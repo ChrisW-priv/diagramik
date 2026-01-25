@@ -1,0 +1,12 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import DiagramView from '../../components/DiagramView.vue';
+---
+
+<Layout>
+  <div class="container mx-auto px-4 py-8">
+    <a href="/diagrams" class="text-blue-400 hover:underline mb-4 inline-block">&larr; Back to Diagrams</a>
+    <h1 class="text-4xl font-bold mb-8">New Diagram</h1>
+    <DiagramView client:load id={null} />
+  </div>
+</Layout>

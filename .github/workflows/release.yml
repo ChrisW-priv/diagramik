@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+  id-token: write  # For OIDC to GCP
+  packages: write  # For GHCR
+
+env:
+  GCP_PROJECT_ID: playground-449613
+  GCP_REGION: europe-west4
+  REGISTRY_GAR: europe-west4-docker.pkg.dev/playground-449613/diagramik
+  WORKLOAD_IDENTITY_PROVIDER: projects/904069135998/locations/global/workloadIdentityPools/github/providers/github-actions
+
+jobs:
+  release:
+    name: Build, Push, and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set lowercase repository owner
+        id: repo_owner
+        run: |
+          echo "owner_lc=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Extract git tag
+        id: get_tag
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Extracted tag: $TAG"
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Pull latest images for cache
+        working-directory: backend
+        env:
+          REGISTRY_GHCR: ghcr.io/${{ steps.repo_owner.outputs.owner_lc }}
+        run: task pull:latest || true
+
+      - name: Build monolith image with release tag
+        working-directory: backend
+        env:
+          TAG: ${{ steps.get_tag.outputs.tag }}
+          REGISTRY_GHCR: ghcr.io/${{ steps.repo_owner.outputs.owner_lc }}
+          CACHE_FROM: ghcr.io/${{ steps.repo_owner.outputs.owner_lc }}/application-monolith:latest
+        run: task monolith:build
+
+      - name: Build MCP image with release tag
+        working-directory: backend
+        env:
+          TAG: ${{ steps.get_tag.outputs.tag }}
+          REGISTRY_GHCR: ghcr.io/${{ steps.repo_owner.outputs.owner_lc }}
+          CACHE_FROM: ghcr.io/${{ steps.repo_owner.outputs.owner_lc }}/diagramming-mcp:latest
+        run: task mcp:build
+
+      - name: Push release tag to both registries
+        working-directory: backend
+        env:
+          TAG: ${{ steps.get_tag.outputs.tag }}
+          REGISTRY_GHCR: ghcr.io/${{ steps.repo_owner.outputs.owner_lc }}
+        run: task push
+
+      - name: Tag and push as latest to GHCR
+        working-directory: backend
+        env:
+          TAG: ${{ steps.get_tag.outputs.tag }}
+          REGISTRY_GHCR: ghcr.io/${{ steps.repo_owner.outputs.owner_lc }}
+        run: task tag:latest
+
+      - name: Run Terraform
+        working-directory: infrastructure
+        env:
+          TF_VAR_FILE: environments/deployed.tfvars
+        run: |
+          task init
+          task apply -- -var="docker_image_tag=${{ steps.get_tag.outputs.tag }}"
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: task install
+
+      - name: Publish frontend
+        working-directory: frontend
+        run: task publish

@@ -1,0 +1,330 @@
+openapi: 3.1.0
+info:
+  title: Diagramik API
+  description: |-
+    This is the doc for the API for the [diagramik](https://diagramik.com) service.
+    It allows you to create and browse diagrams generated from natural language text.
+
+  termsOfService: https://diagramik.com/terms
+  contact:
+    email: chris.watras@gmail.com
+  version: 1.0.0
+servers:
+  - url: https://diagramik.com/api/v1
+tags:
+  - name: diagram
+    description: Everything about your Diagrams
+  - name: user
+    description: Operations on user
+paths:
+  /diagrams:
+    get:
+      tags:
+        - diagram
+      summary: Get list of all diagrams accessible
+      responses:
+        "200":
+          description: A list of diagrams accessible to the user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiagramListItem"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      tags:
+        - diagram
+      summary: Create new diagram from text
+      description: Creates a new Diagram that can have different versions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: The natural language text to generate a diagram from.
+              required:
+                - text
+      responses:
+        "201":
+          description: Diagram created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagramVersion"
+        "400":
+          description: Bad Request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /diagrams/{diagram_id}:
+    get:
+      tags:
+        - diagram
+      summary: Get info on a specific diagram
+      parameters:
+        - name: diagram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Detailed information for a single diagram.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Diagram"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Diagram not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - diagram
+      summary: Delete diagram with all its versions
+      parameters:
+        - name: diagram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Diagram deleted successfully.
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Diagram not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /diagrams/{diagram_id}/versions:
+    post:
+      tags:
+        - diagram
+      summary: Create new diagram version from text
+      description: Creates a new version of a Diagram with given ID
+      parameters:
+        - name: diagram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: The natural language text to generate a new diagram version from.
+              required:
+                - text
+      responses:
+        "201":
+          description: Diagram version created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagramVersion"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Diagram not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /diagrams/{diagram_id}/versions/{version_id}:
+    delete:
+      tags:
+        - diagram
+      summary: Delete a specific diagram version
+      parameters:
+        - name: diagram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: version_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Diagram version deleted successfully.
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Diagram or version not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /diagrams/{diagram_id}/versions/{version_id}/image:
+    get:
+      tags:
+        - diagram
+      summary: Get diagram image
+      description: Redirects to a temporary signed URL for the diagram image.
+      parameters:
+        - name: diagram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: version_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "302":
+          description: Redirect to the signed URL for the diagram image.
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Diagram or version not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    DiagramListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the diagram.
+        title:
+          type: string
+          description: The title of the diagram.
+      required:
+        - id
+        - title
+
+    Diagram:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the diagram.
+        title:
+          type: string
+          description: The title of the diagram.
+        chat_history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+        versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiagramVersion"
+      required:
+        - id
+        - title
+        - chat_history
+        - versions
+
+    ChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum:
+            - user
+            - assistant
+          description: The role of the speaker.
+        content:
+          type: string
+          description: The content of the message.
+      required:
+        - role
+        - content
+
+    DiagramVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for this version.
+        created_at:
+          type: string
+          format: date-time
+          description: The timestamp when this version was created.
+      required:
+        - id
+        - created_at
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: An internal error code.
+        message:
+          type: string
+          description: A human-readable error message.
+      required:
+        - code
+        - message

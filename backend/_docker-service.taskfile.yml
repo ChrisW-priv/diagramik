@@ -1,0 +1,121 @@
+version: "3"
+
+# Generic Docker service taskfile
+# This file is included by the main Taskfile.yml for each service (monolith, mcp)
+# Required vars: SERVICE_NAME, DOCKERFILE
+# Optional vars: REGISTRY_GHCR, REGISTRY_GAR, TAG
+
+vars:
+  REGISTRY_GHCR: "{{.REGISTRY_GHCR | default \"ghcr.io\"}}"
+  REGISTRY_GAR: "{{.REGISTRY_GAR | default \"europe-west4-docker.pkg.dev/playground-449613/diagramik\"}}"
+  TAG: "{{.TAG | default \"latest\"}}"
+  IMAGE_LOCAL: "{{.SERVICE_NAME}}:{{.TAG}}"
+  IMAGE_GAR: "{{.REGISTRY_GAR}}/{{.SERVICE_NAME}}:{{.TAG}}"
+  IMAGE_GHCR: "{{.REGISTRY_GHCR}}/{{.SERVICE_NAME}}:{{.TAG}}"
+  CACHE_FROM: "{{.CACHE_FROM | default \"\"}}"  # Optional: image to use as build cache
+  SCAN_REGISTRY: "{{.SCAN_REGISTRY | default \"\"}}"  # Empty = local, "ghcr" or "gar" = remote
+  REGION: "{{.REGION | default \"europe-west4\"}}"
+  PROJECT_ID: "{{.PROJECT_ID | default \"playground-449613\"}}"
+  CLOUDRUN_SERVICE_NAME: "{{.CLOUDRUN_SERVICE_NAME}}"  # Cloud Run service name (required)
+
+tasks:
+  build:
+    desc: Build Docker image with 3 tags (local, GHCR, GAR)
+    cmds:
+      - |
+        docker build \
+          -f {{.DOCKERFILE}} \
+          -t {{.IMAGE_LOCAL}} \
+          -t {{.IMAGE_GAR}} \
+          -t {{.IMAGE_GHCR}} \
+          {{if .CACHE_FROM}}--cache-from {{.CACHE_FROM}}{{end}} \
+          .
+
+  push:ghcr:
+    desc: Push image to GitHub Container Registry
+    cmds:
+      - docker push {{.IMAGE_GHCR}}
+
+  push:gar:
+    desc: Push image to Google Artifact Registry
+    cmds:
+      - docker push {{.IMAGE_GAR}}
+
+  push:
+    desc: Push image to both registries
+    deps:
+      - push:ghcr
+      - push:gar
+
+  scan:
+    desc: Scan Docker image with Trivy (local or remote based on SCAN_REGISTRY)
+    cmds:
+      - |
+        {{if eq .SCAN_REGISTRY ""}}
+          echo "🔍 Scanning local image: {{.IMAGE_LOCAL}}"
+          trivy image --severity HIGH,CRITICAL {{.IMAGE_LOCAL}}
+        {{else if eq .SCAN_REGISTRY "ghcr"}}
+          echo "🔍 Scanning GHCR image: {{.IMAGE_GHCR}}"
+          trivy image --severity HIGH,CRITICAL {{.IMAGE_GHCR}}
+        {{else if eq .SCAN_REGISTRY "gar"}}
+          echo "🔍 Scanning GAR image: {{.IMAGE_GAR}}"
+          trivy image --severity HIGH,CRITICAL {{.IMAGE_GAR}}
+        {{else}}
+          echo "❌ Invalid SCAN_REGISTRY value: {{.SCAN_REGISTRY}}"
+          echo "   Valid values: (empty), ghcr, gar"
+          exit 1
+        {{end}}
+
+  scan:local:
+    desc: Scan local image with Trivy
+    cmds:
+      - trivy image --severity HIGH,CRITICAL {{.IMAGE_LOCAL}}
+
+  scan:ghcr:
+    desc: Scan GHCR image with Trivy
+    cmds:
+      - trivy image --severity HIGH,CRITICAL {{.IMAGE_GHCR}}
+
+  scan:gar:
+    desc: Scan GAR image with Trivy
+    cmds:
+      - trivy image --severity HIGH,CRITICAL {{.IMAGE_GAR}}
+
+  publish:
+    desc: Build, scan, and push image
+    cmds:
+      - task: build
+      - task: scan
+      - task: push
+
+  deploy:
+    desc: Update existing Cloud Run service with new image (assumes image already pushed to GAR)
+    cmds:
+      - |-
+        gcloud run services update {{.CLOUDRUN_SERVICE_NAME}} \
+          --image={{.IMAGE_GAR}} \
+          --region={{.REGION}} \
+          --project={{.PROJECT_ID}}
+
+  redeploy:
+    desc: Build, push to GAR, and update Cloud Run service with new image
+    cmds:
+      - task: build
+      - task: push:gar
+      - task: deploy
+
+  tag:latest:
+    desc: Tag current image as latest and push to GHCR
+    vars:
+      LATEST_IMAGE_GHCR: "{{.REGISTRY_GHCR}}/{{.SERVICE_NAME}}:latest"
+    cmds:
+      - docker tag {{.IMAGE_GHCR}} {{.LATEST_IMAGE_GHCR}}
+      - docker push {{.LATEST_IMAGE_GHCR}}
+
+  pull:latest:
+    desc: Pull latest image from registry (default GHCR, override with PULL_REGISTRY=gar)
+    vars:
+      PULL_REGISTRY: "{{.PULL_REGISTRY | default \"ghcr\"}}"
+      PULL_IMAGE: "{{if eq .PULL_REGISTRY \"gar\"}}{{.REGISTRY_GAR}}/{{.SERVICE_NAME}}:latest{{else}}{{.REGISTRY_GHCR}}/{{.SERVICE_NAME}}:latest{{end}}"
+    cmds:
+      - docker pull {{.PULL_IMAGE}}

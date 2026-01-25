@@ -1,0 +1,36 @@
+version: "3"
+
+includes:
+  fe:
+    taskfile: ./frontend/Taskfile.yml
+    dir: ./frontend
+  be:
+    taskfile: ./backend/Taskfile.yml
+    dir: ./backend
+  infra:
+    taskfile: ./infrastructure/Taskfile.yml
+    dir: ./infrastructure
+
+tasks:
+  default:
+    desc: List all available tasks
+    cmds:
+      - go-task --list-all
+
+  init:
+    decs: Initializes the environment
+    deps:
+      - fe:install
+      - be:sync
+      - infra:init
+
+  check:
+    desc: Runs static type checks to make sure any obvious errors are not present
+    cmds:
+      - task: be:monolith:check-prod
+
+  dev:
+    desc: Runs dev env for frontend and backend
+    deps:
+      - fe:dev
+      - be:dev

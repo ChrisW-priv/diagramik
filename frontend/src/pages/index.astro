@@ -1,0 +1,25 @@
+---
+// Root page - redirects to login or diagrams based on auth status
+---
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting...</title>
+  </head>
+  <body>
+    <script>
+      const AUTH_STORAGE_KEY = 'diagramik_auth';
+      const isAuthenticated = localStorage.getItem(AUTH_STORAGE_KEY) !== null;
+
+      if (isAuthenticated) {
+        window.location.href = '/diagrams';
+      } else {
+        window.location.href = '/login';
+      }
+    </script>
+    <noscript>
+      <meta http-equiv="refresh" content="0; url=/login" />
+    </noscript>
+  </body>
+</html>

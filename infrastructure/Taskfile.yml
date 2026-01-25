@@ -1,0 +1,30 @@
+version: "3"
+
+vars:
+  TF_VAR_FILE: "{{.TF_VAR_FILE | default \"environments/deployed.tfvars\"}}"
+
+tasks:
+  init:
+    desc: Initialize Terraform
+    cmds:
+      - terraform init
+
+  fmt:
+    desc: Format Terraform files
+    cmds:
+      - terraform fmt -recursive
+
+  validate:
+    desc: Validate Terraform configuration
+    cmds:
+      - terraform validate
+
+  plan:
+    desc: Plan Terraform changes
+    cmds:
+      - terraform plan -var-file={{.TF_VAR_FILE}}
+
+  apply:
+    desc: Apply Terraform changes
+    cmds:
+      - terraform apply -var-file={{.TF_VAR_FILE}} -auto-approve

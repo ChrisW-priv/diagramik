@@ -1,0 +1,36 @@
+[project]
+name = "text-diagrams-backend"
+version = "0.1.0"
+description = "Project for a Custom AI Assistant that will draw diagrams from natural text"
+readme = "README.md"
+requires-python = ">=3.13.7"
+dependencies = [ ]
+
+[dependency-groups]
+dev = [
+    "debugpy>=1.8.19",
+    "pytest>=9.0.2",
+    "ruff>=0.14.13",
+]
+diagram-mcp = [
+    "uuid-utils>=0.13.0",
+    "diagrams>=0.24.4",
+    "mcp>=1.13.1",
+    "google-cloud-storage>=3.8.0",
+]
+django-monolith = [
+    "django>=6.0.1",
+    "django-ensuresuperuser>=0.1.1",
+    "djangorestframework>=3.15.0",
+    "psycopg[binary,pool]>=3.2.0",
+    "google-cloud-storage>=3.8.0",
+    "google-cloud-logging>=3.11.0",
+    "pydantic>=2.12.5",
+    "hypercorn>=0.18.0",
+    "fast-agent-mcp>=0.4.39",
+    "django-allauth[socialaccount]>=65.0.0",
+    "djangorestframework-simplejwt>=5.4.0",
+    "requests>=2.32.0",
+    "django-cors-headers>=4.9.0",
+    "mailersend>=2.0.0",
+]

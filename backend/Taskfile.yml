@@ -1,0 +1,152 @@
+version: "3"
+
+vars:
+  REGISTRY_GHCR: "{{.REGISTRY_GHCR | default \"ghcr.io\"}}"
+  REGISTRY_GAR: "{{.REGISTRY_GAR | default \"europe-west4-docker.pkg.dev/playground-449613/diagramik\"}}"
+  TAG: "{{.TAG | default \"latest\"}}"
+  DIAGRAMS_BUCKET: "{{.DIAGRAMS_BUCKET | default \"diagramik-diagrams\"}}"
+  SCAN_REGISTRY: "{{.SCAN_REGISTRY | default \"\"}}"  # Empty = local images, otherwise ghcr/gar
+  REGION: "{{.REGION | default \"europe-west4\"}}"
+  PROJECT_ID: "{{.PROJECT_ID | default \"playground-449613\"}}"
+
+includes:
+  monolith:
+    taskfile: _docker-service.taskfile.yml
+    vars:
+      SERVICE_NAME: application-monolith
+      DOCKERFILE: django_monolith/Dockerfile
+      CLOUDRUN_SERVICE_NAME: diagramik
+      REGISTRY_GHCR: "{{.REGISTRY_GHCR}}"
+      REGISTRY_GAR: "{{.REGISTRY_GAR}}"
+      TAG: "{{.TAG}}"
+      CACHE_FROM: "{{.CACHE_FROM | default \"application-monolith:latest\"}}"
+      SCAN_REGISTRY: "{{.SCAN_REGISTRY}}"
+      REGION: "{{.REGION}}"
+      PROJECT_ID: "{{.PROJECT_ID}}"
+
+  mcp:
+    taskfile: _docker-service.taskfile.yml
+    vars:
+      SERVICE_NAME: diagramming-mcp
+      DOCKERFILE: mcp_diagrams/Dockerfile
+      CLOUDRUN_SERVICE_NAME: diagramik-mcp
+      REGISTRY_GHCR: "{{.REGISTRY_GHCR}}"
+      REGISTRY_GAR: "{{.REGISTRY_GAR}}"
+      TAG: "{{.TAG}}"
+      CACHE_FROM: "{{.CACHE_FROM | default \"diagramming-mcp:latest\"}}"
+      SCAN_REGISTRY: "{{.SCAN_REGISTRY}}"
+      REGION: "{{.REGION}}"
+      PROJECT_ID: "{{.PROJECT_ID}}"
+
+tasks:
+  # === Python Environment ===
+  sync:
+    desc: Install all Python dependencies via uv
+    cmds:
+      - uv sync --all-groups
+
+  fmt:
+    desc: Auto-fix lint issues and format code
+    cmds:
+      - .venv/bin/ruff check . --fix
+      - .venv/bin/ruff format .
+
+  # === Aggregate Tasks (all services) ===
+  build:
+    desc: Build all backend Docker images
+    deps:
+      - monolith:build
+      - mcp:build
+
+  scan:
+    desc: Scan all backend Docker images with Trivy
+    deps:
+      - monolith:scan
+      - mcp:scan
+
+  push:
+    desc: Push all backend Docker images to registries
+    deps:
+      - monolith:push
+      - mcp:push
+
+  push:ghcr:
+    desc: Push all images to GitHub Container Registry
+    deps:
+      - monolith:push:ghcr
+      - mcp:push:ghcr
+
+  push:gar:
+    desc: Push all images to Google Artifact Registry
+    deps:
+      - monolith:push:gar
+      - mcp:push:gar
+
+  publish:
+    desc: Build, scan, and push all backend Docker images
+    cmds:
+      - task: build
+      - task: scan
+      - task: push
+
+  deploy:
+    desc: Deploy all backend services to Cloud Run (assumes images already pushed)
+    deps:
+      - monolith:deploy
+      - mcp:deploy
+
+  redeploy:
+    desc: Build, push to GAR, and deploy all backend services to Cloud Run
+    deps:
+      - monolith:redeploy
+      - mcp:redeploy
+
+  tag:latest:
+    desc: Tag all images as latest and push to GHCR
+    deps:
+      - monolith:tag:latest
+      - mcp:tag:latest
+
+  pull:latest:
+    desc: Pull latest images from registry
+    deps:
+      - monolith:pull:latest
+      - mcp:pull:latest
+
+  dev:
+    desc: Run all services in dev mode (use in separate terminals)
+    deps:
+      - monolith:dev
+      - mcp:dev
+
+  # === Django Monolith Custom Tasks ===
+  monolith:dev:
+    desc: Run Django dev server locally
+    env:
+      DEPLOYMENT_ENVIRONMENT: DEBUG
+    cmds:
+      - .venv/bin/python django_monolith/manage.py runserver 0.0.0.0:8000
+
+  monolith:check:
+    desc: Test Django settings for common deployment config errors
+    cmds:
+      - .venv/bin/python django_monolith/manage.py check
+
+  monolith:check-prod:
+    desc: Test Django production settings for deployment errors
+    env:
+      DJANGO_SECRET_KEY: "789123456123123123123123123123123123123123123123123123arstqwfpzxcv"  # Has to be long and have many unique chars
+    cmds:
+      - mkdir -p django_monolith/backend/temp_settings
+      - cp -r django_monolith/backend/settings/* django_monolith/backend/temp_settings
+      - cp -r django_monolith/backend/deployed_settings/* django_monolith/backend/temp_settings
+      - .venv/bin/python django_monolith/manage.py check --deploy --fail-level WARNING --settings=backend.temp_settings
+      - rm -r django_monolith/backend/temp_settings
+
+  # === MCP Custom Tasks ===
+  mcp:dev:
+    desc: Run MCP diagram server locally
+    env:
+      BUCKET_NAME: "{{.DIAGRAMS_BUCKET}}"
+    cmds:
+      - .venv/bin/python mcp_diagrams/server.py

@@ -1,0 +1,34 @@
+threshold: medium
+
+fileignoreconfig:
+- filename: backend/Taskfile.yml
+  checksum: 01cbc52c8c094055fd260bdc697607265d1470bd795b04822e1ae4d1f9e0f2f1
+- filename: infrastructure/.terraform.lock.hcl
+  checksum: d4f5072238c412b0264f55c54a7e05eff3bc33e0c300838f1c41dbdc4c14fffa
+- filename: infrastructure/modules/cloudrun-job/.terraform.lock.hcl
+  checksum: 939c83aabe5aa0562dd5d0169e6bbe6659363d40a750f4de03519bcc5dba4e2e
+- filename: infrastructure/modules/artifact-registry/.terraform.lock.hcl
+  checksum: bfb204c86b4d23b6c7cdcd9842ab4bebd2acb4a7f51d53e37d56567b1a83c46c
+- filename: infrastructure/modules/frontend-bucket/.terraform.lock.hcl
+  checksum: 90a0cf1ef9acbb8f28d406915a17255f8b594e1160ebaaf91f89606f4f6ad123
+- filename: infrastructure/modules/cloudrun-service/.terraform.lock.hcl
+  checksum: 9aaf89ec51f9898d456203ca85a8a3f230a5000c190b95c6ef3f4b29d8fa7b19
+- filename: infrastructure/modules/global-lb/.terraform.lock.hcl
+  checksum: a9a01a33c7261a6451587bbb6c73cd279a4bf8f55e620adf377a923cfd1b44b9
+- filename: infrastructure/modules/storage-bucket/.terraform.lock.hcl
+  checksum: e6c8245d6879780f1e4cd168d126e38cdd31dd4b2ec7c40c8ef98a6daa9e0dcb
+- filename: infrastructure/modules/secret/.terraform.lock.hcl
+  checksum: c2209b6afe6c8039e9f310c739dd9db545842af553d7244a636f1791e8ac4f97
+- filename: infrastructure/modules/mcp-service/.terraform.lock.hcl
+  checksum: e42b6177b9e9935c7b2f195f1d8fe4c3d146e451467a18d3a006ebe7673151da
+- filename: infrastructure/modules/django-monolith/.terraform.lock.hcl
+  checksum: 736ea011f0e3b4cea088e31152bc5b1372ad66e52cdc4ef22b2fff88b6c4791c
+- filename: infrastructure/modules/cloudsql/.terraform.lock.hcl
+  checksum: ef3b31c24d05a60cc1c376e81ff2a54f9bcf612e037ca80a3b56f86d15176d8e
+- filename: backend/uv.lock
+  checksum: 23efd74920401cc73568ff074ff62d04ac06246463a3447d6b30c439764bc6bb
+- filename: .github/workflows/release.yml
+  checksum: 4643a5bc72a7d71e99a388b4128b326eb3f50cba1705fa85c6051a6a073125b4
+
+version: "1.0"
+

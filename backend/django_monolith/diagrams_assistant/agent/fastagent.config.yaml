@@ -1,0 +1,15 @@
+default_model: gemini25
+logger:
+  progress_display: true
+  show_chat: true
+  show_tools: true
+  truncate_tools: false
+
+mcp:
+  servers:
+    diagramming:
+      transport: http
+      url: "https://diagramik-mcp-904069135998.europe-west4.run.app/mcp"
+      auth:
+        oauth: true
+

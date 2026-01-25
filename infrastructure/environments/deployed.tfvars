@@ -1,0 +1,5 @@
+google_project_id         = "playground-449613"
+google_region             = "europe-west4"
+application_name          = "diagramik"
+github_repository         = "chrisw-priv/text-diagrams"
+workload_identity_pool_id = "projects/904069135998/locations/global/workloadIdentityPools/github"
