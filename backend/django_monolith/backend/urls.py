@@ -17,45 +17,11 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from diagrams_assistant.auth_views import (
-    LoginView,
-    RegisterView,
-    LogoutView,
-    UserView,
-    PasswordResetView,
-    PasswordResetConfirmView,
-    GoogleAuthURLView,
-    GoogleLoginView,
-    CustomTokenRefreshView,
-)
 
 urlpatterns = [
     path("api/admin/", admin.site.urls),
+    # Auth endpoints (user_auth app)
+    path("api/v1/auth/", include("user_auth.urls")),
+    # Diagram endpoints (diagrams_assistant app)
     path("api/v1/", include("diagrams_assistant.urls")),
-    # Auth endpoints
-    path("api/v1/auth/login/", LoginView.as_view(), name="login"),
-    path("api/v1/auth/registration/", RegisterView.as_view(), name="register"),
-    path("api/v1/auth/logout/", LogoutView.as_view(), name="logout"),
-    path("api/v1/auth/user/", UserView.as_view(), name="user"),
-    path(
-        "api/v1/auth/password/reset/",
-        PasswordResetView.as_view(),
-        name="password_reset",
-    ),
-    path(
-        "api/v1/auth/password/reset/confirm/",
-        PasswordResetConfirmView.as_view(),
-        name="password_reset_confirm",
-    ),
-    path(
-        "api/v1/auth/token/refresh/",
-        CustomTokenRefreshView.as_view(),
-        name="token_refresh",
-    ),
-    path(
-        "api/v1/auth/social/google/url/",
-        GoogleAuthURLView.as_view(),
-        name="google_auth_url",
-    ),
-    path("api/v1/auth/social/google/", GoogleLoginView.as_view(), name="google_login"),
 ]

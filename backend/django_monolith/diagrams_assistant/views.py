@@ -10,7 +10,7 @@ from .serializers import (
     DiagramListItemSerializer,
     DiagramVersionSerializer,
 )
-from .throttles import DiagramGenerationThrottle, log_diagram_generation
+from quota_management.throttles import DiagramGenerationThrottle, log_diagram_generation
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.request import Request
