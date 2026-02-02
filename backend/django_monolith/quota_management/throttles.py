@@ -3,11 +3,7 @@ from django.utils import timezone
 from rest_framework.throttling import BaseThrottle
 
 from .models import UserQuota, DiagramGenerationLog
-
-
-# Default quota settings for users without a UserQuota record
-DEFAULT_QUOTA_LIMIT = 10
-DEFAULT_QUOTA_PERIOD = "day"
+from site_settings.models import SiteSettings
 
 
 class DiagramGenerationThrottle(BaseThrottle):
@@ -54,15 +50,16 @@ class DiagramGenerationThrottle(BaseThrottle):
 
         quota = self.get_user_quota(user)
 
-        # Use quota settings or defaults
+        # Use quota settings or defaults from SiteSettings
         if quota:
             if quota.is_unlimited:
                 return True
             quota_limit = quota.quota_limit
             period = quota.period
         else:
-            quota_limit = DEFAULT_QUOTA_LIMIT
-            period = DEFAULT_QUOTA_PERIOD
+            site_settings = SiteSettings.load()
+            quota_limit = site_settings.quota_limit_default
+            period = site_settings.quota_period_default
 
         period_start = self.get_period_start(period)
         usage_count = self.get_usage_count(user, period_start)
@@ -122,8 +119,9 @@ def get_user_quota_status(user) -> dict:
         quota_limit = quota.quota_limit
         period = quota.period
     else:
-        quota_limit = DEFAULT_QUOTA_LIMIT
-        period = DEFAULT_QUOTA_PERIOD
+        site_settings = SiteSettings.load()
+        quota_limit = site_settings.quota_limit_default
+        period = site_settings.quota_period_default
 
     period_start = throttle.get_period_start(period)
     usage_count = throttle.get_usage_count(user, period_start)
