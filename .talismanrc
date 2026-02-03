@@ -26,7 +26,7 @@ fileignoreconfig:
 - filename: infrastructure/modules/cloudsql/.terraform.lock.hcl
   checksum: ef3b31c24d05a60cc1c376e81ff2a54f9bcf612e037ca80a3b56f86d15176d8e
 - filename: backend/uv.lock
-  checksum: 23efd74920401cc73568ff074ff62d04ac06246463a3447d6b30c439764bc6bb
+  checksum: d4135fbad7ac80bdf32993dd3e2aba6fba5c224fd53c8d39d044c13f331eb1fe
 - filename: .github/workflows/release.yml
   checksum: 4643a5bc72a7d71e99a388b4128b326eb3f50cba1705fa85c6051a6a073125b4
 

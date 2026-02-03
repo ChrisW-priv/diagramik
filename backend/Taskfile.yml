@@ -64,6 +64,12 @@ tasks:
       - monolith:scan
       - mcp:scan
 
+  test:
+    desc: Run all tests
+    deps:
+      - monolith:test
+      - mcp:test
+
   push:
     desc: Push all backend Docker images to registries
     deps:
@@ -127,6 +133,12 @@ tasks:
     cmds:
       - .venv/bin/python django_monolith/manage.py runserver 0.0.0.0:8000
 
+  monolith:test:
+    desc: Run Tests in monolith service directory
+    dir: ./django_monolith/
+    cmds:
+      - ../.venv/bin/pytest --cov=. --cov-report=term-missing --cov-report=html -vv
+
   monolith:check:
     desc: Test Django settings for common deployment config errors
     cmds:
@@ -150,3 +162,10 @@ tasks:
       BUCKET_NAME: "{{.DIAGRAMS_BUCKET}}"
     cmds:
       - .venv/bin/python mcp_diagrams/server.py
+
+  mcp:test:
+    desc: Run Tests in mcp service directory
+    dir: ./mcp_diagrams/
+    cmds:
+      - ../.venv/bin/pytest --cov=. --cov-report=term-missing --cov-report=html -vv
+
