@@ -1,0 +1,16 @@
+---
+import EmailVerificationHandler from '../../../../components/EmailVerificationHandler.vue';
+
+const { uid, token } = Astro.params;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Verify Email - Diagramik</title>
+  </head>
+  <body>
+    <EmailVerificationHandler uid={uid} token={token} client:only="vue" />
+  </body>
+</html>

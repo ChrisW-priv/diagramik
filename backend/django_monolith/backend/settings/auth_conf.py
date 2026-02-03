@@ -36,3 +36,16 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+# Email Verification Configuration
+EMAIL_VERIFICATION_MAX_RESENDS = 5  # Maximum number of resend attempts
+EMAIL_VERIFICATION_COOLDOWN_MINUTES = 10  # Cooldown period between resends in minutes
+EMAIL_VERIFICATION_TOKEN_EXPIRY_DAYS = 1  # Email verification tokens expire after 1 day
+
+# Password Reset Configuration
+PASSWORD_RESET_MAX_REQUESTS = 5  # Maximum password reset requests per cooldown period
+PASSWORD_RESET_COOLDOWN_MINUTES = 10  # Cooldown period between password reset requests
+PASSWORD_RESET_TOKEN_EXPIRY_DAYS = 1  # Password reset tokens expire after 1 day
+PASSWORD_RESET_TIMEOUT = (
+    86400  # Django default - 1 day in seconds (override default 3 days)
+)

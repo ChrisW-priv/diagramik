@@ -9,6 +9,10 @@ from .views import (
     CustomTokenRefreshView,
     GoogleAuthURLView,
     GoogleLoginView,
+    VerifyEmailView,
+    ResendVerificationEmailView,
+    PasswordResetRequestView,
+    SetNewPasswordView,
 )
 
 urlpatterns = [
@@ -24,6 +28,22 @@ urlpatterns = [
         name="auth-password-reset-confirm",
     ),
     path("token/refresh/", CustomTokenRefreshView.as_view(), name="auth-token-refresh"),
+    # Email Verification
+    path("verify-email/", VerifyEmailView.as_view(), name="auth-verify-email"),
+    path(
+        "resend-verification/",
+        ResendVerificationEmailView.as_view(),
+        name="auth-resend-verification",
+    ),
+    # Password Reset (New System)
+    path(
+        "password-reset-request/",
+        PasswordResetRequestView.as_view(),
+        name="auth-password-reset-request",
+    ),
+    path(
+        "set-new-password/", SetNewPasswordView.as_view(), name="auth-set-new-password"
+    ),
     # Google OAuth
     path("social/google/url/", GoogleAuthURLView.as_view(), name="auth-google-url"),
     path("social/google/", GoogleLoginView.as_view(), name="auth-google-login"),

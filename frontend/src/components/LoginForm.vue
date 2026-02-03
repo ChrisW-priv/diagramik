@@ -16,6 +16,19 @@ const handleSubmit = async () => {
     await authApi.login(email.value, password.value);
     window.location.href = '/diagrams';
   } catch (err: any) {
+    if (err.response?.status === 403) {
+      const errorCode = err.response.data.error_code;
+
+      if (errorCode === 'EMAIL_NOT_VERIFIED') {
+        // Redirect to verification-pending page with email pre-filled
+        window.location.href = `/auth/verification-pending?email=${encodeURIComponent(email.value)}`;
+        return;
+      } else if (errorCode === 'ACCOUNT_DISABLED') {
+        error.value = 'Your account has been disabled. Please contact support.';
+        return;
+      }
+    }
+
     if (err.response?.status === 400 || err.response?.status === 401) {
       error.value = 'Invalid email or password';
     } else {

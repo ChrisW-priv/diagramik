@@ -23,7 +23,21 @@ const handleSubmit = async () => {
   }
 
   try {
-    await authApi.register(email.value, password1.value, password2.value, firstName.value);
+    const response = await authApi.register(email.value, password1.value, password2.value, firstName.value);
+
+    // Check if email verification is mandatory (no tokens in response)
+    if (response.detail && response.detail.includes('Verification email sent')) {
+      // Redirect to verification-pending page with email pre-filled
+      window.location.href = `/auth/verification-pending?email=${encodeURIComponent(email.value)}`;
+      return;
+    }
+
+    // If tokens are present, user is auto-logged in (optional verification mode)
+    if (response.access && response.refresh) {
+      window.location.href = '/diagrams';
+      return;
+    }
+
     success.value = 'Account created! Please check your email to verify your account.';
   } catch (err: any) {
     if (err.response?.data) {

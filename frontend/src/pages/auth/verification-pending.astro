@@ -1,0 +1,18 @@
+---
+import VerificationPendingView from '../../components/VerificationPendingView.vue';
+
+// Get email from query params if present
+const url = new URL(Astro.request.url);
+const emailParam = url.searchParams.get('email');
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Verify Your Email - Diagramik</title>
+  </head>
+  <body>
+    <VerificationPendingView initialEmail={emailParam} client:only="vue" />
+  </body>
+</html>

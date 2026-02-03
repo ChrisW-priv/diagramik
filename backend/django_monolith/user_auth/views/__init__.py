@@ -6,6 +6,10 @@ from .email_password_auth import (
     PasswordResetView,
     PasswordResetConfirmView,
     CustomTokenRefreshView,
+    VerifyEmailView,
+    ResendVerificationEmailView,
+    PasswordResetRequestView,
+    SetNewPasswordView,
 )
 from .google_auth import (
     GoogleAuthURLView,
@@ -21,6 +25,12 @@ __all__ = [
     "PasswordResetView",
     "PasswordResetConfirmView",
     "CustomTokenRefreshView",
+    # Email Verification
+    "VerifyEmailView",
+    "ResendVerificationEmailView",
+    # Password Reset (New System)
+    "PasswordResetRequestView",
+    "SetNewPasswordView",
     # Google OAuth
     "GoogleAuthURLView",
     "GoogleLoginView",

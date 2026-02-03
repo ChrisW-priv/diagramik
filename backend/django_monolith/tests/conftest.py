@@ -148,3 +148,34 @@ def create_test_sa_key(tmp_path, mocker):
     )
 
     return str(key_file)
+
+
+@pytest.fixture
+def unverified_user():
+    """Create an unverified user (is_active=False)."""
+    from user_auth.models import EmailVerificationToken
+
+    user = UserFactory(is_active=False)
+    EmailVerificationToken.objects.create(user=user, resend_count=0)
+    return user
+
+
+@pytest.fixture
+def verified_user():
+    """Create a verified user with verification token marked as verified."""
+    from user_auth.models import EmailVerificationToken
+
+    user = UserFactory(is_active=True)
+    token = EmailVerificationToken.objects.create(user=user, resend_count=0)
+    token.mark_verified()
+    return user
+
+
+@pytest.fixture
+def user_with_max_resends():
+    """Create unverified user who has exhausted resend attempts."""
+    from user_auth.models import EmailVerificationToken
+
+    user = UserFactory(is_active=False)
+    EmailVerificationToken.objects.create(user=user, resend_count=5)
+    return user
