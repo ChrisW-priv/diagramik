@@ -137,7 +137,7 @@ tasks:
     desc: Run Tests in monolith service directory
     dir: ./django_monolith/
     cmds:
-      - ../.venv/bin/pytest --cov=. --cov-report=term-missing --cov-report=html -vv
+      - ../.venv/bin/pytest -n auto --cov=. --cov-report=term-missing --cov-report=html -vv
 
   monolith:check:
     desc: Test Django settings for common deployment config errors
