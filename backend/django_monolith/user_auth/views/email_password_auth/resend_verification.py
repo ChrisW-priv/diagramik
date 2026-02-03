@@ -105,7 +105,9 @@ class ResendVerificationEmailView(CsrfExemptMixin, APIView):
 
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        verification_url = f"{settings.FRONTEND_URL}/auth/verify-email/{uid}/{token}"
+        verification_url = (
+            f"{settings.FRONTEND_URL}/auth/verify-email?uid={uid}&token={token}"
+        )
 
         subject = "Verify your Diagramik account"
         message = f"""

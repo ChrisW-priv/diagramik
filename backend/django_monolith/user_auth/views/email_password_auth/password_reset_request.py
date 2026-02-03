@@ -116,7 +116,9 @@ class PasswordResetRequestView(CsrfExemptMixin, APIView):
         token_expiry_days = getattr(settings, "EMAIL_VERIFICATION_TOKEN_EXPIRY_DAYS", 1)
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        verification_url = f"{settings.FRONTEND_URL}/auth/verify-email/{uid}/{token}"
+        verification_url = (
+            f"{settings.FRONTEND_URL}/auth/verify-email?uid={uid}&token={token}"
+        )
 
         subject = "Verify your Diagramik account"
         message = f"""

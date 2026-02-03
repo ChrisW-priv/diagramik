@@ -1,7 +1,10 @@
 ---
-import EmailVerificationHandler from '../../../../components/EmailVerificationHandler.vue';
+import EmailVerificationHandler from '../../components/EmailVerificationHandler.vue';
 
-const { uid, token } = Astro.params;
+// Get uid and token from query params
+const url = new URL(Astro.request.url);
+const uid = url.searchParams.get('uid');
+const token = url.searchParams.get('token');
 ---
 
 <html lang="en">
