@@ -88,6 +88,7 @@ class TestDiagramCreate:
 
         # Assert
         assert response.status_code == status.HTTP_201_CREATED
+        mock_agent_call.assert_called_once()
 
         # Check diagram was created
         diagram = Diagram.objects.get(owner=user)

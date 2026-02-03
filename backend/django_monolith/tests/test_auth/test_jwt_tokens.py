@@ -35,7 +35,7 @@ class TestJWTTokens:
         response = api_client.get(protected_url)
 
         # Assert
-        assert response.status_code in [status.HTTP_200_OK, status.HTTP_201_CREATED]
+        assert response.status_code == status.HTTP_200_OK
 
     def test_expired_access_token_returns_401(
         self, api_client, protected_url, user, settings

@@ -43,7 +43,7 @@ class LoginView(CsrfExemptMixin, APIView):
 
         if not user.is_active:
             return Response(
-                {"detail": "Account is disabled."},
+                {"detail": "Account has been disabled."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 

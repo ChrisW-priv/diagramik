@@ -34,14 +34,13 @@ Install test dependencies:
 task be:sync
 ```
 
+This will for sure create a correct `.venv` directory in the "${PROJECT_ROOT}/backend/.venv" directory.
+If you need to use `pytest` command directly, use the `./.venv/bin/pytest` with the "backend" directory as CWD.
+
 ### Run All Tests
 
 ```bash
-# From django_monolith directory
-pytest
-
-# Or from backend root
-pytest django_monolith/tests/
+task be:monolith:test  # Runs tests in parallel
 ```
 
 ### Run Specific Test Categories
@@ -87,9 +86,6 @@ open htmlcov/index.html
 ```bash
 # Use all CPU cores
 pytest -n auto
-
-# Use specific number of workers
-pytest -n 4
 ```
 
 ### Run Only Fast Tests

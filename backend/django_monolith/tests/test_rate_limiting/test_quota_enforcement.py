@@ -39,6 +39,7 @@ class TestQuotaEnforcement:
 
         # Assert
         assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+        assert "detail" in response.data
 
     @freeze_time("2026-01-01 12:00:00")
     def test_custom_quota_overrides_default(
@@ -81,29 +82,6 @@ class TestQuotaEnforcement:
 
         # Assert
         assert response.status_code == status.HTTP_201_CREATED
-
-    @freeze_time("2026-01-01 12:00:00")
-    def test_quota_returns_429_with_detail(
-        self, authenticated_client, diagrams_url, mock_agent_call, user, site_settings
-    ):
-        """Test that quota enforcement returns proper 429 response."""
-        # Arrange
-        from quota_management.models import UserQuota
-
-        UserQuota.objects.update_or_create(
-            user=user, defaults=dict(quota_limit=3, period="day")
-        )
-
-        # Make 3 requests
-        for i in range(3):
-            DiagramGenerationLogFactory(user=user)
-
-        # Act
-        response = authenticated_client.post(diagrams_url, {"text": "test"})
-
-        # Assert
-        assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-        assert "detail" in response.data
 
     @freeze_time("2026-01-01 12:00:00")
     def test_quota_logs_successful_generations(
@@ -193,8 +171,9 @@ class TestQuotaEnforcement:
         for i in range(2):
             DiagramGenerationLogFactory(user=user1)
 
-        # Act - user2 should still be able to make requests
         api_client.force_authenticate(user=user2)
+
+        # Act - user2 should still be able to make requests
         response = api_client.post(diagrams_url, {"text": "test"})
 
         # Assert

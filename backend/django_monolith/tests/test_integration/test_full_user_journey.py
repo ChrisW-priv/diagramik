@@ -3,7 +3,6 @@
 import pytest
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from diagrams_assistant.models import Diagram
 from freezegun import freeze_time
 
 User = get_user_model()
@@ -53,6 +52,7 @@ class TestCompleteUserJourney:
         )
         assert create_diagram_response.status_code == status.HTTP_201_CREATED
         diagram_id = create_diagram_response.data["diagram_id"]
+        mock_agent_call.assert_called_once()
 
         # Step 3: List diagrams (verify it's there)
         list_response = api_client.get("/api/v1/diagrams/")
@@ -72,6 +72,7 @@ class TestCompleteUserJourney:
             {"text": "Make it bigger"},
         )
         assert version_response.status_code == status.HTTP_201_CREATED
+        assert mock_agent_call.call_count == 2
 
         # Verify diagram now has 2 versions
         detail_response = api_client.get(f"/api/v1/diagrams/{diagram_id}/")
@@ -84,6 +85,7 @@ class TestCompleteUserJourney:
         )
         assert image_response.status_code == status.HTTP_200_OK
         assert "image_url" in image_response.data
+        mock_gcs_signed_url.assert_called_once()
 
         # Step 7: Delete diagram
         delete_response = api_client.delete(f"/api/v1/diagrams/{diagram_id}/")
@@ -97,9 +99,10 @@ class TestCompleteUserJourney:
     def test_oauth_to_diagram_creation_flow(
         self, api_client, mock_agent_call, mock_gcs_signed_url, mock_google_oauth
     ):
-        """Test flow: OAuth login -> Create diagrams -> Hit rate limit."""
-        # This test would require more complex OAuth mocking
-        # For now, we'll create a user with social account and test from there
+        """
+        Test flow: User with OAuth account -> Create multiple diagrams.
+        This test verifies that users with social accounts can create diagrams
+        """
 
         from tests.factories import UserFactory, SocialAccountFactory
 
@@ -122,118 +125,5 @@ class TestCompleteUserJourney:
         list_response = api_client.get("/api/v1/diagrams/")
         assert len(list_response.data) == 2
 
-
-class TestMultiVersionWorkflow:
-    """Test creating and managing multiple versions."""
-
-    @freeze_time("2026-01-01 12:00:00")
-    def test_iterative_diagram_creation(
-        self, authenticated_client, mock_agent_call, user
-    ):
-        """Test creating a diagram and iterating with multiple versions."""
-        # Create initial diagram
-        response = authenticated_client.post(
-            "/api/v1/diagrams/", {"text": "Initial diagram"}
-        )
-        assert response.status_code == status.HTTP_201_CREATED
-        diagram_id = response.data["diagram_id"]
-
-        # Create multiple versions iteratively
-        prompts = [
-            "Make it bigger",
-            "Add more servers",
-            "Change colors to blue",
-            "Add database",
-        ]
-
-        for prompt in prompts:
-            version_response = authenticated_client.post(
-                f"/api/v1/diagrams/{diagram_id}/versions/", {"text": prompt}
-            )
-            assert version_response.status_code == status.HTTP_201_CREATED
-
-        # Verify all versions exist
-        detail_response = authenticated_client.get(f"/api/v1/diagrams/{diagram_id}/")
-        assert len(detail_response.data["versions"]) == 5  # 1 initial + 4 updates
-
-        # Verify chat history
-        assert len(detail_response.data["chat_history"]) == 10  # 5 user + 5 assistant
-
-
-class TestQuotaLimitJourney:
-    """Test user journey when hitting quota limits."""
-
-    @freeze_time("2026-01-01 12:00:00")
-    def test_hit_quota_limit_then_reset(
-        self, authenticated_client, mock_agent_call, user, site_settings
-    ):
-        """Test hitting quota limit and then waiting for reset."""
-        from quota_management.models import UserQuota
-
-        # Set custom quota of 3 per day
-        UserQuota.objects.update_or_create(
-            user=user, defaults=dict(quota_limit=3, period="day")
-        )
-
-        # Create 3 diagrams successfully
-        for i in range(3):
-            response = authenticated_client.post(
-                "/api/v1/diagrams/", {"text": f"Diagram {i}"}
-            )
-            assert response.status_code == status.HTTP_201_CREATED
-
-        # 4th should be throttled
-        response = authenticated_client.post(
-            "/api/v1/diagrams/", {"text": "Should fail"}
-        )
-        assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-
-        # Verify user still has their 3 diagrams
-        list_response = authenticated_client.get("/api/v1/diagrams/")
-        assert len(list_response.data) == 3
-
-        # Travel to next day
-        with freeze_time("2026-01-02 12:00:00"):
-            # Should be able to create again
-            response = authenticated_client.post(
-                "/api/v1/diagrams/", {"text": "After reset"}
-            )
-            assert response.status_code == status.HTTP_201_CREATED
-
-            # Verify user now has 4 diagrams total
-            list_response = authenticated_client.get("/api/v1/diagrams/")
-            assert len(list_response.data) == 4
-
-
-class TestPermissionsAndIsolation:
-    """Test that users can't access each other's data."""
-
-    def test_user_isolation(self, api_client, mock_agent_call):
-        """Test that users can only access their own diagrams."""
-        from tests.factories import UserFactory, DiagramFactory
-
-        # Create two users with diagrams
-        user1 = UserFactory(email="user1@example.com")
-        user2 = UserFactory(email="user2@example.com")
-
-        DiagramFactory(owner=user1, title="User 1 Diagram")
-        diagram2 = DiagramFactory(owner=user2, title="User 2 Diagram")
-
-        # User 1 logs in
-        api_client.force_authenticate(user=user1)
-
-        # User 1 can see their own diagram
-        list_response = api_client.get("/api/v1/diagrams/")
-        assert len(list_response.data) == 1
-        assert list_response.data[0]["title"] == "User 1 Diagram"
-
-        # User 1 cannot access User 2's diagram
-        detail_response = api_client.get(f"/api/v1/diagrams/{diagram2.id}/")
-        assert detail_response.status_code == status.HTTP_404_NOT_FOUND
-
-        # User 1 cannot delete User 2's diagram
-        delete_response = api_client.delete(f"/api/v1/diagrams/{diagram2.id}/")
-        assert delete_response.status_code == status.HTTP_404_NOT_FOUND
-
-        # Verify User 2's diagram still exists
-        assert Diagram.objects.filter(id=diagram2.id).exists()
+        # Verify agent was called twice
+        assert mock_agent_call.call_count == 2

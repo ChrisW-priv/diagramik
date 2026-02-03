@@ -34,6 +34,7 @@ class TestDiagramVersionCreate:
 
         # Assert
         assert response.status_code == status.HTTP_201_CREATED
+        mock_agent_call.assert_called_once()
         assert DiagramVersion.objects.filter(diagram=user_diagram).count() == 2
 
     def test_create_version_preserves_agent_history(
@@ -70,6 +71,7 @@ class TestDiagramVersionCreate:
 
         # Assert
         assert response.status_code == status.HTTP_201_CREATED
+        mock_agent_call.assert_called_once()
         messages = ChatMessage.objects.filter(diagram=user_diagram).order_by(
             "created_at"
         )

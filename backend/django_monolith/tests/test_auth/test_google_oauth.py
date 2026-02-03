@@ -48,6 +48,10 @@ class TestGoogleOAuth:
         assert "access" in response.data
         assert "refresh" in response.data
 
+        # Verify OAuth API calls were made
+        mock_google_oauth["post"].assert_called_once()
+        mock_google_oauth["get"].assert_called_once()
+
         # Verify user was created
         user = User.objects.get(email="testuser@gmail.com")
         assert user.first_name == "Test"
@@ -77,6 +81,10 @@ class TestGoogleOAuth:
         # Assert
         assert response.status_code == status.HTTP_200_OK
         assert "access" in response.data
+
+        # Verify OAuth API calls were made
+        mock_google_oauth["post"].assert_called_once()
+        mock_google_oauth["get"].assert_called_once()
 
         # Verify social account was linked to existing user
         social_account = SocialAccount.objects.get(
@@ -113,6 +121,10 @@ class TestGoogleOAuth:
         assert response.status_code == status.HTTP_200_OK
         assert "access" in response.data
 
+        # Verify OAuth API calls were made
+        mock_google_oauth["post"].assert_called_once()
+        mock_google_oauth["get"].assert_called_once()
+
         # Verify no duplicate accounts were created
         assert SocialAccount.objects.filter(user=user, provider="google").count() == 1
 
@@ -125,7 +137,7 @@ class TestGoogleOAuth:
         mock_response = mocker.MagicMock()
         mock_response.status_code = 400
         mock_response.json.return_value = {"error": "invalid_grant"}
-        mocker.patch("requests.post", return_value=mock_response)
+        mock_post = mocker.patch("requests.post", return_value=mock_response)
 
         callback_data = {"code": "invalid-code"}
 
@@ -134,6 +146,7 @@ class TestGoogleOAuth:
 
         # Assert
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_post.assert_called_once()
 
     def test_google_callback_without_code_returns_400(
         self, api_client, callback_endpoint
@@ -164,8 +177,8 @@ class TestGoogleOAuth:
             "family_name": "User",
         }
 
-        mocker.patch("requests.post", return_value=mock_response)
-        mocker.patch("requests.get", return_value=mock_userinfo)
+        mock_post = mocker.patch("requests.post", return_value=mock_response)
+        mock_get = mocker.patch("requests.get", return_value=mock_userinfo)
 
         callback_data = {"code": "valid-code"}
 
@@ -174,6 +187,8 @@ class TestGoogleOAuth:
 
         # Assert
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_post.assert_called_once()
+        mock_get.assert_called_once()
 
 
 class TestGoogleOAuthPermissions:
@@ -185,9 +200,7 @@ class TestGoogleOAuthPermissions:
         response = api_client.get("/api/v1/auth/social/google/url/")
 
         # Assert
-        # Should not return 401/403
-        assert response.status_code != status.HTTP_401_UNAUTHORIZED
-        assert response.status_code != status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_200_OK
 
     def test_google_callback_allows_anonymous_access(self, api_client):
         """Test that Google callback endpoint allows anonymous access."""

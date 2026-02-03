@@ -20,8 +20,8 @@ class TestRegistration:
     def valid_registration_data(self):
         return {
             "email": "newuser@example.com",
-            "password1": "securepass123",
-            "password2": "securepass123",
+            "password1": "securepassword",
+            "password2": "securepassword",
             "first_name": "New",
         }
 
@@ -36,11 +36,11 @@ class TestRegistration:
 
         # Assert
         assert response.status_code == status.HTTP_201_CREATED
-        assert User.objects.filter(email="newuser@example.com").exists()
+        assert User.objects.filter(email=valid_registration_data["email"]).exists()
 
-        user = User.objects.get(email="newuser@example.com")
-        assert user.first_name == "New"
-        assert user.check_password("securepass123")
+        user = User.objects.get(email=valid_registration_data["email"])
+        assert user.first_name == valid_registration_data["first_name"]
+        assert user.check_password(valid_registration_data["password1"])
         assert user.is_active
 
     def test_registration_returns_jwt_tokens_in_dev_mode(
@@ -58,7 +58,7 @@ class TestRegistration:
         assert "access" in response.data
         assert "refresh" in response.data
         assert "user" in response.data
-        assert response.data["user"]["email"] == "newuser@example.com"
+        assert response.data["user"]["email"] == valid_registration_data["email"]
 
     def test_registration_sends_verification_email_in_production(
         self, api_client, registration_url, valid_registration_data, settings, mocker
