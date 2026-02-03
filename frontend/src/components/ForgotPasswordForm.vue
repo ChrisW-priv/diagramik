@@ -1,22 +1,70 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { authApi } from '../lib/api';
 
 const email = ref('');
 const error = ref('');
 const success = ref(false);
 const loading = ref(false);
+const actionRequired = ref<string | null>(null);
+const cooldownMinutes = ref(0);
+const cooldownInterval = ref<number | null>(null);
+
+const canSubmit = computed(() => !loading.value && cooldownMinutes.value === 0 && email.value.trim() !== '');
+
+const startCooldownTimer = (minutes: number) => {
+  cooldownMinutes.value = minutes;
+
+  // Clear existing interval
+  if (cooldownInterval.value) {
+    clearInterval(cooldownInterval.value);
+  }
+
+  // Countdown every minute
+  cooldownInterval.value = setInterval(() => {
+    cooldownMinutes.value--;
+    if (cooldownMinutes.value <= 0) {
+      if (cooldownInterval.value) {
+        clearInterval(cooldownInterval.value);
+      }
+    }
+  }, 60000) as unknown as number;
+};
 
 const handleSubmit = async () => {
   error.value = '';
+  success.value = false;
+  actionRequired.value = null;
   loading.value = true;
 
   try {
-    await authApi.requestPasswordReset(email.value);
+    const response = await authApi.requestPasswordResetNew(email.value);
     success.value = true;
+
+    // Check if user needs to verify email first
+    if (response.action_required === 'verify_email') {
+      actionRequired.value = 'verify_email';
+    }
+
+    // Start cooldown timer
+    startCooldownTimer(10);
+
   } catch (err: any) {
-    if (err.response?.data?.email) {
-      error.value = err.response.data.email[0];
+    if (err.response?.status === 429) {
+      // Rate limit error - extract minutes from message
+      const detail = err.response.data.detail || '';
+      const match = detail.match(/(\d+) more minute/);
+      if (match) {
+        const minutes = parseInt(match[1]);
+        startCooldownTimer(minutes);
+        error.value = detail;
+      } else {
+        error.value = err.response.data.detail || 'Too many requests. Please try again later.';
+      }
+    } else if (err.response?.status === 400) {
+      error.value = err.response.data.detail || 'Please enter a valid email address.';
+    } else if (err.response?.status === 500) {
+      error.value = 'Failed to send email. Please try again later.';
     } else {
       error.value = 'An error occurred. Please try again.';
     }
@@ -42,20 +90,29 @@ const handleSubmit = async () => {
         {{ error }}
       </div>
 
-      <div v-if="success" class="space-y-6">
-        <div class="bg-green-500/10 border border-green-500 text-green-400 px-4 py-3 rounded">
-          <p>If an account with that email exists, we've sent a password reset link.</p>
-          <p class="mt-2">Please check your email and follow the instructions.</p>
+      <div v-if="success && actionRequired === 'verify_email'" class="bg-yellow-500/10 border border-yellow-500 text-yellow-400 px-4 py-3 rounded">
+        <p class="font-semibold">Email verification required</p>
+        <p class="text-sm mt-1">
+          Your email is not verified. We've sent you a verification email instead. Please verify your email before resetting your password.
+        </p>
+        <div class="mt-3">
+          <a
+            :href="`/auth/verification-pending?email=${encodeURIComponent(email)}`"
+            class="inline-block text-yellow-300 hover:text-yellow-200 underline text-sm"
+          >
+            Go to verification page
+          </a>
         </div>
-        <a
-          href="/login"
-          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          Back to login
-        </a>
       </div>
 
-      <form v-else class="mt-8 space-y-6" @submit.prevent="handleSubmit">
+      <div v-else-if="success" class="bg-green-500/10 border border-green-500 text-green-400 px-4 py-3 rounded">
+        <p class="font-semibold">Password reset email sent!</p>
+        <p class="text-sm mt-1">
+          If an account exists with this email, you will receive password reset instructions. Please check your inbox and spam folder.
+        </p>
+      </div>
+
+      <form class="mt-8 space-y-6" @submit.prevent="handleSubmit">
         <div>
           <label for="email" class="block text-sm font-medium text-gray-300">
             Email address
@@ -74,19 +131,28 @@ const handleSubmit = async () => {
 
         <button
           type="submit"
-          :disabled="loading"
+          :disabled="!canSubmit"
           class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span v-if="loading">Sending...</span>
+          <span v-else-if="cooldownMinutes > 0">Wait {{ cooldownMinutes }} minute{{ cooldownMinutes === 1 ? '' : 's' }}</span>
           <span v-else>Send reset link</span>
         </button>
 
-        <p class="text-center text-sm text-gray-400">
-          Remember your password?
-          <a href="/login" class="text-blue-400 hover:text-blue-300">
-            Sign in
-          </a>
-        </p>
+        <div class="text-center space-y-2">
+          <p class="text-sm text-gray-400">
+            Remember your password?
+            <a href="/login" class="text-blue-400 hover:text-blue-300">
+              Sign in
+            </a>
+          </p>
+          <p class="text-sm text-gray-400">
+            Don't have an account?
+            <a href="/auth/register" class="text-blue-400 hover:text-blue-300">
+              Sign up
+            </a>
+          </p>
+        </div>
       </form>
     </div>
   </div>

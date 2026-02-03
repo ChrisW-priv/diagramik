@@ -80,6 +80,64 @@ class TestRegistration:
         assert "Verification email sent" in response.data["detail"]
         mock_send_mail.assert_called_once()
 
+    def test_registration_creates_inactive_user_when_verification_mandatory(
+        self, api_client, registration_url, valid_registration_data, settings, mocker
+    ):
+        """Test that user is created with is_active=False when verification is mandatory."""
+        # Arrange
+        settings.ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+        mocker.patch(
+            "user_auth.views.email_password_auth.register.send_mail", return_value=1
+        )
+
+        # Act
+        response = api_client.post(registration_url, valid_registration_data)
+
+        # Assert
+        assert response.status_code == status.HTTP_201_CREATED
+        user = User.objects.get(email=valid_registration_data["email"])
+        assert user.is_active is False
+
+    def test_registration_creates_verification_token_record(
+        self, api_client, registration_url, valid_registration_data, settings, mocker
+    ):
+        """Test that registration creates EmailVerificationToken record."""
+        # Arrange
+        settings.ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+        mocker.patch(
+            "user_auth.views.email_password_auth.register.send_mail", return_value=1
+        )
+
+        # Act
+        response = api_client.post(registration_url, valid_registration_data)
+
+        # Assert
+        assert response.status_code == status.HTTP_201_CREATED
+        user = User.objects.get(email=valid_registration_data["email"])
+        assert hasattr(user, "verification_token")
+        assert user.verification_token.resend_count == 0
+        assert user.verification_token.verified_at is None
+
+    def test_registration_deletes_user_if_email_send_fails(
+        self, api_client, registration_url, valid_registration_data, settings, mocker
+    ):
+        """Test that user is deleted if verification email send fails."""
+        # Arrange
+        settings.ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+        # Mock send_mail to return failure
+        mocker.patch(
+            "user_auth.views.email_password_auth.register.send_mail", return_value=0
+        )
+
+        # Act
+        response = api_client.post(registration_url, valid_registration_data)
+
+        # Assert
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert "could not be sent" in response.data["detail"].lower()
+        # User should not exist in database
+        assert not User.objects.filter(email=valid_registration_data["email"]).exists()
+
     def test_registration_with_duplicate_email_returns_400(
         self, api_client, registration_url, valid_registration_data, user
     ):
@@ -94,6 +152,22 @@ class TestRegistration:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "email" in response.data
         assert "already exists" in response.data["email"][0].lower()
+
+    def test_registration_with_unverified_duplicate_email_shows_helpful_message(
+        self, api_client, registration_url, valid_registration_data, unverified_user
+    ):
+        """Test that registration with unverified duplicate email shows helpful message."""
+        # Arrange
+        valid_registration_data["email"] = unverified_user.email
+
+        # Act
+        response = api_client.post(registration_url, valid_registration_data)
+
+        # Assert
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "email" in response.data
+        assert "unverified account" in response.data["email"][0].lower()
+        assert "verification link" in response.data["email"][0].lower()
 
     def test_registration_with_short_password_returns_400(
         self, api_client, registration_url, valid_registration_data
