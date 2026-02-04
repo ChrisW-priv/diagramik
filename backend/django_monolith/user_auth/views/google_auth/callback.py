@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 import requests
 
-from user_auth.models import SocialAccount
+from user_auth.models import SocialAccount, EmailVerificationToken
 from user_auth.utils import get_tokens_for_user, get_user_data
 
 User = get_user_model()
@@ -88,6 +88,22 @@ class GoogleLoginView(APIView):
             if not user:
                 try:
                     user = User.objects.get(email=email)
+                    # User exists from email/password registration
+                    # Google has verified this email, so activate the account
+                    if not user.is_active:
+                        user.is_active = True
+                        user.save()
+
+                    # Ensure verification token exists and is marked verified
+                    if hasattr(user, "verification_token"):
+                        if not user.verification_token.verified_at:
+                            user.verification_token.mark_verified()
+                    else:
+                        verification_token = EmailVerificationToken.objects.create(
+                            user=user
+                        )
+                        verification_token.mark_verified()
+
                 except User.DoesNotExist:
                     # Create new user
                     user = User.objects.create_user(
@@ -95,7 +111,14 @@ class GoogleLoginView(APIView):
                         email=email,
                         first_name=first_name,
                         last_name=last_name,
+                        is_active=True,  # Google has verified the email
                     )
+
+                    # Create verified email token for consistency
+                    verification_token = EmailVerificationToken.objects.create(
+                        user=user
+                    )
+                    verification_token.mark_verified()
 
                 # Link social account
                 SocialAccount.objects.create(
@@ -196,6 +219,22 @@ class GoogleLoginView(APIView):
             if not user:
                 try:
                     user = User.objects.get(email=email)
+                    # User exists from email/password registration
+                    # Google has verified this email, so activate the account
+                    if not user.is_active:
+                        user.is_active = True
+                        user.save()
+
+                    # Ensure verification token exists and is marked verified
+                    if hasattr(user, "verification_token"):
+                        if not user.verification_token.verified_at:
+                            user.verification_token.mark_verified()
+                    else:
+                        verification_token = EmailVerificationToken.objects.create(
+                            user=user
+                        )
+                        verification_token.mark_verified()
+
                 except User.DoesNotExist:
                     # Create new user
                     user = User.objects.create_user(
@@ -203,7 +242,14 @@ class GoogleLoginView(APIView):
                         email=email,
                         first_name=first_name,
                         last_name=last_name,
+                        is_active=True,  # Google has verified the email
                     )
+
+                    # Create verified email token for consistency
+                    verification_token = EmailVerificationToken.objects.create(
+                        user=user
+                    )
+                    verification_token.mark_verified()
 
                 # Link social account
                 SocialAccount.objects.create(
