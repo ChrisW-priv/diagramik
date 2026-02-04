@@ -241,4 +241,64 @@ export const authApi = {
     setTokens(newTokens);
     return newTokens;
   },
+
+  async verifyEmail(uid: string, token: string) {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/v1/auth/verify-email/`,
+      { uid, token }
+    );
+    const { access, refresh, user } = response.data;
+    if (access && refresh) {
+      setTokens({ access, refresh });
+    }
+    if (user) {
+      setUser(user);
+    }
+    return response.data;
+  },
+
+  async resendVerification(email: string) {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/v1/auth/resend-verification/`,
+      { email }
+    );
+    return response.data;
+  },
+
+  async requestPasswordResetNew(email: string) {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/v1/auth/password-reset-request/`,
+      { email }
+    );
+    return response.data;
+  },
+
+  async setNewPassword(
+    uid?: string,
+    token?: string,
+    email?: string,
+    oldPassword?: string,
+    newPassword?: string
+  ) {
+    const data: any = { new_password: newPassword };
+    if (uid && token) {
+      data.uid = uid;
+      data.token = token;
+    } else if (email && oldPassword) {
+      data.email = email;
+      data.old_password = oldPassword;
+    }
+    const response = await axios.post(
+      `${API_BASE_URL}/api/v1/auth/set-new-password/`,
+      data
+    );
+    const { access, refresh, user } = response.data;
+    if (access && refresh) {
+      setTokens({ access, refresh });
+    }
+    if (user) {
+      setUser(user);
+    }
+    return response.data;
+  },
 };

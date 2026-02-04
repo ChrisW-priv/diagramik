@@ -42,10 +42,29 @@ class LoginView(CsrfExemptMixin, APIView):
             )
 
         if not user.is_active:
-            return Response(
-                {"detail": "Account is disabled."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+            # Check if this is an unverified email vs. disabled account
+            has_verification_token = hasattr(user, "verification_token")
+
+            if has_verification_token and not user.verification_token.verified_at:
+                # Unverified email
+                return Response(
+                    {
+                        "error_code": "EMAIL_NOT_VERIFIED",
+                        "detail": "Please verify your email before logging in.",
+                        "action_required": "verify_email",
+                        "resend_endpoint": "/api/v1/auth/resend-verification/",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            else:
+                # Account disabled by admin
+                return Response(
+                    {
+                        "error_code": "ACCOUNT_DISABLED",
+                        "detail": "Your account has been disabled. Please contact support.",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         tokens = get_tokens_for_user(user)
         return Response(

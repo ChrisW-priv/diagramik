@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { authApi } from '../lib/api';
 
 const email = ref('');
@@ -10,6 +10,11 @@ const error = ref('');
 const success = ref('');
 const loading = ref(false);
 const googleLoading = ref(false);
+
+// Check if error is the unverified account message
+const isUnverifiedAccountError = computed(() => {
+  return error.value.includes('An unverified account with this email exists');
+});
 
 const handleSubmit = async () => {
   error.value = '';
@@ -23,7 +28,21 @@ const handleSubmit = async () => {
   }
 
   try {
-    await authApi.register(email.value, password1.value, password2.value, firstName.value);
+    const response = await authApi.register(email.value, password1.value, password2.value, firstName.value);
+
+    // Check if email verification is mandatory (no tokens in response)
+    if (response.detail && response.detail.includes('Verification email sent')) {
+      // Redirect to verification-pending page with email pre-filled
+      window.location.href = `/auth/verification-pending?email=${encodeURIComponent(email.value)}`;
+      return;
+    }
+
+    // If tokens are present, user is auto-logged in (optional verification mode)
+    if (response.access && response.refresh) {
+      window.location.href = '/diagrams';
+      return;
+    }
+
     success.value = 'Account created! Please check your email to verify your account.';
   } catch (err: any) {
     if (err.response?.data) {
@@ -72,7 +91,15 @@ const handleGoogleLogin = async () => {
       </div>
 
       <div v-if="error" class="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded">
-        {{ error }}
+        <template v-if="isUnverifiedAccountError">
+          An unverified account with this email exists. Please check your email for the verification link or
+          <a :href="`/auth/verification-pending?email=${encodeURIComponent(email)}`" class="underline text-red-300 hover:text-red-200">
+            request a new one
+          </a>.
+        </template>
+        <template v-else>
+          {{ error }}
+        </template>
       </div>
 
       <div v-if="success" class="bg-green-500/10 border border-green-500 text-green-400 px-4 py-3 rounded">

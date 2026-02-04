@@ -10,7 +10,19 @@ repos:
 
   - repo: local
     hooks:
-      - id: format-backend
+      - id: test-backend
+        name: Automated Backend Tests
+        stages:
+          - pre-push
+        language: golang
+        entry: task be:test
+        pass_filenames: false
+        additional_dependencies:
+          - "github.com/go-task/task/v3/cmd/task@v3.42.1"
+
+  - repo: local
+    hooks:
+      - id: check-backend
         name: Static Check
         stages:
           - pre-push
