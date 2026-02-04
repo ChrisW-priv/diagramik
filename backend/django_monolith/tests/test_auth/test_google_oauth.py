@@ -211,3 +211,121 @@ class TestGoogleOAuthPermissions:
         # Should not return 401/403 (even if 400 for missing code)
         assert response.status_code != status.HTTP_401_UNAUTHORIZED
         assert response.status_code != status.HTTP_403_FORBIDDEN
+
+
+class TestGoogleOAuthEmailVerification:
+    """Test suite to ensure Google SSO users have verified email status."""
+
+    @pytest.fixture
+    def callback_endpoint(self):
+        return "/api/v1/auth/social/google/"
+
+    def test_new_google_user_has_verified_email_token(
+        self, api_client, callback_endpoint, mock_google_oauth
+    ):
+        """Test that new Google SSO users get a verified EmailVerificationToken."""
+        # Arrange
+        callback_data = {"code": "valid-google-code"}
+
+        # Act
+        response = api_client.post(callback_endpoint, callback_data)
+
+        # Assert
+        assert response.status_code == status.HTTP_200_OK
+        assert "access" in response.data
+        assert "refresh" in response.data
+
+        # Verify user was created
+        user = User.objects.get(email="testuser@gmail.com")
+        assert user.is_active is True
+
+        # CRITICAL: Verify EmailVerificationToken exists and is marked verified
+        assert hasattr(user, "verification_token"), (
+            "Google SSO user must have EmailVerificationToken"
+        )
+        assert user.verification_token.verified_at is not None, (
+            "Google SSO user's EmailVerificationToken must be verified immediately"
+        )
+
+    def test_existing_unverified_user_verified_on_google_login(
+        self, api_client, callback_endpoint, mock_google_oauth, unverified_user
+    ):
+        """Test that existing unverified users get verified when logging in via Google."""
+        # Arrange
+        # Update the unverified user to have the same email as Google returns
+        unverified_user.email = "testuser@gmail.com"
+        unverified_user.username = "testuser@gmail.com"
+        unverified_user.save()
+
+        # Verify user is unverified
+        assert unverified_user.is_active is False
+        assert unverified_user.verification_token.verified_at is None
+
+        callback_data = {"code": "valid-google-code"}
+
+        # Act
+        response = api_client.post(callback_endpoint, callback_data)
+
+        # Assert
+        assert response.status_code == status.HTTP_200_OK
+
+        # After Google login, user should be verified
+        unverified_user.refresh_from_db()
+        assert unverified_user.is_active is True, (
+            "Existing unverified user should be activated after Google SSO login"
+        )
+        assert unverified_user.verification_token.verified_at is not None, (
+            "Existing user's email should be verified after Google SSO login"
+        )
+
+    def test_existing_verified_user_not_affected(
+        self, api_client, callback_endpoint, mock_google_oauth, verified_user
+    ):
+        """Test that existing verified users aren't negatively affected."""
+        # Arrange
+        # Update the verified user to have the same email as Google returns
+        verified_user.email = "testuser@gmail.com"
+        verified_user.username = "testuser@gmail.com"
+        verified_user.save()
+
+        original_verified_at = verified_user.verification_token.verified_at
+        assert original_verified_at is not None
+
+        callback_data = {"code": "valid-google-code"}
+
+        # Act
+        response = api_client.post(callback_endpoint, callback_data)
+
+        # Assert
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify nothing changed for already-verified user
+        verified_user.refresh_from_db()
+        assert verified_user.is_active is True
+        # Verification timestamp should not be modified
+        assert verified_user.verification_token.verified_at == original_verified_at
+
+    def test_google_user_can_access_protected_endpoints(
+        self,
+        api_client,
+        callback_endpoint,
+        mock_google_oauth,
+        mock_agent_call,
+        mock_gcs_signed_url,
+    ):
+        """Integration test: Google SSO user should access protected resources."""
+        # Arrange - Create user via Google OAuth
+        callback_data = {"code": "valid-google-code"}
+        response = api_client.post(callback_endpoint, callback_data)
+
+        assert response.status_code == status.HTTP_200_OK
+        access_token = response.data["access"]
+
+        # Act - Try to access protected diagram endpoint
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
+        response = api_client.post("/api/v1/diagrams/", {"text": "test diagram"})
+
+        # Assert - Should succeed, not return 401/403
+        assert response.status_code in [200, 201], (
+            f"Google SSO user should access protected endpoints, got {response.status_code}"
+        )
