@@ -18,8 +18,28 @@ const cooldownInterval = ref<number | null>(null);
 const canResend = computed(() => !loading.value && cooldownMinutes.value === 0);
 
 onMounted(() => {
+  // Try to get email from multiple sources (in order of priority):
+  // 1. Props (initialEmail)
+  // 2. URL query parameter
+  // 3. localStorage
+
+  if (!email.value) {
+    // Check URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailParam = urlParams.get('email');
+    if (emailParam) {
+      email.value = emailParam;
+    } else {
+      // Fallback to localStorage if no URL param
+      const savedEmail = localStorage.getItem('verification_email');
+      if (savedEmail) {
+        email.value = savedEmail;
+      }
+    }
+  }
+
   // Focus email field if not pre-filled
-  if (!props.initialEmail) {
+  if (!email.value) {
     document.getElementById('email')?.focus();
   }
 });
@@ -59,6 +79,9 @@ const handleSubmit = async () => {
     success.value = true;
     resendCount.value = response.resend_count || 0;
     maxResends.value = response.max_resends || 5;
+
+    // Save email to localStorage for future autofill
+    localStorage.setItem('verification_email', email.value);
 
     // Start 10-minute cooldown
     startCooldownTimer(10);
@@ -130,6 +153,8 @@ const handleSubmit = async () => {
             name="email"
             type="email"
             autocomplete="email"
+            inputmode="email"
+            spellcheck="false"
             required
             :disabled="loading"
             class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
