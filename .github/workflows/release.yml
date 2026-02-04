@@ -107,9 +107,10 @@ jobs:
         working-directory: infrastructure
         env:
           TF_VAR_FILE: environments/deployed.tfvars
+          TF_VAR_docker_image_tag: ${{ steps.get_tag.outputs.tag }}
         run: |
           task init
-          task apply -- -var="docker_image_tag=${{ steps.get_tag.outputs.tag }}"
+          task apply
 
       - name: Install frontend dependencies
         working-directory: frontend
