@@ -2,18 +2,24 @@
 import { ref, onMounted } from 'vue';
 import { authApi } from '../lib/api';
 
-const props = defineProps<{
-  uid: string;
-  token: string;
-}>();
-
 const loading = ref(true);
 const error = ref('');
 const success = ref(false);
 
 onMounted(async () => {
   try {
-    await authApi.verifyEmail(props.uid, props.token);
+    // Extract uid and token from URL query parameters on the client side
+    const urlParams = new URLSearchParams(window.location.search);
+    const uid = urlParams.get('uid');
+    const token = urlParams.get('token');
+
+    if (!uid || !token) {
+      error.value = 'Invalid verification link. Missing uid or token.';
+      loading.value = false;
+      return;
+    }
+
+    await authApi.verifyEmail(uid, token);
     success.value = true;
     // Redirect to diagrams after 2 seconds
     setTimeout(() => {
