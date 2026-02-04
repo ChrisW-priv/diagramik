@@ -1,3 +1,11 @@
+"""
+Authentication and OAuth Configuration
+
+NOTE: ACCOUNT_* and SOCIALACCOUNT_* settings below are for the custom OAuth
+implementation in the user_auth app, not django-allauth (which was removed in
+commit 7b22b41 in favor of custom models and views).
+"""
+
 import os
 from datetime import timedelta
 
