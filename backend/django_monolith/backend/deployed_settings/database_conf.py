@@ -1,15 +1,21 @@
 import os
+import warnings
 
 
 DB_USER = os.getenv("POSTGRES_USER", "postgres")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DB_DATABASE_NAME = os.getenv("POSTGRES_DATABASE_NAME", "postgres")
 
-# Private IP only - public access disabled for security
-DB_PRIVATE_IP = os.getenv("DB_PRIVATE_IP")
 
-if not DB_PRIVATE_IP:
-    raise ValueError("DB_PRIVATE_IP must be set - private VPC connection required")
+if db_ip := os.getenv("DB_PRIVATE_IP"):
+    _DB_HOST = db_ip
+else:
+    warnings.warn(
+        "You are connecting to a database via PUBLIC IP! (Are you sure this is safe?)"
+    )
+    db_conn_name = os.getenv("DB_CONN_NAME")
+    pre_db_conn_name = os.getenv("PRE_DB_CONN_NAME", "/cloudsql/")
+    _DB_HOST = f"{pre_db_conn_name}{db_conn_name}"
 
 DATABASES = {
     "default": {
@@ -17,7 +23,7 @@ DATABASES = {
         "NAME": DB_DATABASE_NAME,
         "USER": DB_USER,
         "PASSWORD": DB_PASSWORD,
-        "HOST": DB_PRIVATE_IP,
+        "HOST": _DB_HOST,
         "PORT": "5432",
         "OPTIONS": {
             "pool": {
