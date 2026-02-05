@@ -59,19 +59,3 @@ resource "google_compute_firewall" "allow_internal" {
 
   source_ranges = ["10.0.0.0/16"] # All internal subnets (current and future)
 }
-
-# Firewall rule: Allow SSH from IAP (for future Cloud SQL proxy or debugging)
-resource "google_compute_firewall" "allow_iap_ssh" {
-  project   = var.project_id
-  name      = "${var.network_name}-allow-iap-ssh"
-  network   = google_compute_network.vpc.name
-  priority  = 1000
-  direction = "INGRESS"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
-
-  source_ranges = ["35.235.240.0/20"] # IAP IP range
-}
