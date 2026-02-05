@@ -51,7 +51,22 @@ module "mcp-service" {
   env_vars              = local.merged_env_vars
   secret_env_vars       = local.merged_secret_env_vars
 
+  # VPC Direct Egress configuration
+  vpc_network_self_link    = var.vpc_network_self_link
+  vpc_subnetwork_self_link = var.vpc_subnetwork_self_link
+  vpc_egress               = var.vpc_egress
+
   depends_on = [
     google_secret_manager_secret_iam_member.extra_secret_access
   ]
+}
+
+# Grant permission to invoke MCP service
+resource "google_cloud_run_v2_service_iam_member" "run_invoker" {
+  for_each = toset(var.run_invoker_members)
+  project  = var.google_project_id
+  location = module.mcp-service.location
+  name     = module.mcp-service.service_name
+  role     = "roles/run.invoker"
+  member   = each.value
 }

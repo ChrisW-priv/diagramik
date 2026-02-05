@@ -75,3 +75,35 @@ variable "extra_secret_access" {
   type        = set(string)
   default     = []
 }
+
+# VPC Networking Configuration
+variable "vpc_network_self_link" {
+  description = "VPC network self link for CloudRun Direct VPC egress (null to disable)"
+  type        = string
+  default     = null
+}
+
+variable "vpc_subnetwork_self_link" {
+  description = "VPC subnetwork self link for CloudRun Direct VPC egress (null to disable)"
+  type        = string
+  default     = null
+}
+
+variable "enable_cloudsql_private_ip" {
+  description = "Enable Cloud SQL private IP connection"
+  type        = bool
+  default     = false
+}
+
+variable "enable_cloudsql_public_ip" {
+  description = "Enable Cloud SQL public IP and unix socket volume (for migration dual-mode)"
+  type        = bool
+  default     = true
+}
+
+# Application Configuration
+variable "mcp_service_url" {
+  description = "MCP service URL for FastAgent configuration (internal CloudRun service URL)"
+  type        = string
+  default     = ""
+}

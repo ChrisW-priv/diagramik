@@ -22,28 +22,43 @@ locals {
   backend_setup_job_image_url = "${module.artifact-registry.repository_url}/application-monolith:${var.docker_image_tag}"
   mcp_image_url               = "${module.artifact-registry.repository_url}/diagramming-mcp:${var.docker_image_tag}"
 
-  # Base Django configuration
-  django_base_volumes = {
+  # Base Django configuration - Conditional Cloud SQL volume for dual-mode migration
+  # Only include unix socket volume if public IP is enabled
+  django_base_volumes = var.enable_cloudsql_public_ip ? {
     "cloudsql" = {
       cloudsql_instances = [module.postgres_db.connection_name]
     }
-  }
+  } : {}
 
-  django_base_volume_mounts = {
+  django_base_volume_mounts = var.enable_cloudsql_public_ip ? {
     "cloudsql" = "/cloudsql"
-  }
+  } : {}
 
-  django_base_env_vars = {
-    "LOGGING_LEVEL"          = "INFO"
-    "GCP_PROJECT_ID"         = var.google_project_id
-    "DIAGRAMS_BUCKET_NAME"   = module.diagrams-bucket.name
-    "STATIC_BUCKET_NAME"     = module.public-bucket.name
-    "MEDIA_BUCKET_NAME"      = module.private-bucket.name
-    "DB_CONN_NAME"           = module.postgres_db.connection_name
-    "POSTGRES_DATABASE_NAME" = module.postgres_db.db_name
-    "POSTGRES_USER"          = module.postgres_db.db_admin_user
-    "DEPLOYMENT_ENVIRONMENT" = "PRODUCTION_SERVICE"
-  }
+  # Base environment variables - include DB_PRIVATE_IP if private IP enabled
+  django_base_env_vars = merge(
+    {
+      "LOGGING_LEVEL"          = "INFO"
+      "GCP_PROJECT_ID"         = var.google_project_id
+      "DIAGRAMS_BUCKET_NAME"   = module.diagrams-bucket.name
+      "STATIC_BUCKET_NAME"     = module.public-bucket.name
+      "MEDIA_BUCKET_NAME"      = module.private-bucket.name
+      "POSTGRES_DATABASE_NAME" = module.postgres_db.db_name
+      "POSTGRES_USER"          = module.postgres_db.db_admin_user
+      "DEPLOYMENT_ENVIRONMENT" = "PRODUCTION_SERVICE"
+    },
+    # Include DB_CONN_NAME only if public IP enabled (unix socket)
+    var.enable_cloudsql_public_ip ? {
+      "DB_CONN_NAME" = module.postgres_db.connection_name
+    } : {},
+    # Include DB_PRIVATE_IP only if private IP enabled
+    var.enable_cloudsql_private_ip ? {
+      "DB_PRIVATE_IP" = module.postgres_db.private_ip_address
+    } : {},
+    # Include MCP_SERVICE_URL for FastAgent
+    var.mcp_service_url != "" ? {
+      "MCP_SERVICE_URL" = var.mcp_service_url
+    } : {}
+  )
 
   django_base_secret_env_vars = {
     "POSTGRES_PASSWORD" = {
@@ -129,9 +144,14 @@ module "postgres_db" {
   google_project_id = var.google_project_id
   google_region     = var.location
   instance_name     = "django-monolith-postgres"
+  network_self_link = var.vpc_network_self_link
+  enable_private_ip = var.enable_cloudsql_private_ip
+  enable_public_ip  = var.enable_cloudsql_public_ip
 }
 
+# Cloud SQL client role only needed for unix socket (public IP) connection
 resource "google_project_iam_member" "cloudsql_client" {
+  count   = var.enable_cloudsql_public_ip ? 1 : 0
   project = var.google_project_id
   role    = "roles/cloudsql.client"
   member  = google_service_account.sa.member
@@ -198,6 +218,11 @@ module "django-monolith" {
   volume_mounts         = local.django_merged_volume_mounts
   env_vars              = local.django_merged_env_vars
   secret_env_vars       = local.django_merged_secret_env_vars
+
+  # VPC Direct Egress configuration
+  vpc_network_self_link    = var.vpc_network_self_link
+  vpc_subnetwork_self_link = var.vpc_subnetwork_self_link
+  vpc_egress               = "PRIVATE_RANGES_ONLY"
 
   depends_on = [
     module.django-monolith-secret-key,

@@ -36,3 +36,22 @@ variable "database_version" {
   type        = string
   default     = "POSTGRES_15"
 }
+
+# VPC Networking Configuration
+variable "network_self_link" {
+  description = "VPC network self link for private IP (null to disable private IP)"
+  type        = string
+  default     = null
+}
+
+variable "enable_private_ip" {
+  description = "Enable private IP for Cloud SQL"
+  type        = bool
+  default     = false
+}
+
+variable "enable_public_ip" {
+  description = "Enable public IP for Cloud SQL (default true for backward compatibility)"
+  type        = bool
+  default     = false
+}

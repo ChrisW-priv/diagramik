@@ -117,3 +117,22 @@ variable "allow_unauthenticated" {
   default     = false
 }
 
+# VPC Networking Configuration for Direct VPC Egress
+variable "vpc_network_self_link" {
+  description = "VPC network self link for Direct VPC egress (null to disable)"
+  type        = string
+  default     = null
+}
+
+variable "vpc_subnetwork_self_link" {
+  description = "VPC subnetwork self link for Direct VPC egress (null to disable)"
+  type        = string
+  default     = null
+}
+
+variable "vpc_egress" {
+  description = "VPC egress setting: PRIVATE_RANGES_ONLY (default) or ALL_TRAFFIC"
+  type        = string
+  default     = "PRIVATE_RANGES_ONLY"
+}
+
