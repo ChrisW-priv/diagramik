@@ -61,12 +61,12 @@ module "mcp-service" {
   ]
 }
 
-# Grant Django service account permission to invoke MCP service
-resource "google_cloud_run_v2_service_iam_member" "django_invoker" {
-  count    = var.django_service_account_email != null ? 1 : 0
+# Grant permission to invoke MCP service
+resource "google_cloud_run_v2_service_iam_member" "run_invoker" {
+  for_each = toset(var.run_invoker_members)
   project  = var.google_project_id
   location = module.mcp-service.location
   name     = module.mcp-service.service_name
   role     = "roles/run.invoker"
-  member   = "serviceAccount:${var.django_service_account_email}"
+  member   = each.value
 }

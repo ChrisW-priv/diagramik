@@ -144,12 +144,16 @@ module "mcp-service" {
   diagrams_bucket_name = module.diagramik.diagrams_bucket_name
 
   # Phase 3: Internal-only with VPC connectivity
-  ingress                      = "INGRESS_TRAFFIC_INTERNAL_ONLY"
-  allow_unauthenticated        = false
-  vpc_network_self_link        = module.vpc.network_self_link
-  vpc_subnetwork_self_link     = module.vpc.primary_subnet_self_link
-  vpc_egress                   = "PRIVATE_RANGES_ONLY"
-  django_service_account_email = module.diagramik.service_account_email
+  ingress                  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  allow_unauthenticated    = false
+  vpc_network_self_link    = module.vpc.network_self_link
+  vpc_subnetwork_self_link = module.vpc.primary_subnet_self_link
+  vpc_egress               = "PRIVATE_RANGES_ONLY"
+
+  # List of members allowed to invoke the MCP service
+  run_invoker_members = [
+    "serviceAccount:${module.diagramik.service_account_email}"
+  ]
 
   depends_on = [module.vpc]
 }
