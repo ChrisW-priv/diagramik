@@ -53,6 +53,15 @@ resource "google_storage_bucket_iam_member" "bucket_A" {
   member = google_service_account.sa.member
 }
 
+# VPC Network for private Cloud SQL and CloudRun connectivity
+module "vpc" {
+  source              = "./modules/vpc"
+  project_id          = var.google_project_id
+  region              = var.google_region
+  network_name        = "diagramik-vpc"
+  primary_subnet_cidr = "10.0.0.0/24"
+}
+
 # Django Monolith (includes Cloud Run services, buckets, secrets, DB)
 module "diagramik" {
   source                    = "./modules/django-monolith"
@@ -64,6 +73,7 @@ module "diagramik" {
   workload_identity_pool_id = var.workload_identity_pool_id
   depends_on = [
     module.gcs-sa-key-secret,
+    module.vpc,
   ]
 
   # Pass secrets as extra volumes
@@ -112,9 +122,18 @@ module "diagramik" {
     module.email-labs-api-app-key.secret_id,
     module.email-labs-api-secret-key.secret_id,
   ]
+
+  # VPC Configuration: Private IP only (public access CLOSED)
+  vpc_network_self_link      = module.vpc.network_self_link
+  vpc_subnetwork_self_link   = module.vpc.primary_subnet_self_link
+  enable_cloudsql_private_ip = true
+  enable_cloudsql_public_ip  = false # PUBLIC ACCESS DISABLED FOR SECURITY
+
+  # Phase 4: MCP service URL for FastAgent (internal VPC connection)
+  mcp_service_url = module.mcp-service.service_uri
 }
 
-# MCP Service (diagram generation)
+# MCP Service (diagram generation) - Internal-only via VPC
 module "mcp-service" {
   source = "./modules/mcp-service"
 
@@ -123,7 +142,16 @@ module "mcp-service" {
   application_name     = var.application_name
   image_url            = module.diagramik.mcp_image_url
   diagrams_bucket_name = module.diagramik.diagrams_bucket_name
-  ingress              = "INGRESS_TRAFFIC_ALL"
+
+  # Phase 3: Internal-only with VPC connectivity
+  ingress                      = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  allow_unauthenticated        = false
+  vpc_network_self_link        = module.vpc.network_self_link
+  vpc_subnetwork_self_link     = module.vpc.primary_subnet_self_link
+  vpc_egress                   = "PRIVATE_RANGES_ONLY"
+  django_service_account_email = module.diagramik.service_account_email
+
+  depends_on = [module.vpc]
 }
 
 # Frontend Bucket for static files
@@ -155,12 +183,6 @@ module "global-lb" {
       priority     = 1 # Higher priority to match first
     }
 
-    # MCP Diagram Service - ONLY accessible via /mcp/* path
-    mcp = {
-      service_name = module.mcp-service.service_name
-      location     = module.mcp-service.location
-      path_prefix  = "/mcp/*"
-      priority     = 2
-    }
+    # MCP removed from load balancer - now internal-only via VPC
   }
 }

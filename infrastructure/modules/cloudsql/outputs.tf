@@ -26,3 +26,8 @@ output "db_name" {
   description = "The name of the database."
   value       = var.database_name
 }
+
+output "private_ip_address" {
+  description = "The private IP address of the Cloud SQL instance (empty if private IP not enabled)"
+  value       = try(google_sql_database_instance.instance.private_ip_address, "")
+}

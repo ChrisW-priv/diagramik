@@ -23,6 +23,19 @@ resource "google_cloud_run_v2_service" "cloudrun_service" {
       max_instance_count = var.max_instance_count
     }
 
+    # Direct VPC Egress configuration
+    dynamic "vpc_access" {
+      for_each = var.vpc_network_self_link != null ? [1] : []
+      content {
+        network_interfaces {
+          # CloudRun expects network ID format (not https:// self_link)
+          network    = replace(var.vpc_network_self_link, "https://www.googleapis.com/compute/v1/", "")
+          subnetwork = replace(var.vpc_subnetwork_self_link, "https://www.googleapis.com/compute/v1/", "")
+        }
+        egress = var.vpc_egress
+      }
+    }
+
     dynamic "volumes" {
       for_each = var.volumes
       content {

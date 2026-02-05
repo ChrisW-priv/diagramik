@@ -3,8 +3,10 @@ threshold: medium
 fileignoreconfig:
 - filename: backend/Taskfile.yml
   checksum: 01cbc52c8c094055fd260bdc697607265d1470bd795b04822e1ae4d1f9e0f2f1
+- filename: infrastructure/modules/vpc/.terraform.lock.hcl
+  checksum: 6dd48387aa084caa7bb0ce7b7472cdb6a3509de1f2038838d586230c7b37cece
 - filename: infrastructure/.terraform.lock.hcl
-  checksum: d4f5072238c412b0264f55c54a7e05eff3bc33e0c300838f1c41dbdc4c14fffa
+  checksum: 4a991a45e16c7c4ce2325a6a6eff418612980e69aa1172966d9b5c1cfe2d2ebc
 - filename: infrastructure/modules/cloudrun-job/.terraform.lock.hcl
   checksum: 939c83aabe5aa0562dd5d0169e6bbe6659363d40a750f4de03519bcc5dba4e2e
 - filename: infrastructure/modules/artifact-registry/.terraform.lock.hcl

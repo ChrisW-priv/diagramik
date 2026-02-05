@@ -5,9 +5,11 @@ DB_USER = os.getenv("POSTGRES_USER", "postgres")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DB_DATABASE_NAME = os.getenv("POSTGRES_DATABASE_NAME", "postgres")
 
-db_conn_name = os.getenv("DB_CONN_NAME")
-pre_db_conn_name = os.getenv("PRE_DB_CONN_NAME", "/cloudsql/")
-unix_socket_path = f"{pre_db_conn_name}{db_conn_name}"
+# Private IP only - public access disabled for security
+DB_PRIVATE_IP = os.getenv("DB_PRIVATE_IP")
+
+if not DB_PRIVATE_IP:
+    raise ValueError("DB_PRIVATE_IP must be set - private VPC connection required")
 
 DATABASES = {
     "default": {
@@ -15,7 +17,7 @@ DATABASES = {
         "NAME": DB_DATABASE_NAME,
         "USER": DB_USER,
         "PASSWORD": DB_PASSWORD,
-        "HOST": unix_socket_path,
+        "HOST": DB_PRIVATE_IP,
         "PORT": "5432",
         "OPTIONS": {
             "pool": {

@@ -94,3 +94,29 @@ variable "allow_unauthenticated" {
   type        = bool
   default     = true
 }
+
+# VPC Networking Configuration
+variable "vpc_network_self_link" {
+  description = "VPC network self link for CloudRun Direct VPC egress (null to disable)"
+  type        = string
+  default     = null
+}
+
+variable "vpc_subnetwork_self_link" {
+  description = "VPC subnetwork self link for CloudRun Direct VPC egress (null to disable)"
+  type        = string
+  default     = null
+}
+
+variable "vpc_egress" {
+  description = "VPC egress setting: PRIVATE_RANGES_ONLY or ALL_TRAFFIC"
+  type        = string
+  default     = "PRIVATE_RANGES_ONLY"
+}
+
+# Service-to-service authentication
+variable "django_service_account_email" {
+  description = "Django service account email for IAM invoker binding (null to disable)"
+  type        = string
+  default     = null
+}

@@ -9,7 +9,7 @@ mcp:
   servers:
     diagramming:
       transport: http
-      url: "https://diagramik-mcp-904069135998.europe-west4.run.app/mcp"
+      url: "${MCP_SERVICE_URL}/mcp"
       auth:
-        oauth: true
+        oauth: true  # Uses Application Default Credentials (Django SA identity)
 
