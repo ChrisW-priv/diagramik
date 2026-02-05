@@ -13,7 +13,19 @@ def migrate_allauth_data(apps, schema_editor):
     2. Migrates OAuth accounts to user_auth_socialaccount
     3. Handles duplicates gracefully (skip if already exists)
     4. Preserves provider, uid, and timestamps
+
+    NOTE: This migration uses PostgreSQL-specific SQL. For non-PostgreSQL databases
+    (like SQLite in tests), migration 0005 provides a database-agnostic version.
     """
+    from django.db import connection
+
+    # Skip this migration for non-PostgreSQL databases
+    # Migration 0005 will handle the work in a database-agnostic way
+    if connection.vendor != 'postgresql':
+        print("⚠ Skipping PostgreSQL-specific migration (not PostgreSQL database)")
+        print("  Migration 0005 will handle this in a database-agnostic way")
+        return
+
     # Use raw SQL for migration since allauth tables are not in Django models
     with schema_editor.connection.cursor() as cursor:
         # Check if allauth table exists
