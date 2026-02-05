@@ -194,6 +194,7 @@ module "django-monolith" {
   service_account_email = google_service_account.sa.email
   ingress               = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
   allow_unauthenticated = true
+  min_instance_count    = 1
   volumes               = local.django_merged_volumes
   volume_mounts         = local.django_merged_volume_mounts
   env_vars              = local.django_merged_env_vars
