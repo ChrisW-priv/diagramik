@@ -1,12 +1,18 @@
-# Migration to drop orphaned django-allauth tables from production database.
-# These tables were left behind when django-allauth was removed from the codebase.
+# Database-agnostic migration to drop orphaned django-allauth tables.
+# This migration replaces PostgreSQL-specific SQL in 0004 with database-agnostic code
+# that works with both PostgreSQL (production) and SQLite (tests).
 
 from django.db import migrations
 
 
-def drop_allauth_tables(apps, schema_editor):
+def drop_allauth_tables_agnostic(apps, schema_editor):
     """
-    Drops all django-allauth tables from the database.
+    Drops all django-allauth tables from the database using database-agnostic approach.
+
+    Database-agnostic version that:
+    - Uses Django's introspection API instead of information_schema
+    - Works with both PostgreSQL and SQLite
+    - Is idempotent (checks if tables exist before dropping)
 
     Tables dropped (in dependency-safe order):
     - socialaccount_socialtoken (OAuth tokens)
@@ -17,19 +23,7 @@ def drop_allauth_tables(apps, schema_editor):
     - account_emailaddress (email addresses)
 
     Using CASCADE to handle any remaining foreign key dependencies.
-
-    NOTE: This migration uses PostgreSQL-specific SQL. For non-PostgreSQL databases
-    (like SQLite in tests), migration 0006 provides a database-agnostic version.
     """
-    from django.db import connection
-
-    # Skip this migration for non-PostgreSQL databases
-    # Migration 0006 will handle the work in a database-agnostic way
-    if connection.vendor != 'postgresql':
-        print("⚠ Skipping PostgreSQL-specific migration (not PostgreSQL database)")
-        print("  Migration 0006 will handle this in a database-agnostic way")
-        return
-
     tables_to_drop = [
         "socialaccount_socialtoken",
         "socialaccount_socialapp_sites",
@@ -39,24 +33,18 @@ def drop_allauth_tables(apps, schema_editor):
         "account_emailaddress",
     ]
 
-    with schema_editor.connection.cursor() as cursor:
-        print("Dropping django-allauth tables...")
+    connection = schema_editor.connection
+
+    with connection.cursor() as cursor:
+        print("Dropping django-allauth tables (database-agnostic)...")
+
+        # Get all table names using Django's database-agnostic introspection API
+        table_names = connection.introspection.table_names(cursor)
 
         for table_name in tables_to_drop:
-            # Check if table exists before dropping
-            cursor.execute(
-                """
-                SELECT EXISTS (
-                    SELECT FROM information_schema.tables
-                    WHERE table_schema = 'public'
-                    AND table_name = %s
-                );
-            """,
-                [table_name],
-            )
-            table_exists = cursor.fetchone()[0]
-
-            if table_exists:
+            # Check if table exists using introspection
+            if table_name in table_names:
+                # DROP TABLE IF EXISTS with CASCADE is supported by both PostgreSQL and SQLite
                 cursor.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE;")
                 print(f"  ✓ Dropped table: {table_name}")
             else:
@@ -85,12 +73,12 @@ def recreate_allauth_tables(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("user_auth", "0003_migrate_allauth_data"),
+        ("user_auth", "0005_migrate_allauth_data_fix"),
     ]
 
     operations = [
         migrations.RunPython(
-            drop_allauth_tables,
+            drop_allauth_tables_agnostic,
             reverse_code=recreate_allauth_tables,
         ),
     ]
