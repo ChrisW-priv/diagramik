@@ -4,24 +4,28 @@
     <div class="flex border-b border-gray-700 md:hidden">
       <button
         @click="activeTab = 'work'"
-        :class="['px-4 py-2', activeTab === 'work' ? 'bg-gray-700' : '']"
+        :class="['flex items-center justify-center p-3', activeTab === 'work' ? 'bg-gray-700' : '']"
+        aria-label="Work tab"
+        title="Work tab"
       >
-        Work
+        <PencilIcon class="h-6 w-6" />
       </button>
       <button
         @click="activeTab = 'display'"
-        :class="['px-4 py-2', activeTab === 'display' ? 'bg-gray-700' : '']"
+        :class="['flex items-center justify-center p-3', activeTab === 'display' ? 'bg-gray-700' : '']"
         :disabled="!diagram"
+        aria-label="Display tab"
+        title="Display tab"
       >
-        Display
+        <EyeIcon class="h-6 w-6" />
       </button>
     </div>
 
-    <div class="p-4">
+    <div class="p-2 md:p-4">
       <p v-if="loading" class="text-white">Loading diagram...</p>
       <p v-else-if="error" class="text-red-500">Error loading diagram: {{ error }}</p>
       <div v-else>
-        <h2 class="text-3xl font-bold mb-4">{{ diagram ? diagram.title : 'New Diagram' }}</h2>
+        <h2 class="text-xl md:text-3xl font-bold mb-2 md:mb-4">{{ diagram ? diagram.title : 'New Diagram' }}</h2>
         
         <!-- Responsive layout -->
         <div class="flex flex-col md:flex-row" ref="containerRef">
@@ -56,6 +60,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { PencilIcon, EyeIcon } from '@heroicons/vue/24/outline';
 import WorkTab from './WorkTab.vue';
 import DisplayTab from './DisplayTab.vue';
 import { getDiagram } from '../lib/api';
@@ -127,7 +132,29 @@ const fetchDiagram = async (diagramId) => {
       }
     }
   } catch (err) {
-    error.value = err.message;
+    // User-friendly error messages
+    if (err.response) {
+      const status = err.response.status;
+
+      if (status === 404) {
+        error.value = 'Diagram not found. It may have been deleted.';
+      } else if (status === 403) {
+        error.value = 'Access denied. You may not have permission to view this diagram.';
+      } else if (status >= 500) {
+        error.value = 'Server error occurred. Please try again later.';
+      } else {
+        error.value = 'Failed to load diagram. Please try again.';
+      }
+    } else if (err.request) {
+      if (!navigator.onLine) {
+        error.value = 'No internet connection. Please check your network and try again.';
+      } else {
+        error.value = 'Network timeout. Please check your connection and try again.';
+      }
+    } else {
+      error.value = 'An unexpected error occurred while loading the diagram.';
+    }
+
     console.error("Failed to fetch diagram:", err);
   } finally {
     loading.value = false;

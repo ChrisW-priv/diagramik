@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { LockClosedIcon, ArrowPathIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/outline';
 import { authApi } from '../lib/api';
 
 const uid = ref('');
@@ -65,9 +66,9 @@ const handleSubmit = async () => {
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-900">
-    <div class="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg shadow-lg">
+    <div class="max-w-md w-full space-y-4 md:space-y-8 p-4 md:p-8 bg-gray-800 rounded-lg shadow-lg">
       <div>
-        <h2 class="text-center text-3xl font-bold text-white">
+        <h2 class="text-center text-2xl md:text-3xl font-bold text-white">
           Set new password
         </h2>
         <p class="mt-2 text-center text-sm text-gray-400">
@@ -81,9 +82,11 @@ const handleSubmit = async () => {
         </div>
         <a
           href="/auth/forgot-password"
-          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          aria-label="Request new link"
+          title="Request new link"
         >
-          Request new link
+          <ArrowPathIcon class="h-6 w-6" />
         </a>
       </div>
 
@@ -97,9 +100,11 @@ const handleSubmit = async () => {
         </div>
         <a
           href="/login"
-          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          aria-label="Go to login"
+          title="Go to login"
         >
-          Go to login
+          <ArrowRightCircleIcon class="h-6 w-6" />
         </a>
       </div>
 
@@ -140,10 +145,12 @@ const handleSubmit = async () => {
         <button
           type="submit"
           :disabled="loading"
-          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Reset password"
+          title="Reset password"
         >
-          <span v-if="loading">Resetting...</span>
-          <span v-else>Reset password</span>
+          <ArrowPathIcon v-if="loading" class="h-6 w-6 animate-spin" />
+          <LockClosedIcon v-else class="h-6 w-6" />
         </button>
       </form>
     </div>

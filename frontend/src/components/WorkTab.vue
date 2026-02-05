@@ -1,7 +1,22 @@
 <template>
   <div class="flex flex-col h-full w-full">
     <p v-if="!diagram">Enter a prompt below to create your first diagram.</p>
-    <div class="flex-grow overflow-y-auto p-4 bg-gray-800 rounded-lg" ref="chatHistoryContainer">
+
+    <!-- Error Banner -->
+    <div v-if="generationError" class="mb-3 p-3 bg-red-900/50 border border-red-500 rounded-lg flex items-start gap-2">
+      <ExclamationCircleIcon class="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+      <div class="flex-grow">
+        <p class="text-red-200 text-sm">{{ generationError }}</p>
+        <button
+          @click="generationError = null"
+          class="text-red-300 hover:text-red-100 text-xs underline mt-1"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-grow overflow-y-auto p-2 md:p-4 bg-gray-800 rounded-lg" ref="chatHistoryContainer">
       <div class="flex flex-col space-y-2">
         <div
           v-for="(message, index) in localChatHistory"
@@ -36,12 +51,12 @@
       ></textarea>
       <button
         type="submit"
-        class="px-3 py-2 bg-gray-700 text-white rounded-r-lg hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+        class="flex items-center justify-center px-3 py-2 bg-gray-700 text-white rounded-r-lg hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
         :disabled="generating || !prompt.trim()"
+        aria-label="Send prompt"
+        title="Send prompt"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
+        <PaperAirplaneIcon class="h-6 w-6" />
       </button>
     </form>
   </div>
@@ -49,6 +64,7 @@
 
 <script setup>
 import { ref, watch, nextTick, computed } from 'vue';
+import { ExclamationCircleIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline';
 import { createDiagramVersion, createDiagram } from '../lib/api';
 
 const props = defineProps({
@@ -60,6 +76,7 @@ const emit = defineEmits(['diagram-updated', 'diagram-created', 'version-selecte
 
 const prompt = ref('');
 const generating = ref(false);
+const generationError = ref(null);
 const chatHistoryContainer = ref(null);
 const localChatHistory = ref([]);
 
@@ -145,6 +162,8 @@ const submitPrompt = async () => {
   prompt.value = '';
 
   try {
+    generationError.value = null; // Clear any previous errors
+
     if (props.diagram && props.diagram.id) {
       await createDiagramVersion(props.diagram.id, currentPrompt);
       emit('diagram-updated', props.diagram.id);
@@ -153,9 +172,39 @@ const submitPrompt = async () => {
       emit('diagram-created', response.data);
     }
   } catch (error) {
-    console.error("Error generating diagram:", error);
+    // Comprehensive error handling
     localChatHistory.value.pop();
     prompt.value = currentPrompt;
+
+    if (error.response) {
+      // Server responded with error status
+      const status = error.response.status;
+      const errorDetail = error.response.data?.detail || error.response.data?.error;
+
+      if (status === 429) {
+        generationError.value = "Rate limit reached. Please wait before generating another diagram.";
+      } else if (status === 401) {
+        generationError.value = "Your session has expired. Please log in again.";
+      } else if (status === 400) {
+        generationError.value = errorDetail || "Invalid request. Please check your input and try again.";
+      } else if (status >= 500) {
+        generationError.value = "Server error occurred. Please try again later.";
+      } else {
+        generationError.value = errorDetail || "Failed to generate diagram. Please try again.";
+      }
+    } else if (error.request) {
+      // Request made but no response (network error)
+      if (!navigator.onLine) {
+        generationError.value = "No internet connection. Please check your network and try again.";
+      } else {
+        generationError.value = "Network timeout. Please check your connection and try again.";
+      }
+    } else {
+      // Something else went wrong
+      generationError.value = "An unexpected error occurred. Please try again.";
+    }
+
+    console.error("Error generating diagram:", error);
   } finally {
     generating.value = false;
   }

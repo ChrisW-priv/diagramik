@@ -39,9 +39,9 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-900">
-    <div class="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg shadow-lg">
+    <div class="max-w-md w-full space-y-4 md:space-y-8 p-4 md:p-8 bg-gray-800 rounded-lg shadow-lg">
       <div>
-        <h2 class="text-center text-3xl font-bold text-white">
+        <h2 class="text-center text-2xl md:text-3xl font-bold text-white">
           Email Verification
         </h2>
       </div>
