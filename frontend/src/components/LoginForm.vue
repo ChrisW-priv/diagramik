@@ -3,6 +3,14 @@ import { ref, onMounted } from 'vue';
 import { ArrowRightCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 import { authApi } from '../lib/api';
 
+// Google OAuth configuration
+const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ||
+  '904069135998-4h84vjsjnjvo5d442gsqvlummq6ebdj3.apps.googleusercontent.com';
+
+const API_BASE_URL = import.meta.env.PROD
+  ? 'https://diagramik.com'
+  : 'http://localhost:8000';
+
 const email = ref('');
 const password = ref('');
 const error = ref('');
@@ -59,17 +67,19 @@ const handleSubmit = async () => {
   }
 };
 
-const handleGoogleLogin = async () => {
+const handleGoogleLogin = () => {
   googleLoading.value = true;
   error.value = '';
 
-  try {
-    const authUrl = await authApi.getGoogleAuthUrl();
-    window.location.href = authUrl;
-  } catch (err: any) {
-    error.value = 'Could not connect to Google. Please try again.';
-    googleLoading.value = false;
-  }
+  const redirectUri = `${API_BASE_URL}/api/v1/auth/social/google/`;
+  const scope = 'openid email profile';
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}&` +
+    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+    `response_type=code&` +
+    `scope=${encodeURIComponent(scope)}`;
+
+  window.location.href = authUrl;
 };
 </script>
 

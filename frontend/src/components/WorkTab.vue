@@ -1,7 +1,5 @@
 <template>
   <div class="flex flex-col h-full w-full">
-    <p v-if="!diagram">Enter a prompt below to create your first diagram.</p>
-
     <!-- Error Banner -->
     <div v-if="generationError" class="mb-3 p-3 bg-red-900/50 border border-red-500 rounded-lg flex items-start gap-2">
       <ExclamationCircleIcon class="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
@@ -44,7 +42,7 @@
       <textarea
         v-model="prompt"
         @keydown.enter="handleEnter"
-        placeholder="Enter your prompt to generate a diagram..."
+        placeholder="Describe you idea here..."
         class="flex-grow p-2 bg-gray-800 rounded-l-lg border border-gray-700 focus:outline-none focus:border-blue-500 resize-none h-10 overflow-hidden"
         :disabled="generating"
         rows="1"

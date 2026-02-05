@@ -1,5 +1,5 @@
 <template>
-  <div class="border border-gray-700 rounded-lg">
+  <div class="border border-gray-700 rounded-lg flex flex-col h-[calc(100vh-12rem)]">
     <!-- Tab buttons for small screens -->
     <div class="flex border-b border-gray-700 md:hidden">
       <button
@@ -21,16 +21,16 @@
       </button>
     </div>
 
-    <div class="p-2 md:p-4">
+    <div class="p-2 md:p-4 flex-grow flex flex-col">
       <p v-if="loading" class="text-white">Loading diagram...</p>
       <p v-else-if="error" class="text-red-500">Error loading diagram: {{ error }}</p>
       <div v-else>
         <h2 class="text-xl md:text-3xl font-bold mb-2 md:mb-4">{{ diagram ? diagram.title : 'New Diagram' }}</h2>
         
         <!-- Responsive layout -->
-        <div class="flex flex-col md:flex-row" ref="containerRef">
+        <div class="flex flex-col md:flex-row flex-grow" ref="containerRef">
           <!-- WorkTab -->
-          <div :class="['w-full', activeTab === 'work' ? 'block' : 'hidden', 'md:flex']" :style="{ width: `calc(${dividerPosition}% - 0.5rem)` }">
+          <div :class="['w-full', activeTab === 'work' ? 'block' : 'hidden', 'md:flex']" :style="isDesktop ? { width: `calc(${dividerPosition}% - 0.5rem)` } : {}">
             <WorkTab
               :diagram="diagram"
               :selected-version-id="selectedVersionId"
@@ -49,7 +49,7 @@
           </div>
 
           <!-- DisplayTab -->
-          <div :class="['w-full', activeTab === 'display' ? 'block' : 'hidden', 'md:flex']" :style="{ width: `calc(${100 - dividerPosition}% - 0.5rem)` }">
+          <div :class="['w-full', activeTab === 'display' ? 'block' : 'hidden', 'md:flex']" :style="isDesktop ? { width: `calc(${100 - dividerPosition}% - 0.5rem)` } : {}">
             <DisplayTab :diagram="diagram" :selected-version="selectedVersion" />
           </div>
         </div>
@@ -77,6 +77,7 @@ const selectedVersionId = ref(null);
 const isResizing = ref(false);
 const dividerPosition = ref(50); // Initial position in percentage
 const containerRef = ref(null);
+const isDesktop = ref(typeof window !== 'undefined' && window.innerWidth >= 768);
 
 const selectedVersion = computed(() => {
   if (!diagram.value || !selectedVersionId.value) {
@@ -106,6 +107,18 @@ const stopResize = () => {
   isResizing.value = false;
   document.removeEventListener('mousemove', resize);
   document.removeEventListener('mouseup', stopResize);
+};
+
+const updateScreenSize = () => {
+  isDesktop.value = window.innerWidth >= 768;
+};
+
+const handleKeyDown = (event) => {
+  // Alt + Tab (or Option + Tab on Mac)
+  if (event.altKey && event.key === 'Tab') {
+    event.preventDefault();
+    activeTab.value = activeTab.value === 'work' ? 'display' : 'work';
+  }
 };
 
 const fetchDiagram = async (diagramId) => {
@@ -185,11 +198,16 @@ onMounted(() => {
   else {
     loading.value = false;
   }
+
+  window.addEventListener('resize', updateScreenSize);
+  window.addEventListener('keydown', handleKeyDown);
 });
 
 onUnmounted(() => {
   // Clean up global event listeners
   window.removeEventListener('mousemove', resize);
   window.removeEventListener('mouseup', stopResize);
+  window.removeEventListener('resize', updateScreenSize);
+  window.removeEventListener('keydown', handleKeyDown);
 });
 </script>
