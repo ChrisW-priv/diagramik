@@ -14,8 +14,6 @@ resource "google_sql_database_instance" "instance" {
   region              = var.google_region
   deletion_protection = true
 
-  # CRITICAL: Must wait for VPC peering connection before enabling private IP
-  # Note: Terraform will ignore null dependencies automatically
   depends_on = [
     google_project_service.service
   ]

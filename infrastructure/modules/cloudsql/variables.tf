@@ -53,5 +53,5 @@ variable "enable_private_ip" {
 variable "enable_public_ip" {
   description = "Enable public IP for Cloud SQL (default true for backward compatibility)"
   type        = bool
-  default     = true
+  default     = false
 }
