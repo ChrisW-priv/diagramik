@@ -38,7 +38,7 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-900">
-    <div class="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg shadow-lg text-center">
+    <div class="max-w-md w-full space-y-4 md:space-y-8 p-4 md:p-8 bg-gray-800 rounded-lg shadow-lg text-center">
       <div v-if="loading" class="space-y-4">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
         <p class="text-gray-300">Completing Google sign-in...</p>

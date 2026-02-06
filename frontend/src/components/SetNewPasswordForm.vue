@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { LockClosedIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 import { authApi } from '../lib/api';
 
 const props = defineProps<{
@@ -102,9 +103,9 @@ const handleSubmit = async () => {
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-900">
-    <div class="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg shadow-lg">
+    <div class="max-w-md w-full space-y-4 md:space-y-8 p-4 md:p-8 bg-gray-800 rounded-lg shadow-lg">
       <div>
-        <h2 class="text-center text-3xl font-bold text-white">
+        <h2 class="text-center text-2xl md:text-3xl font-bold text-white">
           Set New Password
         </h2>
         <p class="mt-2 text-center text-sm text-gray-400">
@@ -207,10 +208,12 @@ const handleSubmit = async () => {
         <button
           type="submit"
           :disabled="!canSubmit"
-          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Set new password"
+          title="Set new password"
         >
-          <span v-if="loading">Setting password...</span>
-          <span v-else>Set New Password</span>
+          <ArrowPathIcon v-if="loading" class="h-6 w-6 animate-spin" />
+          <LockClosedIcon v-else class="h-6 w-6" />
         </button>
       </form>
 

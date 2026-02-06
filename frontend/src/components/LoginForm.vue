@@ -1,12 +1,40 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { ArrowRightCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 import { authApi } from '../lib/api';
+
+// Google OAuth configuration
+const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ||
+  '904069135998-4h84vjsjnjvo5d442gsqvlummq6ebdj3.apps.googleusercontent.com';
+
+const API_BASE_URL = import.meta.env.PROD
+  ? 'https://diagramik.com'
+  : 'http://localhost:8000';
 
 const email = ref('');
 const password = ref('');
 const error = ref('');
+const sessionMessage = ref('');
 const loading = ref(false);
 const googleLoading = ref(false);
+
+// Check for session expiration or other reasons
+onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const reason = urlParams.get('reason');
+
+  if (reason === 'session_expired') {
+    sessionMessage.value = 'Your session has expired. Please sign in again.';
+  } else if (reason) {
+    sessionMessage.value = decodeURIComponent(reason);
+  }
+
+  // Clean URL after reading parameter
+  if (reason && window.history.replaceState) {
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+});
 
 const handleSubmit = async () => {
   error.value = '';
@@ -39,25 +67,27 @@ const handleSubmit = async () => {
   }
 };
 
-const handleGoogleLogin = async () => {
+const handleGoogleLogin = () => {
   googleLoading.value = true;
   error.value = '';
 
-  try {
-    const authUrl = await authApi.getGoogleAuthUrl();
-    window.location.href = authUrl;
-  } catch (err: any) {
-    error.value = 'Could not connect to Google. Please try again.';
-    googleLoading.value = false;
-  }
+  const redirectUri = `${API_BASE_URL}/api/v1/auth/social/google/`;
+  const scope = 'openid email profile';
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}&` +
+    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+    `response_type=code&` +
+    `scope=${encodeURIComponent(scope)}`;
+
+  window.location.href = authUrl;
 };
 </script>
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-900">
-    <div class="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg shadow-lg">
+    <div class="max-w-md w-full space-y-4 md:space-y-8 p-4 md:p-8 bg-gray-800 rounded-lg shadow-lg">
       <div>
-        <h2 class="text-center text-3xl font-bold text-white">
+        <h2 class="text-center text-2xl md:text-3xl font-bold text-white">
           Sign in to Diagramik
         </h2>
         <p class="mt-2 text-center text-sm text-gray-400">
@@ -65,6 +95,12 @@ const handleGoogleLogin = async () => {
         </p>
       </div>
 
+      <!-- Session Expiration Warning -->
+      <div v-if="sessionMessage" class="bg-yellow-500/10 border border-yellow-500 text-yellow-400 px-4 py-3 rounded">
+        {{ sessionMessage }}
+      </div>
+
+      <!-- Login Error -->
       <div v-if="error" class="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded">
         {{ error }}
       </div>
@@ -137,7 +173,9 @@ const handleGoogleLogin = async () => {
         <button
           type="submit"
           :disabled="loading"
-          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Sign in"
+          title="Sign in"
         >
           <span v-if="loading">Signing in...</span>
           <span v-else>Sign in</span>

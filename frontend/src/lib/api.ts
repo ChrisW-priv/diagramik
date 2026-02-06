@@ -52,10 +52,10 @@ apiClient.interceptors.request.use(async (config) => {
           setTokens(newTokens);
           onTokenRefreshed(newTokens.access);
           config.headers.Authorization = `Bearer ${newTokens.access}`;
-        } catch {
+        } catch (refreshError) {
           clearTokens();
           if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+            window.location.href = '/login?reason=session_expired';
           }
         } finally {
           isRefreshing = false;
@@ -84,7 +84,9 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       clearTokens();
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        const errorDetail = error.response?.data?.detail;
+        const reason = errorDetail ? encodeURIComponent(errorDetail) : 'session_expired';
+        window.location.href = `/login?reason=${reason}`;
       }
     }
     return Promise.reject(error);
