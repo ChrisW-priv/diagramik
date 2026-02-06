@@ -17,6 +17,7 @@ const error = ref('');
 const sessionMessage = ref('');
 const loading = ref(false);
 const googleLoading = ref(false);
+const acceptedTerms = ref(false);
 
 // Check for session expiration or other reasons
 onMounted(() => {
@@ -105,10 +106,23 @@ const handleGoogleLogin = () => {
         {{ error }}
       </div>
 
+      <!-- Terms and Conditions Checkbox -->
+      <div class="flex items-start space-x-2">
+        <input
+          id="acceptTerms"
+          v-model="acceptedTerms"
+          type="checkbox"
+          class="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-2 focus:ring-blue-500"
+        />
+        <label for="acceptTerms" class="text-sm text-gray-300">
+          I accept that Krzysztof Watras, as an individual (not a company), will process my data (storing and reading) for the purpose of providing this service.
+        </label>
+      </div>
+
       <!-- Google Sign In Button -->
       <button
         @click="handleGoogleLogin"
-        :disabled="googleLoading"
+        :disabled="googleLoading || !acceptedTerms"
         class="w-full flex items-center justify-center gap-3 py-2 px-4 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24">
