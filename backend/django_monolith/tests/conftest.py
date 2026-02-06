@@ -43,16 +43,32 @@ def auth_headers(jwt_tokens):
 
 @pytest.fixture
 def mock_agent_call(mocker):
-    """Mock the agent call to avoid external dependencies."""
+    """Mock the agent call to avoid external dependencies.
+
+    Works with both old agent (diagrams_assistant.agent) and new agent (agent module).
+    """
     mock_result = mocker.MagicMock()
     mock_result.diagram_title = "Test Diagram"
     mock_result.media_uri = "gs://test-bucket/test-image.png"
     mock_result.history_json = '{"history": []}'
 
-    return mocker.patch(
+    # Mock both old and new agent paths
+    old_agent_mock = mocker.patch(
         "diagrams_assistant.views.agent",
         return_value=mock_result,
     )
+
+    # Also mock the new agent module (if imported)
+    try:
+        new_agent_mock = mocker.patch(
+            "agent.core.agent_orchestrator.agent",
+            return_value=mock_result,
+        )
+    except (ImportError, ModuleNotFoundError):
+        # New agent not installed, skip mocking it
+        new_agent_mock = None
+
+    return old_agent_mock
 
 
 @pytest.fixture
@@ -179,3 +195,77 @@ def user_with_max_resends():
     user = UserFactory(is_active=False)
     EmailVerificationToken.objects.create(user=user, resend_count=5)
     return user
+
+
+@pytest.fixture
+def mock_new_agent_clarification_needed(mocker, site_settings):
+    """Mock new agent raising ClarificationNeeded exception.
+
+    Only works when use_new_agent feature flag is enabled.
+    """
+    # Enable new agent
+    site_settings.use_new_agent = True
+    site_settings.save()
+
+    # Create a mock exception that mimics ClarificationNeeded
+    class MockClarificationNeeded(Exception):
+        def __init__(self, question):
+            self.clarification_question = question
+            super().__init__(question)
+
+    # Make the exception have the right name
+    MockClarificationNeeded.__name__ = "ClarificationNeeded"
+
+    # Mock the agent to raise this exception
+    mock_agent = mocker.patch(
+        "diagrams_assistant.views.agent",
+        side_effect=MockClarificationNeeded("What type of diagram do you want?"),
+    )
+
+    # Also need to mock the import
+    mock_module = mocker.MagicMock()
+    mock_module.agent = mock_agent
+    mock_module.ClarificationNeeded = MockClarificationNeeded
+    mock_module.CodeGenerationError = Exception
+
+    mocker.patch.dict("sys.modules", {"agent": mock_module})
+
+    return mock_agent
+
+
+@pytest.fixture
+def mock_new_agent_code_generation_error(mocker, site_settings):
+    """Mock new agent raising CodeGenerationError exception.
+
+    Only works when use_new_agent feature flag is enabled.
+    """
+    # Enable new agent
+    site_settings.use_new_agent = True
+    site_settings.save()
+
+    # Create a mock exception that mimics CodeGenerationError
+    class MockCodeGenerationError(Exception):
+        def __init__(self, message, validation_errors=None):
+            self.validation_errors = validation_errors or []
+            super().__init__(message)
+
+    # Make the exception have the right name
+    MockCodeGenerationError.__name__ = "CodeGenerationError"
+
+    # Mock the agent to raise this exception
+    mock_agent = mocker.patch(
+        "diagrams_assistant.views.agent",
+        side_effect=MockCodeGenerationError(
+            "Failed to generate valid code", validation_errors=["Syntax error"]
+        ),
+    )
+
+    # Also need to mock the import
+    mock_module = mocker.MagicMock()
+    mock_module.agent = mock_agent
+    mock_module.ClarificationNeeded = Exception
+    mock_module.CodeGenerationError = MockCodeGenerationError
+
+    mocker.patch.dict("sys.modules", {"agent": mock_module})
+
+    return mock_agent

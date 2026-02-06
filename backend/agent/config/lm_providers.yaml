@@ -1,0 +1,24 @@
+providers:
+  # Default provider - Gemini Flash (fast and cost-effective)
+  gemini-flash:
+    model: "gemini/gemini-2.0-flash-exp"
+    max_tokens: 2000
+    temperature: 0.7
+    default: true
+
+  # More capable Gemini model
+  gemini-pro:
+    model: "gemini/gemini-2.5-pro-latest"
+    max_tokens: 2000
+    temperature: 0.7
+
+  # Future providers (uncomment when needed):
+  # gpt-4o:
+  #   model: "openai/gpt-4o"
+  #   max_tokens: 2000
+  #   temperature: 0.7
+  #
+  # claude-sonnet:
+  #   model: "anthropic/claude-sonnet-4.5"
+  #   max_tokens: 2000
+  #   temperature: 0.7
