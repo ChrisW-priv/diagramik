@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { ArrowRightCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 import { authApi } from '../lib/api';
+import { GDPR_CONSENT_TEXT } from '../constants/gdpr';
 
 // Google OAuth configuration
 const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ||
@@ -115,7 +116,7 @@ const handleGoogleLogin = () => {
           class="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-2 focus:ring-blue-500"
         />
         <label for="acceptTerms" class="text-sm text-gray-300">
-          I accept that Krzysztof Watras, as an individual (not a company), will process my data (storing and reading) for the purpose of providing this service.
+          {{ GDPR_CONSENT_TEXT }}
         </label>
       </div>
 
