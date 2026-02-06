@@ -25,6 +25,7 @@ class RegisterView(CsrfExemptMixin, APIView):
         password1 = request.data.get("password1")
         password2 = request.data.get("password2")
         first_name = request.data.get("first_name", "")
+        terms_accepted = request.data.get("terms_accepted", False)
 
         errors = {}
 
@@ -59,6 +60,16 @@ class RegisterView(CsrfExemptMixin, APIView):
             password=password1,
             first_name=first_name,
             is_active=(settings.ACCOUNT_EMAIL_VERIFICATION != "mandatory"),
+        )
+
+        # Create user profile with terms acceptance
+        from user_auth.models import UserProfile
+        from django.utils import timezone
+
+        UserProfile.objects.create(
+            user=user,
+            terms_accepted=terms_accepted,
+            terms_accepted_at=timezone.now() if terms_accepted else None,
         )
 
         # Send verification email (in production)

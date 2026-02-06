@@ -27,9 +27,15 @@ def get_tokens_for_user(user):
 
 def get_user_data(user):
     """Get user data for response"""
+    # Get terms acceptance from profile if it exists
+    terms_accepted = False
+    if hasattr(user, "profile"):
+        terms_accepted = user.profile.terms_accepted
+
     return {
         "pk": user.pk,
         "email": user.email,
         "first_name": user.first_name,
         "last_name": user.last_name,
+        "terms_accepted": terms_accepted,
     }

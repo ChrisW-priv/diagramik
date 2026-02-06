@@ -137,7 +137,8 @@ export const authApi = {
     email: string,
     password1: string,
     password2: string,
-    firstName?: string
+    firstName?: string,
+    termsAccepted?: boolean
   ) {
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/registration/`,
@@ -146,6 +147,7 @@ export const authApi = {
         password1,
         password2,
         first_name: firstName || '',
+        terms_accepted: termsAccepted || false,
       }
     );
     const { access, refresh, user } = response.data;

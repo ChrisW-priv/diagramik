@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 import requests
 
-from user_auth.models import SocialAccount, EmailVerificationToken
+from user_auth.models import SocialAccount, EmailVerificationToken, UserProfile
 from user_auth.utils import get_tokens_for_user, get_user_data
 
 User = get_user_model()
@@ -104,6 +104,15 @@ class GoogleLoginView(APIView):
                         )
                         verification_token.mark_verified()
 
+                    # Ensure user profile exists (terms acceptance assumed via OAuth)
+                    if not hasattr(user, "profile"):
+                        from django.utils import timezone
+                        UserProfile.objects.create(
+                            user=user,
+                            terms_accepted=True,
+                            terms_accepted_at=timezone.now(),
+                        )
+
                 except User.DoesNotExist:
                     # Create new user
                     user = User.objects.create_user(
@@ -119,6 +128,14 @@ class GoogleLoginView(APIView):
                         user=user
                     )
                     verification_token.mark_verified()
+
+                    # Create user profile (terms acceptance assumed via OAuth)
+                    from django.utils import timezone
+                    UserProfile.objects.create(
+                        user=user,
+                        terms_accepted=True,  # OAuth flow requires terms acceptance
+                        terms_accepted_at=timezone.now(),
+                    )
 
                 # Link social account
                 SocialAccount.objects.create(
@@ -235,6 +252,15 @@ class GoogleLoginView(APIView):
                         )
                         verification_token.mark_verified()
 
+                    # Ensure user profile exists (terms acceptance assumed via OAuth)
+                    if not hasattr(user, "profile"):
+                        from django.utils import timezone
+                        UserProfile.objects.create(
+                            user=user,
+                            terms_accepted=True,
+                            terms_accepted_at=timezone.now(),
+                        )
+
                 except User.DoesNotExist:
                     # Create new user
                     user = User.objects.create_user(
@@ -250,6 +276,14 @@ class GoogleLoginView(APIView):
                         user=user
                     )
                     verification_token.mark_verified()
+
+                    # Create user profile (terms acceptance assumed via OAuth)
+                    from django.utils import timezone
+                    UserProfile.objects.create(
+                        user=user,
+                        terms_accepted=True,  # OAuth flow requires terms acceptance
+                        terms_accepted_at=timezone.now(),
+                    )
 
                 # Link social account
                 SocialAccount.objects.create(
