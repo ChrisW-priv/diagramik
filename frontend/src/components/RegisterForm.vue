@@ -125,7 +125,6 @@ const handleGoogleLogin = async () => {
             <a href="/terms" target="_blank" class="text-blue-400 hover:text-blue-300 underline">
               Terms and Conditions
             </a>
-            and acknowledge that Krzysztof Watras will process my data in the EU region.
           </label>
         </div>
 
