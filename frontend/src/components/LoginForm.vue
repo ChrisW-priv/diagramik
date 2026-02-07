@@ -17,7 +17,6 @@ const error = ref('');
 const sessionMessage = ref('');
 const loading = ref(false);
 const googleLoading = ref(false);
-const acceptedTerms = ref(false);
 
 // Check for session expiration or other reasons
 onMounted(() => {
@@ -109,7 +108,7 @@ const handleGoogleLogin = () => {
       <!-- Google Sign In Button -->
       <button
         @click="handleGoogleLogin"
-        :disabled="googleLoading || !acceptedTerms"
+        :disabled="googleLoading"
         class="w-full flex items-center justify-center gap-3 py-2 px-4 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -121,22 +120,6 @@ const handleGoogleLogin = () => {
         <span v-if="googleLoading">Connecting...</span>
         <span v-else>Continue with Google</span>
       </button>
-
-      <!-- Terms and Conditions Checkbox -->
-      <div class="flex items-start space-x-2">
-        <input
-          id="acceptTerms"
-          v-model="acceptedTerms"
-          type="checkbox"
-          class="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-2 focus:ring-blue-500"
-        />
-        <label for="acceptTerms" class="text-sm text-gray-300">
-          I accept the
-          <a href="/terms" target="_blank" class="text-blue-400 hover:text-blue-300 underline">
-            Terms and Conditions
-          </a>
-        </label>
-      </div>
 
       <div class="relative">
         <div class="absolute inset-0 flex items-center">
