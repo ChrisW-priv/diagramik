@@ -9,7 +9,9 @@ class MermaidSignature(dspy.Signature):
     The generated code must be valid Mermaid syntax with proper diagram type declaration.
     """
 
-    user_intent: str = dspy.InputField(desc="The user's request describing the diagram to create")
+    user_intent: str = dspy.InputField(
+        desc="The user's request describing the diagram to create"
+    )
 
     style_guide: str = dspy.InputField(
         desc="Mermaid syntax guide and examples for different diagram types"
@@ -42,7 +44,9 @@ class MermaidSignature(dspy.Signature):
         )
     )
 
-    diagram_title: str = dspy.OutputField(desc="Clear, descriptive title for the diagram")
+    diagram_title: str = dspy.OutputField(
+        desc="Clear, descriptive title for the diagram"
+    )
 
     mermaid_code: str = dspy.OutputField(
         desc=(

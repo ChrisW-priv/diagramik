@@ -11,18 +11,24 @@ tasks:
 
   test:
     desc: Run all agent tests
+    env:
+      MCP_SERVICE_URL: http://localhost:8080
     cmds:
       - "{{.VENV}}/pytest tests/ -v"
 
   test:unit:
-    desc: Run unit tests only
+    desc: Run unit tests only (no MCP server required)
+    env:
+      MCP_SERVICE_URL: http://localhost:8080
     cmds:
-      - "{{.VENV}}/pytest tests/unit/ -v"
+      - "{{.VENV}}/pytest tests/ -v -k 'not integration'"
 
   test:integration:
     desc: Run integration tests (requires MCP server)
+    env:
+      MCP_SERVICE_URL: http://localhost:8080
     cmds:
-      - "{{.VENV}}/pytest tests/integration/ -v"
+      - "{{.VENV}}/pytest tests/ -v -m integration"
 
   test:watch:
     desc: Run tests in watch mode

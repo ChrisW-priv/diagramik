@@ -87,7 +87,9 @@ web >> app >> db
 
     def test_validation_result_bool(self):
         """Test that ValidationResult can be used in boolean context."""
-        valid = self.validator.validate("web = ELB('web')\napp = EC2('app')\nweb >> app")
+        valid = self.validator.validate(
+            "web = ELB('web')\napp = EC2('app')\nweb >> app"
+        )
         invalid = self.validator.validate("import os")
 
         assert bool(valid) is True
@@ -168,7 +170,8 @@ class TestMermaidCodeValidator:
         # Valid but with warning
         assert result.is_valid
         assert any(
-            "arrow" in warn.lower() or "connection" in warn.lower() for warn in result.warnings
+            "arrow" in warn.lower() or "connection" in warn.lower()
+            for warn in result.warnings
         )
 
     def test_flowchart_with_connections(self):
@@ -180,7 +183,8 @@ class TestMermaidCodeValidator:
         assert result.is_valid
         # Should not warn about connections
         assert not any(
-            "arrow" in warn.lower() or "connection" in warn.lower() for warn in result.warnings
+            "arrow" in warn.lower() or "connection" in warn.lower()
+            for warn in result.warnings
         )
 
     def test_sequence_diagram_validation(self):

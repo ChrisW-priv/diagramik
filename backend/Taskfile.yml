@@ -38,6 +38,10 @@ includes:
       REGION: "{{.REGION}}"
       PROJECT_ID: "{{.PROJECT_ID}}"
 
+  agent:
+    taskfile: agent/Taskfile.yml
+    dir: agent
+
 tasks:
   # === Python Environment ===
   sync:
@@ -69,6 +73,7 @@ tasks:
     deps:
       - monolith:test
       - mcp:test
+      - agent:test:unit
 
   push:
     desc: Push all backend Docker images to registries
@@ -168,4 +173,30 @@ tasks:
     dir: ./mcp_diagrams/
     cmds:
       - ../.venv/bin/pytest --cov=. --cov-report=term-missing --cov-report=html -vv
+
+  # === Agent Tasks ===
+  # Note: Basic agent tasks (sync, fmt, check, test:unit) are available via includes
+  # Use: task agent:sync, task agent:fmt, task agent:test:unit, task agent:test:integration
+
+  agent:test:with-server:
+    desc: Run agent integration tests with real MCP server
+    env:
+      BUCKET_NAME: "{{.DIAGRAMS_BUCKET}}"
+    cmds:
+      - bash scripts/run-agent-integration-tests.sh
+
+  agent:verify:
+    desc: Run agent verification script
+    env:
+      MCP_SERVICE_URL: http://localhost:8080
+    dir: agent
+    cmds:
+      - ../.venv/bin/python verify_dspy_agent.py
+
+  agent:verify:with-server:
+    desc: Run agent verification with real MCP server connection
+    env:
+      BUCKET_NAME: "{{.DIAGRAMS_BUCKET}}"
+    cmds:
+      - bash scripts/run-agent-verification.sh
 

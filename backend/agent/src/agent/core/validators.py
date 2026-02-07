@@ -203,10 +203,14 @@ class MermaidCodeValidator:
             warnings=warnings,
         )
 
-    def _validate_flowchart(self, code: str, lines: list[str], warnings: list[str]) -> None:
+    def _validate_flowchart(
+        self, code: str, lines: list[str], warnings: list[str]
+    ) -> None:
         """Validate flowchart-specific syntax."""
         # Check for arrows/connections
-        has_connections = any(arrow in code for arrow in ["-->", "---", "-.->", "==>", "->", "~~>"])
+        has_connections = any(
+            arrow in code for arrow in ["-->", "---", "-.->", "==>", "->", "~~>"]
+        )
         if not has_connections:
             warnings.append("No arrow connections found in flowchart")
 
@@ -215,14 +219,18 @@ class MermaidCodeValidator:
         if not has_nodes:
             warnings.append("No node definitions found (brackets, parentheses, braces)")
 
-    def _validate_sequence(self, code: str, lines: list[str], warnings: list[str]) -> None:
+    def _validate_sequence(
+        self, code: str, lines: list[str], warnings: list[str]
+    ) -> None:
         """Validate sequence diagram-specific syntax."""
         # Check for participant declarations or arrows
         has_participants = "participant " in code.lower()
         has_arrows = any(arrow in code for arrow in ["->", "->>", "-->", "-->>"])
 
         if not (has_participants or has_arrows):
-            warnings.append("No participants or message arrows found in sequence diagram")
+            warnings.append(
+                "No participants or message arrows found in sequence diagram"
+            )
 
     def _validate_er(self, code: str, lines: list[str], warnings: list[str]) -> None:
         """Validate ER diagram-specific syntax."""

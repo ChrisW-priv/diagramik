@@ -14,7 +14,9 @@ from agent.exceptions import ClarificationNeeded, CodeGenerationError, MCPToolEr
 from agent.utils import format_conversation_history
 
 # Path to FastAgent config
-CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "config" / "fastagent.config.yaml"
+CONFIG_PATH = (
+    Path(__file__).parent.parent.parent.parent / "config" / "fastagent.config.yaml"
+)
 
 
 class AgentResult(BaseModel):
@@ -35,7 +37,9 @@ fast = FastAgent(
 )
 
 
-async def agent(user_instruction: str, previous_history_json: str | None = None) -> AgentResult:
+async def agent(
+    user_instruction: str, previous_history_json: str | None = None
+) -> AgentResult:
     """Main agent function - orchestrates diagram generation.
 
     This function combines DSPy intelligence with FastAgent MCP tool access:
@@ -73,7 +77,9 @@ async def agent(user_instruction: str, previous_history_json: str | None = None)
     routing = router(user_instruction, conversation_context)
 
     if routing.tool_choice == "clarify":
-        raise ClarificationNeeded(routing.clarification_question or "Please clarify your request")
+        raise ClarificationNeeded(
+            routing.clarification_question or "Please clarify your request"
+        )
 
     # Step 2: Generate code based on routing decision
     if routing.tool_choice == "python_diagrams":
@@ -138,9 +144,7 @@ async def agent(user_instruction: str, previous_history_json: str | None = None)
         # Call the MCP tool directly
         try:
             # Send a message that will trigger tool use
-            tool_use_message = (
-                f"Use the {tool_name} tool with these parameters: {json.dumps(tool_params)}"
-            )
+            tool_use_message = f"Use the {tool_name} tool with these parameters: {json.dumps(tool_params)}"
             await agent_runner.send(tool_use_message)
 
             # Extract tool result

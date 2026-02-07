@@ -54,7 +54,9 @@ def get_configured_lm(provider_name: str | None = None) -> dspy.LM:
 
     if provider_name not in providers:
         available = ", ".join(providers.keys())
-        raise ValueError(f"Unknown provider: {provider_name}. Available providers: {available}")
+        raise ValueError(
+            f"Unknown provider: {provider_name}. Available providers: {available}"
+        )
 
     provider_config = providers[provider_name]
 

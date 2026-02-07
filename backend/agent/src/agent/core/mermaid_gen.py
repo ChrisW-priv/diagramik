@@ -34,7 +34,10 @@ def _load_style_guide() -> str:
         Style guide content as string
     """
     style_guide_path = (
-        Path(__file__).parent.parent.parent.parent / "data" / "style_guides" / "mermaid.md"
+        Path(__file__).parent.parent.parent.parent
+        / "data"
+        / "style_guides"
+        / "mermaid.md"
     )
 
     if not style_guide_path.exists():

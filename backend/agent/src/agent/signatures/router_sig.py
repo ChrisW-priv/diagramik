@@ -14,7 +14,9 @@ class DiagramRouterSignature(dspy.Signature):
     - clarify: When the request is ambiguous and needs clarification
     """
 
-    user_request: str = dspy.InputField(desc="The user's natural language diagram request")
+    user_request: str = dspy.InputField(
+        desc="The user's natural language diagram request"
+    )
 
     conversation_history: str = dspy.InputField(
         desc="Previous conversation context (formatted text, may be empty for first request)"
