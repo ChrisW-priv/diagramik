@@ -43,9 +43,8 @@ def auth_headers(jwt_tokens):
 
 @pytest.fixture
 def mock_agent_call(mocker):
-    """Mock the agent call to avoid external dependencies.
+    """Mock the new agent to avoid external dependencies.
 
-    Works with both old agent (diagrams_assistant.agent) and new agent (agent module).
     Returns an async coroutine since agent is called with asyncio.run().
     """
 
@@ -62,66 +61,11 @@ def mock_agent_call(mocker):
         call_tracker(*args, **kwargs)
         return mock_result
 
-    # Create a mock for the FastAgent context manager
-    mock_fast_agent_instance = mocker.MagicMock()
-    mock_fast_agent_instance.diagram_generator.send = mocker.AsyncMock()
-
-    # Create proper mock structure for message_history
-    # The agent expects: message_history[-2].tool_results to be a dict
-    # where each value has .content[0].text as a JSON string
-    mock_content = mocker.MagicMock()
-    mock_content.text = (
-        '{"title": "Test Diagram", "uri": "gs://test-bucket/test-image.png"}'
-    )
-
-    mock_tool_result = mocker.MagicMock()
-    mock_tool_result.content = [mock_content]
-
-    # Use PropertyMock to ensure tool_results is treated as an attribute
-    mock_message = mocker.MagicMock()
-    type(mock_message).tool_results = mocker.PropertyMock(
-        return_value={"test_tool": mock_tool_result}
-    )
-
-    mock_fast_agent_instance.diagram_generator.message_history = [
-        mock_message,  # index 0, which is -2 (second to last - has tool results)
-        mocker.MagicMock(),  # index 1, which is -1 (last message)
-    ]
-    mock_fast_agent_instance.diagram_generator.load_message_history = mocker.MagicMock()
-
-    # Create async context manager mock
-    class MockAsyncContext:
-        async def __aenter__(self):
-            return mock_fast_agent_instance
-
-        async def __aexit__(self, *args):
-            return None
-
-    # Mock FastAgent.run() to return our mock context
+    # Mock the agent function as imported in views.py
     mocker.patch(
-        "diagrams_assistant.agent.agent.fast.run", return_value=MockAsyncContext()
+        "diagrams_assistant.views.agent",
+        side_effect=async_agent,
     )
-
-    # Mock to_json and from_json to avoid serialization issues
-    mocker.patch(
-        "diagrams_assistant.agent.agent.to_json", return_value='{"history": []}'
-    )
-    mocker.patch("diagrams_assistant.agent.agent.from_json", return_value=[])
-
-    # Patch the agent at both the module level and the package level
-    # The views import from diagrams_assistant.agent (package __init__.py)
-    # which re-exports from diagrams_assistant.agent.agent (module)
-    mocker.patch("diagrams_assistant.agent.agent.agent", side_effect=async_agent)
-    mocker.patch("diagrams_assistant.agent.agent", new=async_agent)
-
-    # Also mock the new agent module
-    try:
-        mocker.patch(
-            "agent.core.agent_orchestrator.agent",
-            side_effect=async_agent,
-        )
-    except (ImportError, ModuleNotFoundError):
-        pass
 
     return call_tracker
 
@@ -253,89 +197,3 @@ def user_with_max_resends():
     user = UserFactory(is_active=False)
     EmailVerificationToken.objects.create(user=user, resend_count=5)
     return user
-
-
-@pytest.fixture
-def mock_new_agent_clarification_needed(mocker, site_settings):
-    """Mock new agent raising ClarificationNeeded exception.
-
-    Only works when use_new_agent feature flag is enabled.
-    """
-
-    # Enable new agent
-    site_settings.use_new_agent = True
-    site_settings.save()
-
-    # Create a mock exception that mimics ClarificationNeeded
-    class MockClarificationNeeded(Exception):
-        def __init__(self, question):
-            self.clarification_question = question
-            super().__init__(question)
-
-    # Make the exception have the right name
-    MockClarificationNeeded.__name__ = "ClarificationNeeded"
-
-    # Create async wrapper that raises the exception
-    async def async_agent_raises(*args, **kwargs):
-        raise MockClarificationNeeded("What type of diagram do you want?")
-
-    # Mock the new agent module
-    mock_module = mocker.MagicMock()
-    mock_module.ClarificationNeeded = MockClarificationNeeded
-    mock_module.CodeGenerationError = Exception
-
-    # Patch the agent module in sys.modules first
-    mocker.patch.dict("sys.modules", {"agent": mock_module})
-
-    # Then patch the actual agent function
-    mock_agent = mocker.patch(
-        "agent.core.agent_orchestrator.agent",
-        side_effect=async_agent_raises,
-    )
-    mock_module.agent = async_agent_raises
-
-    return mock_agent
-
-
-@pytest.fixture
-def mock_new_agent_code_generation_error(mocker, site_settings):
-    """Mock new agent raising CodeGenerationError exception.
-
-    Only works when use_new_agent feature flag is enabled.
-    """
-
-    # Enable new agent
-    site_settings.use_new_agent = True
-    site_settings.save()
-
-    # Create a mock exception that mimics CodeGenerationError
-    class MockCodeGenerationError(Exception):
-        def __init__(self, message, validation_errors=None):
-            self.validation_errors = validation_errors or []
-            super().__init__(message)
-
-    # Make the exception have the right name
-    MockCodeGenerationError.__name__ = "CodeGenerationError"
-
-    # Create async wrapper that raises the exception
-    async def async_agent_raises(*args, **kwargs):
-        raise MockCodeGenerationError(
-            "Failed to generate valid code", validation_errors=["Syntax error"]
-        )
-
-    # Mock the new agent module
-    mock_module = mocker.MagicMock()
-    mock_module.ClarificationNeeded = Exception
-    mock_module.CodeGenerationError = MockCodeGenerationError
-
-    # Patch the agent module in sys.modules first
-    mocker.patch.dict("sys.modules", {"agent": mock_module})
-
-    # Then patch the actual agent function
-    mock_agent = mocker.patch(
-        "agent.core.agent_orchestrator.agent",
-        side_effect=async_agent_raises,
-    )
-    mock_module.agent = async_agent_raises
-
-    return mock_agent

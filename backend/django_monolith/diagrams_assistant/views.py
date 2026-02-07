@@ -4,6 +4,8 @@ from django.shortcuts import redirect
 
 from google.oauth2 import service_account
 
+from agent import agent, ClarificationNeeded, CodeGenerationError
+
 from .models import Diagram, DiagramVersion, ChatMessage
 from .serializers import (
     DiagramSerializer,
@@ -17,7 +19,6 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 from django.conf import settings
 from google.cloud.storage import Client, Blob
-from site_settings.models import SiteSettings
 
 
 def create_publicly_accessible_url(image_uri: str) -> str:
@@ -52,40 +53,18 @@ class DiagramListCreate(generics.ListCreateAPIView):
             )
         user = request.user
 
-        # Check feature flag to determine which agent to use
-        site_settings = SiteSettings.load()
-        use_new_agent = site_settings.use_new_agent
-
-        if use_new_agent:
-            try:
-                from agent import agent, ClarificationNeeded, CodeGenerationError
-            except ImportError:
-                # Fallback to old agent if new agent not installed
-                from .agent import agent
-
-                use_new_agent = False
-        else:
-            from .agent import agent
-
         try:
             agent_result = asyncio.run(agent(text, previous_history_json=None))
-        except Exception as e:
-            # Handle new agent exceptions if using new agent
-            if use_new_agent:
-                # Check exception type by name (avoids import issues)
-                exc_name = type(e).__name__
-                if exc_name == "ClarificationNeeded":
-                    return Response(
-                        {"clarification_needed": True, "question": str(e)},
-                        status=status.HTTP_200_OK,
-                    )
-                elif exc_name == "CodeGenerationError":
-                    return Response(
-                        {"error": "Could not generate diagram", "details": str(e)},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
-            # Re-raise if not handled
-            raise
+        except ClarificationNeeded as e:
+            return Response(
+                {"clarification_needed": True, "question": str(e)},
+                status=status.HTTP_200_OK,
+            )
+        except CodeGenerationError as e:
+            return Response(
+                {"error": "Could not generate diagram", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         diagram = Diagram.objects.create(
             title=agent_result.diagram_title,
             owner=user,
@@ -128,21 +107,6 @@ class DiagramVersionCreate(APIView):
 
         ChatMessage.objects.create(diagram=diagram, role="user", content=text)
 
-        # Check feature flag to determine which agent to use
-        site_settings = SiteSettings.load()
-        use_new_agent = site_settings.use_new_agent
-
-        if use_new_agent:
-            try:
-                from agent import agent, ClarificationNeeded, CodeGenerationError
-            except ImportError:
-                # Fallback to old agent if new agent not installed
-                from .agent import agent
-
-                use_new_agent = False
-        else:
-            from .agent import agent
-
         # Pass previous history to agent
         previous_history = diagram.agent_history if diagram.agent_history else None
 
@@ -150,23 +114,16 @@ class DiagramVersionCreate(APIView):
             agent_result = asyncio.run(
                 agent(text, previous_history_json=previous_history)
             )
-        except Exception as e:
-            # Handle new agent exceptions if using new agent
-            if use_new_agent:
-                # Check exception type by name (avoids import issues)
-                exc_name = type(e).__name__
-                if exc_name == "ClarificationNeeded":
-                    return Response(
-                        {"clarification_needed": True, "question": str(e)},
-                        status=status.HTTP_200_OK,
-                    )
-                elif exc_name == "CodeGenerationError":
-                    return Response(
-                        {"error": "Could not generate diagram", "details": str(e)},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
-            # Re-raise if not handled
-            raise
+        except ClarificationNeeded as e:
+            return Response(
+                {"clarification_needed": True, "question": str(e)},
+                status=status.HTTP_200_OK,
+            )
+        except CodeGenerationError as e:
+            return Response(
+                {"error": "Could not generate diagram", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         # Update stored history
         diagram.agent_history = agent_result.history_json

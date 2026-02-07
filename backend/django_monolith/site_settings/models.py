@@ -18,10 +18,6 @@ class SiteSettings(models.Model):
         default=5,
         help_text="Maximum emails per hour (registration/password reset)",
     )
-    use_new_agent = models.BooleanField(
-        default=False,
-        help_text="Use new DSPy-based agent for diagram generation (hybrid DSPy + FastAgent)",
-    )
 
     class Meta:
         verbose_name = "Site Settings"
