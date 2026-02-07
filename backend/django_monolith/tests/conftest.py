@@ -54,26 +54,76 @@ def mock_agent_call(mocker):
     mock_result.media_uri = "gs://test-bucket/test-image.png"
     mock_result.history_json = '{"history": []}'
 
-    # Create async wrapper for the mock result
+    # Create a tracker for agent calls
+    call_tracker = mocker.MagicMock()
+
+    # Create async wrapper for the mock result that tracks calls
     async def async_agent(*args, **kwargs):
+        call_tracker(*args, **kwargs)
         return mock_result
 
-    # Mock the old agent path (diagrams_assistant.agent.agent)
-    agent_mock = mocker.patch(
-        "diagrams_assistant.agent.agent",
-        side_effect=async_agent,
+    # Create a mock for the FastAgent context manager
+    mock_fast_agent_instance = mocker.MagicMock()
+    mock_fast_agent_instance.diagram_generator.send = mocker.AsyncMock()
+
+    # Create proper mock structure for message_history
+    # The agent expects: message_history[-2].tool_results to be a dict
+    # where each value has .content[0].text as a JSON string
+    mock_content = mocker.MagicMock()
+    mock_content.text = (
+        '{"title": "Test Diagram", "uri": "gs://test-bucket/test-image.png"}'
     )
+
+    mock_tool_result = mocker.MagicMock()
+    mock_tool_result.content = [mock_content]
+
+    # Use PropertyMock to ensure tool_results is treated as an attribute
+    mock_message = mocker.MagicMock()
+    type(mock_message).tool_results = mocker.PropertyMock(
+        return_value={"test_tool": mock_tool_result}
+    )
+
+    mock_fast_agent_instance.diagram_generator.message_history = [
+        mock_message,  # index 0, which is -2 (second to last - has tool results)
+        mocker.MagicMock(),  # index 1, which is -1 (last message)
+    ]
+    mock_fast_agent_instance.diagram_generator.load_message_history = mocker.MagicMock()
+
+    # Create async context manager mock
+    class MockAsyncContext:
+        async def __aenter__(self):
+            return mock_fast_agent_instance
+
+        async def __aexit__(self, *args):
+            return None
+
+    # Mock FastAgent.run() to return our mock context
+    mocker.patch(
+        "diagrams_assistant.agent.agent.fast.run", return_value=MockAsyncContext()
+    )
+
+    # Mock to_json and from_json to avoid serialization issues
+    mocker.patch(
+        "diagrams_assistant.agent.agent.to_json", return_value='{"history": []}'
+    )
+    mocker.patch("diagrams_assistant.agent.agent.from_json", return_value=[])
+
+    # Patch the agent at both the module level and the package level
+    # The views import from diagrams_assistant.agent (package __init__.py)
+    # which re-exports from diagrams_assistant.agent.agent (module)
+    mocker.patch("diagrams_assistant.agent.agent.agent", side_effect=async_agent)
+    mocker.patch("diagrams_assistant.agent.agent", new=async_agent)
 
     # Also mock the new agent module
     try:
-        agent_mock = mocker.patch(
+        mocker.patch(
             "agent.core.agent_orchestrator.agent",
             side_effect=async_agent,
         )
     except (ImportError, ModuleNotFoundError):
         pass
 
-    return agent_mock
+    return call_tracker
 
 
 @pytest.fixture
@@ -120,7 +170,7 @@ def mock_google_oauth(mocker):
 
 
 @pytest.fixture(autouse=True)
-def set_test_settings(settings):
+def set_test_settings(settings, monkeypatch):
     """Configure Django settings for tests."""
     # Use DEBUG mode features in tests (no email verification)
     settings.ACCOUNT_EMAIL_VERIFICATION = "optional"
@@ -131,6 +181,9 @@ def set_test_settings(settings):
 
     # Set test frontend URL
     settings.FRONTEND_URL = "http://localhost:3000"
+
+    # Set MCP service URL for FastAgent
+    monkeypatch.setenv("MCP_SERVICE_URL", "http://localhost:8080")
 
     return settings
 
