@@ -46,29 +46,34 @@ def mock_agent_call(mocker):
     """Mock the agent call to avoid external dependencies.
 
     Works with both old agent (diagrams_assistant.agent) and new agent (agent module).
+    Returns an async coroutine since agent is called with asyncio.run().
     """
+
     mock_result = mocker.MagicMock()
     mock_result.diagram_title = "Test Diagram"
     mock_result.media_uri = "gs://test-bucket/test-image.png"
     mock_result.history_json = '{"history": []}'
 
-    # Mock both old and new agent paths
-    old_agent_mock = mocker.patch(
-        "diagrams_assistant.views.agent",
-        return_value=mock_result,
+    # Create async wrapper for the mock result
+    async def async_agent(*args, **kwargs):
+        return mock_result
+
+    # Mock the old agent path (diagrams_assistant.agent.agent)
+    agent_mock = mocker.patch(
+        "diagrams_assistant.agent.agent",
+        side_effect=async_agent,
     )
 
-    # Also mock the new agent module (if imported)
+    # Also mock the new agent module
     try:
-        new_agent_mock = mocker.patch(
+        agent_mock = mocker.patch(
             "agent.core.agent_orchestrator.agent",
-            return_value=mock_result,
+            side_effect=async_agent,
         )
     except (ImportError, ModuleNotFoundError):
-        # New agent not installed, skip mocking it
-        new_agent_mock = None
+        pass
 
-    return old_agent_mock
+    return agent_mock
 
 
 @pytest.fixture
@@ -203,6 +208,7 @@ def mock_new_agent_clarification_needed(mocker, site_settings):
 
     Only works when use_new_agent feature flag is enabled.
     """
+
     # Enable new agent
     site_settings.use_new_agent = True
     site_settings.save()
@@ -216,19 +222,24 @@ def mock_new_agent_clarification_needed(mocker, site_settings):
     # Make the exception have the right name
     MockClarificationNeeded.__name__ = "ClarificationNeeded"
 
-    # Mock the agent to raise this exception
-    mock_agent = mocker.patch(
-        "diagrams_assistant.views.agent",
-        side_effect=MockClarificationNeeded("What type of diagram do you want?"),
-    )
+    # Create async wrapper that raises the exception
+    async def async_agent_raises(*args, **kwargs):
+        raise MockClarificationNeeded("What type of diagram do you want?")
 
-    # Also need to mock the import
+    # Mock the new agent module
     mock_module = mocker.MagicMock()
-    mock_module.agent = mock_agent
     mock_module.ClarificationNeeded = MockClarificationNeeded
     mock_module.CodeGenerationError = Exception
 
+    # Patch the agent module in sys.modules first
     mocker.patch.dict("sys.modules", {"agent": mock_module})
+
+    # Then patch the actual agent function
+    mock_agent = mocker.patch(
+        "agent.core.agent_orchestrator.agent",
+        side_effect=async_agent_raises,
+    )
+    mock_module.agent = async_agent_raises
 
     return mock_agent
 
@@ -239,6 +250,7 @@ def mock_new_agent_code_generation_error(mocker, site_settings):
 
     Only works when use_new_agent feature flag is enabled.
     """
+
     # Enable new agent
     site_settings.use_new_agent = True
     site_settings.save()
@@ -252,20 +264,25 @@ def mock_new_agent_code_generation_error(mocker, site_settings):
     # Make the exception have the right name
     MockCodeGenerationError.__name__ = "CodeGenerationError"
 
-    # Mock the agent to raise this exception
-    mock_agent = mocker.patch(
-        "diagrams_assistant.views.agent",
-        side_effect=MockCodeGenerationError(
+    # Create async wrapper that raises the exception
+    async def async_agent_raises(*args, **kwargs):
+        raise MockCodeGenerationError(
             "Failed to generate valid code", validation_errors=["Syntax error"]
-        ),
-    )
+        )
 
-    # Also need to mock the import
+    # Mock the new agent module
     mock_module = mocker.MagicMock()
-    mock_module.agent = mock_agent
     mock_module.ClarificationNeeded = Exception
     mock_module.CodeGenerationError = MockCodeGenerationError
 
+    # Patch the agent module in sys.modules first
     mocker.patch.dict("sys.modules", {"agent": mock_module})
+
+    # Then patch the actual agent function
+    mock_agent = mocker.patch(
+        "agent.core.agent_orchestrator.agent",
+        side_effect=async_agent_raises,
+    )
+    mock_module.agent = async_agent_raises
 
     return mock_agent

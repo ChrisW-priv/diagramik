@@ -36,6 +36,7 @@ class TestAgentFeatureFlag:
         self, authenticated_client, diagrams_url, mock_agent_call, site_settings, mocker
     ):
         """Test that new agent is used when feature flag is enabled."""
+
         # Enable new agent
         site_settings.use_new_agent = True
         site_settings.save()
@@ -46,14 +47,17 @@ class TestAgentFeatureFlag:
         mock_result.media_uri = "gs://test-bucket/new-agent.png"
         mock_result.history_json = '{"history": []}'
 
-        mock_new_agent = mocker.MagicMock(return_value=mock_result)
+        # Create async wrapper
+        async def async_agent(*args, **kwargs):
+            return mock_result
 
         mock_module = mocker.MagicMock()
-        mock_module.agent = mock_new_agent
+        mock_module.agent = async_agent
         mock_module.ClarificationNeeded = Exception
         mock_module.CodeGenerationError = Exception
 
         mocker.patch.dict("sys.modules", {"agent": mock_module})
+        mocker.patch("agent.core.agent_orchestrator.agent", side_effect=async_agent)
 
         # Arrange
         diagram_data = {"text": "Draw a cloud architecture diagram"}
@@ -63,28 +67,11 @@ class TestAgentFeatureFlag:
 
         # Assert
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.data["title"] == "New Agent Diagram"
-
-    def test_fallback_to_old_agent_if_new_agent_not_installed(
-        self, authenticated_client, diagrams_url, mock_agent_call, site_settings, mocker
-    ):
-        """Test that system falls back to old agent if new agent not installed."""
-        # Enable new agent
-        site_settings.use_new_agent = True
-        site_settings.save()
-
-        # Mock ImportError when trying to import new agent
-        def raise_import_error(*args, **kwargs):
-            raise ImportError("No module named 'agent'")
-
-        mocker.patch("builtins.__import__", side_effect=raise_import_error)
-
-        # The old agent mock should still work
-        diagram_data = {"text": "Draw a cloud architecture diagram"}
-
-        # Act - should fall back to old agent
-        # Note: This test might not work perfectly due to import complexity
-        # In real scenario, the code handles the ImportError gracefully
+        # Response contains diagram_id from DiagramVersionSerializer
+        assert "diagram_id" in response.data
+        # Verify the diagram was created with the correct title
+        diagram = Diagram.objects.get(id=response.data["diagram_id"])
+        assert diagram.title == "New Agent Diagram"
 
 
 class TestNewAgentExceptions:
@@ -162,6 +149,7 @@ class TestAgentHistoryHandling:
         self, authenticated_client, site_settings, mocker
     ):
         """Test that new agent correctly saves and loads conversation history."""
+
         # Enable new agent
         site_settings.use_new_agent = True
         site_settings.save()
@@ -172,14 +160,17 @@ class TestAgentHistoryHandling:
         mock_result.media_uri = "gs://test.png"
         mock_result.history_json = '{"history": ["test"]}'
 
-        mock_new_agent = mocker.MagicMock(return_value=mock_result)
+        # Create async wrapper
+        async def async_agent(*args, **kwargs):
+            return mock_result
 
         mock_module = mocker.MagicMock()
-        mock_module.agent = mock_new_agent
+        mock_module.agent = async_agent
         mock_module.ClarificationNeeded = Exception
         mock_module.CodeGenerationError = Exception
 
         mocker.patch.dict("sys.modules", {"agent": mock_module})
+        mocker.patch("agent.core.agent_orchestrator.agent", side_effect=async_agent)
 
         # Create initial diagram
         response = authenticated_client.post(
@@ -232,14 +223,17 @@ class TestDiagramVersionCreateWithAgents:
         mock_result.media_uri = "gs://test.png"
         mock_result.history_json = '{"updated": []}'
 
-        mock_new_agent = mocker.MagicMock(return_value=mock_result)
+        # Create async wrapper
+        async def async_agent(*args, **kwargs):
+            return mock_result
 
         mock_module = mocker.MagicMock()
-        mock_module.agent = mock_new_agent
+        mock_module.agent = async_agent
         mock_module.ClarificationNeeded = Exception
         mock_module.CodeGenerationError = Exception
 
         mocker.patch.dict("sys.modules", {"agent": mock_module})
+        mocker.patch("agent.core.agent_orchestrator.agent", side_effect=async_agent)
 
         # Create initial diagram
         diagram = DiagramFactory(owner=user, agent_history='{"initial": []}')
