@@ -63,18 +63,22 @@ def _create_tool_wrapper(context: "DspyAgent", tool_name: str) -> Callable[[Any]
         Callable that executes the tool
     """
 
-    def tool_wrapper(**kwargs: Any) -> str:
-        """Execute the FastAgent tool via call_tool()."""
-        # Generate unique tool use ID
-        tool_use_id = str(uuid.uuid4())
-
-        # Call tool using agent's call_tool method (async)
+    def _get_async_loop():
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
             # No event loop running, create a new one
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+        return loop
+
+    def tool_wrapper(**kwargs: Any) -> str:
+        """Execute the FastAgent tool via call_tool()."""
+        # Generate unique tool use ID
+        tool_use_id = str(uuid.uuid4())
+
+        # Call tool using agent's call_tool method (async)
+        loop = _get_async_loop()
 
         try:
             result = loop.run_until_complete(
@@ -103,8 +107,8 @@ def _create_tool_wrapper(context: "DspyAgent", tool_name: str) -> Callable[[Any]
 
 
 def _initialize_react_module(
-    module_config: DspyModuleArgs,
     agent: "DspyAgent",
+    module_config: DspyModuleArgs,
 ) -> tuple[str, dspy.Module]:
     """Initialize a single ReAct module with its tools.
 
@@ -118,15 +122,14 @@ def _initialize_react_module(
     # Create tool callables for this module
     tools = agent._create_callable_tools(module_config.tools)
 
-    # Initialize module with args and tools
-    # Assumes module_type.__init__ accepts tools as kwarg
+    # Initialize module with args and "tools" as kwarg
     module = module_config.module_type(*module_config.args, tools=tools)
 
     # Load state if path provided
     if module_config.load_path is not None:
         module.load(module_config.load_path)
 
-    return (module_config.name, module)
+    return module_config.name, module
 
 
 class DspyAgent(McpAgent):
@@ -170,15 +173,9 @@ class DspyAgent(McpAgent):
             Initialized router module (main entry point)
         """
         # Initialize all react modules using map
-        react_modules_list = list(
-            map(
-                lambda config: _initialize_react_module(config, self),
-                self.react_modules,
-            )
+        react_modules_dict = dict(
+            _initialize_react_module(self, module) for module in self.react_modules
         )
-
-        # Convert list of tuples to dict
-        react_modules_dict = dict(react_modules_list)
 
         # Initialize router module with react modules as kwargs
         router = self.router.module_type(
