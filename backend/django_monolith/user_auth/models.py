@@ -2,6 +2,34 @@ from django.db import models
 from django.conf import settings
 
 
+class UserProfile(models.Model):
+    """Stores additional user profile information."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+    terms_accepted = models.BooleanField(
+        default=False,
+        help_text="Whether the user has accepted the terms and conditions"
+    )
+    terms_accepted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the user accepted the terms and conditions"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
+
+    def __str__(self):
+        return f"{self.user.email} - Terms Accepted: {self.terms_accepted}"
+
+
 class SocialAccount(models.Model):
     """Links external OAuth provider accounts to Django users."""
 

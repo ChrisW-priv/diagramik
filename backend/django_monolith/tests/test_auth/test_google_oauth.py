@@ -1,6 +1,8 @@
 """Tests for Google OAuth authentication."""
 
 import pytest
+import json
+from django.core.signing import TimestampSigner
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from user_auth.models import SocialAccount
@@ -8,6 +10,16 @@ from user_auth.models import SocialAccount
 User = get_user_model()
 
 pytestmark = pytest.mark.django_db
+
+
+def create_oauth_state(from_register=True, terms_accepted=True):
+    """Helper to create a signed OAuth state parameter."""
+    signer = TimestampSigner()
+    state_data = {
+        "from_register": from_register,
+        "terms_accepted": terms_accepted,
+    }
+    return signer.sign(json.dumps(state_data))
 
 
 class TestGoogleOAuth:
@@ -38,7 +50,10 @@ class TestGoogleOAuth:
     ):
         """Test that OAuth callback with valid code creates a new user."""
         # Arrange
-        callback_data = {"code": "valid-google-code"}
+        callback_data = {
+            "code": "valid-google-code",
+            "state": create_oauth_state(from_register=True, terms_accepted=True),
+        }
 
         # Act
         response = api_client.post(callback_endpoint, callback_data)
@@ -225,7 +240,10 @@ class TestGoogleOAuthEmailVerification:
     ):
         """Test that new Google SSO users get a verified EmailVerificationToken."""
         # Arrange
-        callback_data = {"code": "valid-google-code"}
+        callback_data = {
+            "code": "valid-google-code",
+            "state": create_oauth_state(from_register=True, terms_accepted=True),
+        }
 
         # Act
         response = api_client.post(callback_endpoint, callback_data)
@@ -315,7 +333,10 @@ class TestGoogleOAuthEmailVerification:
     ):
         """Integration test: Google SSO user should access protected resources."""
         # Arrange - Create user via Google OAuth
-        callback_data = {"code": "valid-google-code"}
+        callback_data = {
+            "code": "valid-google-code",
+            "state": create_oauth_state(from_register=True, terms_accepted=True),
+        }
         response = api_client.post(callback_endpoint, callback_data)
 
         assert response.status_code == status.HTTP_200_OK

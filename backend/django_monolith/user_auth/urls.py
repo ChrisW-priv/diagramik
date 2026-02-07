@@ -14,6 +14,8 @@ from .views import (
     PasswordResetRequestView,
     SetNewPasswordView,
 )
+from user_auth.views.google_auth.complete_oauth import CompleteOAuthRegistrationView
+from user_auth.views.google_auth.decode_state import DecodeOAuthStateView
 
 urlpatterns = [
     # Email/Password Auth
@@ -47,4 +49,14 @@ urlpatterns = [
     # Google OAuth
     path("social/google/url/", GoogleAuthURLView.as_view(), name="auth-google-url"),
     path("social/google/", GoogleLoginView.as_view(), name="auth-google-login"),
+    path(
+        "social/google/complete/",
+        CompleteOAuthRegistrationView.as_view(),
+        name="complete-oauth",
+    ),
+    path(
+        "social/google/decode-state/",
+        DecodeOAuthStateView.as_view(),
+        name="decode-oauth-state",
+    ),
 ]
