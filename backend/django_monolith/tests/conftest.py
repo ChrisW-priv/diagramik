@@ -43,16 +43,31 @@ def auth_headers(jwt_tokens):
 
 @pytest.fixture
 def mock_agent_call(mocker):
-    """Mock the agent call to avoid external dependencies."""
+    """Mock the new agent to avoid external dependencies.
+
+    Returns an async coroutine since agent is called with asyncio.run().
+    """
+
     mock_result = mocker.MagicMock()
     mock_result.diagram_title = "Test Diagram"
     mock_result.media_uri = "gs://test-bucket/test-image.png"
     mock_result.history_json = '{"history": []}'
 
-    return mocker.patch(
+    # Create a tracker for agent calls
+    call_tracker = mocker.MagicMock()
+
+    # Create async wrapper for the mock result that tracks calls
+    async def async_agent(*args, **kwargs):
+        call_tracker(*args, **kwargs)
+        return mock_result
+
+    # Mock the agent function as imported in views.py
+    mocker.patch(
         "diagrams_assistant.views.agent",
-        return_value=mock_result,
+        side_effect=async_agent,
     )
+
+    return call_tracker
 
 
 @pytest.fixture
@@ -99,7 +114,7 @@ def mock_google_oauth(mocker):
 
 
 @pytest.fixture(autouse=True)
-def set_test_settings(settings):
+def set_test_settings(settings, monkeypatch):
     """Configure Django settings for tests."""
     # Use DEBUG mode features in tests (no email verification)
     settings.ACCOUNT_EMAIL_VERIFICATION = "optional"
@@ -110,6 +125,9 @@ def set_test_settings(settings):
 
     # Set test frontend URL
     settings.FRONTEND_URL = "http://localhost:3000"
+
+    # Set MCP service URL for FastAgent
+    monkeypatch.setenv("MCP_SERVICE_URL", "http://localhost:8080")
 
     return settings
 

@@ -21,7 +21,7 @@ def migrate_allauth_data(apps, schema_editor):
 
     # Skip this migration for non-PostgreSQL databases
     # Migration 0005 will handle the work in a database-agnostic way
-    if connection.vendor != 'postgresql':
+    if connection.vendor != "postgresql":
         print("⚠ Skipping PostgreSQL-specific migration (not PostgreSQL database)")
         print("  Migration 0005 will handle this in a database-agnostic way")
         return

@@ -1,0 +1,64 @@
+version: "3"
+
+vars:
+  VENV: ../.venv/bin
+
+tasks:
+  sync:
+    desc: Install agent dependencies
+    cmds:
+      - cd .. && uv pip install -e agent
+
+  test:
+    desc: Run all agent tests
+    env:
+      MCP_SERVICE_URL: http://localhost:8080
+    cmds:
+      - "{{.VENV}}/pytest tests/ -v"
+
+  test:unit:
+    desc: Run unit tests only (no MCP server required)
+    env:
+      MCP_SERVICE_URL: http://localhost:8080
+    cmds:
+      - "{{.VENV}}/pytest tests/ -v -k 'not integration'"
+
+  test:integration:
+    desc: Run integration tests (requires MCP server)
+    env:
+      MCP_SERVICE_URL: http://localhost:8080
+    cmds:
+      - "{{.VENV}}/pytest tests/ -v -m integration"
+
+  test:watch:
+    desc: Run tests in watch mode
+    cmds:
+      - "{{.VENV}}/pytest-watch tests/"
+
+  fmt:
+    desc: Format agent code with ruff
+    cmds:
+      - "{{.VENV}}/ruff format src/ tests/"
+      - "{{.VENV}}/ruff check --fix src/ tests/"
+
+  check:
+    desc: Check code quality without fixing
+    cmds:
+      - "{{.VENV}}/ruff check src/ tests/"
+
+  # Future optimization tasks (when enough data collected)
+  optimize:
+    desc: Optimize all DSPy modules (requires 100+ examples)
+    cmds:
+      - "{{.VENV}}/python -m agent.optimization.compile"
+
+  optimize:router:
+    desc: Optimize router only
+    cmds:
+      - "{{.VENV}}/python -m agent.optimization.compile router"
+
+  collect-data:
+    desc: Export production logs to dataset format
+    cmds:
+      - echo "Data collection not yet implemented"
+      - echo "Will be implemented in Phase 5"

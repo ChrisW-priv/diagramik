@@ -35,8 +35,16 @@ django-monolith = [
     "google-cloud-logging>=3.11.0",
     "pydantic>=2.12.5",
     "hypercorn>=0.18.0",
-    "fast-agent-mcp>=0.4.39",
     "djangorestframework-simplejwt>=5.4.0",
     "requests>=2.32.0",
     "django-cors-headers>=4.9.0",
+    "text-diagrams-agent",
 ]
+
+[tool.uv.workspace]
+members = [
+    "agent",
+]
+
+[tool.uv.sources]
+text-diagrams-agent = { workspace = true }

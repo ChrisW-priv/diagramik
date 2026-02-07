@@ -29,7 +29,7 @@ def migrate_allauth_data_agnostic(apps, schema_editor):
         table_names = connection.introspection.table_names(cursor)
 
         # Check if allauth table exists
-        if 'socialaccount_socialaccount' not in table_names:
+        if "socialaccount_socialaccount" not in table_names:
             print("✓ No django-allauth tables found - skipping data migration")
             return
 
@@ -39,13 +39,15 @@ def migrate_allauth_data_agnostic(apps, schema_editor):
         print(f"Found {allauth_count} OAuth accounts in django-allauth table")
 
         # Check if user_auth_socialaccount exists and has data
-        if 'user_auth_socialaccount' in table_names:
+        if "user_auth_socialaccount" in table_names:
             cursor.execute("SELECT COUNT(*) FROM user_auth_socialaccount;")
             new_count = cursor.fetchone()[0]
 
             # If we have as many or more records in the new table, assume migration already done
             if new_count >= allauth_count and allauth_count > 0:
-                print(f"✓ Data already migrated ({new_count} records in user_auth_socialaccount) - skipping")
+                print(
+                    f"✓ Data already migrated ({new_count} records in user_auth_socialaccount) - skipping"
+                )
                 return
 
         if allauth_count == 0:
@@ -55,7 +57,7 @@ def migrate_allauth_data_agnostic(apps, schema_editor):
         # Detect database vendor and use appropriate SQL
         db_vendor = connection.vendor
 
-        if db_vendor == 'postgresql':
+        if db_vendor == "postgresql":
             # PostgreSQL: use JSONB casting and NOW()
             cursor.execute("""
                 INSERT INTO user_auth_socialaccount
