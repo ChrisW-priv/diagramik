@@ -112,22 +112,6 @@ const handleGoogleLogin = async () => {
       </div>
 
       <template v-if="!success">
-        <!-- Terms and Conditions Checkbox -->
-        <div class="flex items-start space-x-2">
-          <input
-            id="acceptTerms"
-            v-model="acceptedTerms"
-            type="checkbox"
-            class="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-2 focus:ring-blue-500"
-          />
-          <label for="acceptTerms" class="text-sm text-gray-300">
-            I accept the
-            <a href="/terms" target="_blank" class="text-blue-400 hover:text-blue-300 underline">
-              Terms and Conditions
-            </a>
-          </label>
-        </div>
-
         <!-- Google Sign Up Button -->
         <button
           @click="handleGoogleLogin"
@@ -216,6 +200,22 @@ const handleGoogleLogin = async () => {
             </div>
           </div>
 
+          <!-- Terms and Conditions Checkbox -->
+          <div class="flex items-start space-x-2">
+            <input
+              id="acceptTerms"
+              v-model="acceptedTerms"
+              type="checkbox"
+              class="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-2 focus:ring-blue-500"
+            />
+            <label for="acceptTerms" class="text-sm text-gray-300">
+              I accept the
+              <a href="/terms" target="_blank" class="text-blue-400 hover:text-blue-300 underline">
+                Terms and Conditions
+              </a>
+            </label>
+          </div>
+
           <button
             type="submit"
             :disabled="loading || !acceptedTerms"
@@ -234,6 +234,7 @@ const handleGoogleLogin = async () => {
             Sign in
           </a>
         </p>
+
       </template>
     </div>
   </div>
