@@ -1,5 +1,4 @@
 from typing import Callable, Type, Any
-import asyncio
 import functools
 import uuid
 import dspy
@@ -52,61 +51,25 @@ def _fastagent_tool_to_dspy_tool(
     )
 
 
-def _create_tool_wrapper(context: "DspyAgent", tool_name: str) -> Callable[[Any], str]:
+def _create_tool_wrapper(agent: "DspyAgent", tool_name: str) -> Callable[[Any], str]:
     """Create a tool wrapper callable for a specific tool.
 
     Args:
         tool_name: Name of the tool to wrap
-        context: DspyAgent instance (acts as self)
+        agent: DspyAgent instance
 
     Returns:
-        Callable that executes the tool
+        Callable that executes the tool synchronously by storing result in agent
     """
 
-    def _get_async_loop():
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            # No event loop running, create a new one
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        return loop
-
     def tool_wrapper(**kwargs: Any) -> str:
-        """Execute the FastAgent tool via call_tool()."""
-        # Generate unique tool use ID
-        tool_use_id = str(uuid.uuid4())
-
-        # Call tool using agent's call_tool method (async)
-        loop = _get_async_loop()
-
-        try:
-            result = loop.run_until_complete(
-                context.call_tool(
-                    name=tool_name,
-                    arguments=kwargs,
-                    tool_use_id=tool_use_id,
-                    request_params=None,
-                )
-            )
-
-            # Handle error results
-            if result.isError:
-                return f"Error calling tool: {result.content}"
-
-            # Extract text content from CallToolResult.content blocks
-            return "".join(
-                block.text if hasattr(block, "text") else str(block)
-                for block in result.content
-            )
-
-        except Exception as e:
-            return f"Error calling tool '{tool_name}': {str(e)}"
+        """Execute the FastAgent tool by calling the agent's sync method."""
+        return agent._call_tool_sync(tool_name, kwargs)
 
     return tool_wrapper
 
 
-def _initialize_react_module(
+async def _initialize_react_module(
     agent: "DspyAgent",
     module_config: DspyModuleArgs,
 ) -> tuple[str, dspy.Module]:
@@ -119,8 +82,8 @@ def _initialize_react_module(
     Returns:
         Tuple of (module_name, initialized_module)
     """
-    # Create tool callables for this module
-    tools = agent._create_callable_tools(module_config.tools)
+    # Create tool callables for this module (now async)
+    tools = await agent._create_callable_tools(module_config.tools)
 
     # Initialize module with args and "tools" as kwarg
     module = module_config.module_type(*module_config.args, tools=tools)
@@ -148,23 +111,100 @@ class DspyAgent(McpAgent):
 
         self.router = dspy_fast_agent_config.router_module
         self.react_modules = dspy_fast_agent_config.react_modules
-        self._main_module = None  # Lazy initialization
+        self._main_module = None  # Initialized in __aenter__
         self._modules_constructed = False
+        self._pending_tool_calls = []  # Store pending async tool calls
+
+    def _call_tool_sync(self, tool_name: str, kwargs: dict) -> str:
+        """Synchronous wrapper for async tool calls.
+
+        Stores the tool call to be executed later in async context.
+        """
+        # Store the pending call
+        tool_use_id = str(uuid.uuid4())
+
+        # DSPy ReAct wraps arguments in an 'args' dict - unwrap it
+        if "args" in kwargs and len(kwargs) == 1:
+            arguments = kwargs["args"]
+        else:
+            arguments = kwargs
+
+        self._pending_tool_calls.append(
+            {
+                "tool_name": tool_name,
+                "arguments": arguments,
+                "tool_use_id": tool_use_id,
+            }
+        )
+
+        # Return a placeholder that will be replaced
+        return f"PENDING_TOOL_CALL_{len(self._pending_tool_calls) - 1}"
+
+    async def execute_pending_tools(self) -> dict[str, str]:
+        """Execute all pending tool calls and return results."""
+        results = {}
+
+        for i, call in enumerate(self._pending_tool_calls):
+            try:
+                result = await self.call_tool(
+                    name=call["tool_name"],
+                    arguments=call["arguments"],
+                    tool_use_id=call["tool_use_id"],
+                    request_params=None,
+                )
+
+                # Handle error results
+                if result.isError:
+                    results[f"PENDING_TOOL_CALL_{i}"] = (
+                        f"Error calling tool: {result.content}"
+                    )
+                else:
+                    # Extract text content from CallToolResult.content blocks
+                    results[f"PENDING_TOOL_CALL_{i}"] = "".join(
+                        block.text if hasattr(block, "text") else str(block)
+                        for block in result.content
+                    )
+            except Exception as e:
+                results[f"PENDING_TOOL_CALL_{i}"] = (
+                    f"Error calling tool '{call['tool_name']}': {str(e)}"
+                )
+
+        self._pending_tool_calls.clear()
+        return results
+
+    async def __aenter__(self):
+        """
+        Establish MCP connection and initialize modules.
+
+        Overrides parent to add eager module initialization after
+        MCP connection is established.
+        """
+        # Call parent's __aenter__ to establish MCP connection
+        await super().__aenter__()
+        # Now initialize modules (MCP connection is ready)
+        self._main_module = await self.construct_main_module()
+        self._modules_constructed = True
+        return self
 
     @property
     def main_module(self) -> dspy.Module:
         """
-        Lazily construct and return the main module.
+        Return the main module.
 
-        Modules are constructed on first access to ensure the MCP connection
-        is properly initialized.
+        Module must be initialized via async context manager before access.
+        Use `async with agent:` to properly initialize.
+
+        Raises:
+            RuntimeError: If accessed before initialization
         """
         if not self._modules_constructed:
-            self._main_module = self.construct_main_module()
-            self._modules_constructed = True
+            raise RuntimeError(
+                "main_module accessed before initialization. "
+                "Use 'async with agent:' to initialize the agent first."
+            )
         return self._main_module
 
-    def construct_main_module(self) -> dspy.Module:
+    async def construct_main_module(self) -> dspy.Module:
         """
         Initializes each ReAct like dspy.Module with tools.
         Initializes Router Module with new modules as kwargs to init module
@@ -172,10 +212,11 @@ class DspyAgent(McpAgent):
         Returns:
             Initialized router module (main entry point)
         """
-        # Initialize all react modules using map
-        react_modules_dict = dict(
-            _initialize_react_module(self, module) for module in self.react_modules
-        )
+        # Initialize all react modules using async map
+        react_modules_dict = {}
+        for module in self.react_modules:
+            name, initialized_module = await _initialize_react_module(self, module)
+            react_modules_dict[name] = initialized_module
 
         # Initialize router module with react modules as kwargs
         router = self.router.module_type(
@@ -189,9 +230,11 @@ class DspyAgent(McpAgent):
 
         return router
 
-    def _create_callable_tools(self, tool_names: list[str]) -> list[dspy.Tool]:
+    async def _create_callable_tools(self, tool_names: list[str]) -> list[dspy.Tool]:
         """
         Create DSPy-compatible Tools from FastAgent Tools.
+
+        Must be called from async context after MCP connection is established.
 
         For each tool in tool_names:
         1. Get tool metadata from agent's list_tools()
@@ -199,23 +242,23 @@ class DspyAgent(McpAgent):
         3. Convert to dspy.Tool using helper function (preserves all metadata)
 
         Args:
-            tool_names: List of tool names to create callables for
+            tool_names: List of tool names to create callables for (unprefixed names)
 
         Returns:
             List of dspy.Tool instances ready for ReAct modules
         """
-        # Get all available tools from agent
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            # No event loop running, create a new one
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # Get all available tools from agent (direct await, no threading!)
+        tools_result = await self.list_tools()
 
-        tools_result = loop.run_until_complete(self.list_tools())
-
-        # Create map of tool_name -> Tool for easy lookup
-        tools_map = {tool.name: tool for tool in tools_result.tools}
+        # Create map of both prefixed and unprefixed tool names for lookup
+        # MCP tools are returned with server prefix (e.g., "diagramming__draw_technical_diagram")
+        tools_map = {}
+        for tool in tools_result.tools:
+            tools_map[tool.name] = tool
+            # Also map unprefixed name (after "__") for convenience
+            if "__" in tool.name:
+                unprefixed_name = tool.name.split("__", 1)[1]
+                tools_map[unprefixed_name] = tool
 
         # Create tool wrapper with self bound as context
         create_wrapper_with_context = functools.partial(
@@ -226,10 +269,14 @@ class DspyAgent(McpAgent):
         # Convert tool name to dspy.Tool
         def tool_name_to_dspy_tool(tool_name: str) -> dspy.Tool:
             if tool_name not in tools_map:
-                raise ValueError(f"Tool '{tool_name}' not found in available tools")
+                available = list(tools_map.keys())
+                raise ValueError(
+                    f"Tool '{tool_name}' not found in available tools: {available}"
+                )
 
             fastagent_tool = tools_map[tool_name]
-            wrapper_callable = create_wrapper_with_context(tool_name)
+            # Use the full prefixed name for the wrapper
+            wrapper_callable = create_wrapper_with_context(fastagent_tool.name)
             return _fastagent_tool_to_dspy_tool(fastagent_tool, wrapper_callable)
 
         # Use map to convert all tool names to dspy.Tools

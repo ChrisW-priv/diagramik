@@ -17,7 +17,7 @@ Example:
     >>> print(result.media_uri)
 """
 
-from agent.core.agent_orchestrator import AgentResult, agent
+from agent.agent import AgentResult, agent
 from agent.exceptions import ClarificationNeeded, CodeGenerationError
 
 __version__ = "0.1.0"

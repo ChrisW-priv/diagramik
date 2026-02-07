@@ -11,11 +11,9 @@ class TestDspyAgentInitialization:
     async def initialized_agent(self):
         """Fixture providing agent with MCP connection initialized."""
         agent = main()
-        # Initialize MCP connection
-        await agent._aggregator.load_servers()
-        yield agent
-        # Cleanup
-        await agent._aggregator.close()
+        # Initialize MCP connection using context manager
+        async with agent:
+            yield agent
 
     def test_main_returns_dspy_agent_instance(self):
         """Test that main() returns a DspyAgent instance."""
@@ -79,11 +77,9 @@ class TestDiagramRouterBehavior:
     async def agent(self):
         """Fixture providing agent with MCP connection initialized."""
         agent = main()
-        # Initialize MCP connection
-        await agent._aggregator.load_servers()
-        yield agent
-        # Cleanup
-        await agent._aggregator.close()
+        # Initialize MCP connection using context manager
+        async with agent:
+            yield agent
 
     @pytest.mark.asyncio
     async def test_router_has_tool_routing_config(self, agent):
@@ -168,11 +164,9 @@ class TestDspyAgentWithMCPServer:
     async def agent_with_tools(self):
         """Fixture providing agent with MCP tools loaded."""
         agent = main()
-        # Initialize MCP connection
-        await agent._aggregator.initialize()
-        yield agent
-        # Cleanup
-        await agent._aggregator.close()
+        # Initialize MCP connection using context manager
+        async with agent:
+            yield agent
 
     @pytest.mark.asyncio
     async def test_agent_can_list_tools(self, agent_with_tools):
@@ -180,13 +174,14 @@ class TestDspyAgentWithMCPServer:
         tools_result = await agent_with_tools.list_tools()
         tool_names = [tool.name for tool in tools_result.tools]
 
-        assert "draw_technical_diagram" in tool_names
-        assert "draw_mermaid" in tool_names
+        # MCP tools are prefixed with server name
+        assert "diagramming__draw_technical_diagram" in tool_names
+        assert "diagramming__draw_mermaid" in tool_names
 
     @pytest.mark.asyncio
     async def test_create_callable_tools_success(self, agent_with_tools):
         """Test _create_callable_tools converts MCP tools to dspy.Tool."""
-        dspy_tools = agent_with_tools._create_callable_tools(
+        dspy_tools = await agent_with_tools._create_callable_tools(
             ["draw_technical_diagram", "draw_mermaid"]
         )
 
