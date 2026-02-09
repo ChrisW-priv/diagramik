@@ -1,11 +1,18 @@
+"""Main agent entry point for diagram generation.
+
+This module provides the public API for the diagram generation agent.
+It handles:
+1. History persistence between sessions
+2. Direct tool result extraction
+3. DSPy-driven generation via DspyAgent
+"""
+
 import asyncio
-import json
 from pathlib import Path
 
 import dspy
 from fast_agent import FastAgent
-from fast_agent.agents import McpAgent
-from fast_agent.mcp.prompt_serialization import to_json
+from fast_agent.mcp.prompt_serialization import from_json, to_json
 from pydantic import BaseModel, Field
 
 from agent.dspy_modules import DiagramRouter, FallbackAgent
@@ -32,7 +39,14 @@ class AgentResult(BaseModel):
         description="Title of the diagram",
     )
     media_uri: str = Field(..., description="URI of the generated diagram")
-    history_json: str
+    history_json: str = Field(
+        ...,
+        description="Serialized conversation history for next turn",
+    )
+    trace_id: str | None = Field(
+        None,
+        description="ID linking to DSPy trace file for training data",
+    )
 
 
 def _create_dspy_config() -> DspyFastAgentConfig:
@@ -83,73 +97,6 @@ def _create_dspy_config() -> DspyFastAgentConfig:
 DspyAgent = build_dspy_agent_class(_create_dspy_config())
 
 
-def _extract_tool_result_from_executed(tool_results: dict[str, str]) -> dict | None:
-    """Extract diagram result from executed tool calls.
-
-    Args:
-        tool_results: Dictionary mapping placeholder IDs to tool result strings
-
-    Returns:
-        Dictionary with tool result (containing "uri" and "title") or None
-    """
-    import sys
-
-    # Check each tool result for a valid diagram response
-    for placeholder_id, result_str in tool_results.items():
-        print(
-            f"DEBUG: Checking {placeholder_id}: {result_str[:200]}",
-            file=sys.stderr,
-            flush=True,
-        )
-
-        # Skip error messages
-        if result_str.startswith("Error"):
-            continue
-
-        # Try to parse as JSON
-        try:
-            result_json = json.loads(result_str)
-            if "uri" in result_json:
-                print(
-                    f"DEBUG: Found valid result with URI in {placeholder_id}!",
-                    file=sys.stderr,
-                    flush=True,
-                )
-                return result_json
-        except json.JSONDecodeError:
-            continue
-
-    return None
-
-
-def _serialize_history(dspy_agent: McpAgent) -> str:
-    """
-    Serialize conversation history from DspyAgent for next turn.
-
-    Args:
-        dspy_agent: DspyAgent instance after execution
-
-    Returns:
-        JSON string representation of conversation history
-    """
-    # Access the aggregator's message history
-    if not hasattr(dspy_agent, "_aggregator"):
-        return json.dumps([])
-
-    aggregator = dspy_agent._aggregator
-    if not hasattr(aggregator, "message_history"):
-        return json.dumps([])
-
-    messages = aggregator.message_history
-
-    # Use FastAgent's to_json serializer
-    try:
-        return to_json(messages)
-    except Exception:
-        # Fallback to empty history on error
-        return json.dumps([])
-
-
 @fast.custom(
     DspyAgent,
     servers=["diagramming"],
@@ -157,24 +104,49 @@ def _serialize_history(dspy_agent: McpAgent) -> str:
 async def agent(
     user_instruction: str, previous_history_json: str | None = None
 ) -> AgentResult:
-    async with fast.run() as agent:
-        # TODO: load history from JSON
+    """Main entry point for diagram generation.
 
-        # run the agent, agent runs tools and returns the status
-        result = await agent.default.send(user_instruction)
+    Handles history persistence at this level (not in DspyAgent class).
 
-        # TODO: retrieve the last tool call since the last message in the history
-        # this means: find last message, get it's index
-        # iterate over all messages from that index till the end, but in rev. order.
+    Args:
+        user_instruction: The user's request for diagram generation
+        previous_history_json: Optional JSON string of previous conversation history
 
-        # TODO: build proper AgentResult
-        agent_result = AgentResult(result)
-    return agent_result
+    Returns:
+        AgentResult with diagram info, updated history, and trace ID
+    """
+    async with fast.run() as agents:
+        dspy_agent = agents.default
+
+        # 1. Load previous history if continuing conversation
+        if previous_history_json:
+            restored_messages = from_json(previous_history_json)
+            dspy_agent.load_message_history(restored_messages)
+
+        # 2. Call agent (uses generate_impl override → DSPy)
+        await dspy_agent.send(user_instruction)
+
+        # 3. Extract last tool result directly (no AI rewriting)
+        tool_result = dspy_agent.extract_last_tool_result()
+
+        # 4. Serialize updated history
+        history_json = to_json(dspy_agent.message_history)
+
+        # 5. Get trace ID from last generation
+        trace_id = dspy_agent.last_trace_id
+
+        return AgentResult(
+            diagram_title=tool_result.get("title", "Untitled"),
+            media_uri=tool_result.get("uri", ""),
+            history_json=history_json,
+            trace_id=trace_id,
+        )
 
 
 async def main():
-    async with fast.run() as agent:
-        result = await agent.interactive()
+    """Run the agent in interactive mode."""
+    async with fast.run() as agents:
+        result = await agents.interactive()
     return result
 
 
