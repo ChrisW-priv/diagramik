@@ -18,13 +18,8 @@ Example:
 """
 
 from agent.agent import AgentResult, agent
-from agent.exceptions import ClarificationNeeded, CodeGenerationError
-
-__version__ = "0.1.0"
 
 __all__ = [
     "agent",
     "AgentResult",
-    "ClarificationNeeded",
-    "CodeGenerationError",
 ]
