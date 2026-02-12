@@ -1,5 +1,3 @@
-"""DspyAgent: FastAgent McpAgent that uses DSPy modules for generation."""
-
 import asyncio
 import json
 import uuid
@@ -8,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
 import dspy
+import nest_asyncio
 from fast_agent import Context
 from fast_agent.agents import AgentConfig, McpAgent
 from mcp.types import CallToolResult, TextContent
@@ -16,6 +15,7 @@ from pydantic import BaseModel
 
 from agent.config import get_configured_lm
 
+nest_asyncio.apply()
 if TYPE_CHECKING:
     from fast_agent.types import PromptMessageExtended, RequestParams
 
@@ -146,7 +146,7 @@ class DspyAgent(McpAgent):
         # 5. Configure DSPy LM and call module
         lm = get_configured_lm()
         with dspy.context(lm=lm):
-            prediction = main_module.forward(
+            prediction = main_module(
                 conversation_history=history_for_dspy,
                 user_request=user_request,
             )

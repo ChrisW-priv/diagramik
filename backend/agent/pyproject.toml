@@ -10,6 +10,7 @@ authors = [
 dependencies = [
     "dspy>=2.5.0",
     "fast-agent-mcp>=0.4.39",
+    "nest-asyncio>=1.6.0",
     "pydantic>=2.12.5",
     "pyyaml>=6.0.2",
 ]
