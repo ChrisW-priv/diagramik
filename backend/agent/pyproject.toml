@@ -11,6 +11,9 @@ dependencies = [
     "dspy>=2.5.0",
     "fast-agent-mcp>=0.4.39",
     "nest-asyncio>=1.6.0",
+    "opentelemetry-api>=1.28.0",
+    "opentelemetry-sdk>=1.28.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.28.0",
     "pydantic>=2.12.5",
     "pyyaml>=6.0.2",
 ]

@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,6 +22,8 @@ if TYPE_CHECKING:
 
 # Directory for storing DSPy traces for training data collection
 TRACES_DIR = Path(__file__).parent.parent.parent.parent / "data" / "dspy_traces"
+
+logger = logging.getLogger("agent.dspy")
 
 
 class DspyModuleArgs(BaseModel):
@@ -137,25 +140,42 @@ class DspyAgent(McpAgent):
         # 2. Extract user request from last message
         user_request = messages[-1].all_text() if messages else ""
 
-        # 3. Format existing history for DSPy input (everything except current request)
-        history_for_dspy = self._format_history_for_dspy(self.message_history)
+        # 3. Add user message to history BEFORE DSPy processing
+        user_msg = PromptMessageExtended(
+            role="user",
+            content=[TextContent(type="text", text=user_request)],
+        )
+        self._append_history([user_msg])
 
-        # 4. Reset tool results collector for this turn
+        # 4. Format existing history for DSPy input (exclude just-added user message)
+        history_for_dspy = self._format_history_for_dspy(self.message_history[:-1])
+
+        # 5. Reset tool results collector for this turn
         self._tool_results_collected = {}
 
-        # 5. Configure DSPy LM and call module
+        # 6. Configure DSPy LM and call module with usage tracking
         lm = get_configured_lm()
-        with dspy.context(lm=lm):
+        with dspy.context(lm=lm), dspy.track_usage() as usage:
             prediction = main_module(
                 conversation_history=history_for_dspy,
                 user_request=user_request,
             )
 
-        # 6. Save DSPy trace (stores trace_id in instance for later retrieval)
+        # 7. Log DSPy call history and usage for debugging
+        self._log_dspy_debug(usage)
+
+        # 8. Save DSPy trace (stores trace_id in instance for later retrieval)
         self._last_trace_id = await self._save_dspy_trace(prediction, user_request)
 
-        # 7. Build response message from DSPy result
+        # 9. Build response message from DSPy result
         response_text = self._build_response_from_prediction(prediction)
+
+        # 10. Add assistant response to history (DSPy modules are action-oriented)
+        done_msg = PromptMessageExtended(
+            role="assistant",
+            content=[TextContent(type="text", text="Done!")],
+        )
+        self._append_history([done_msg])
 
         response = PromptMessageExtended(
             role="assistant",
@@ -430,6 +450,18 @@ class DspyAgent(McpAgent):
             parts.append(str(prediction))
 
         return "\n\n".join(parts)
+
+    def _log_dspy_debug(self, usage: dict | None = None) -> None:
+        """Log DSPy call history and usage for debugging.
+
+        Args:
+            usage: Optional usage dict from dspy.track_usage() context manager
+        """
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("DSPy call history:\n%s", dspy.inspect_history(1))
+
+        if usage:
+            logger.info("DSPy usage: %s", usage)
 
     async def _save_dspy_trace(
         self, prediction: dspy.Prediction, user_request: str

@@ -5,6 +5,7 @@ It handles:
 1. History persistence between sessions
 2. Direct tool result extraction
 3. DSPy-driven generation via DspyAgent
+4. OpenTelemetry tracing for monitoring
 """
 
 import asyncio
@@ -21,6 +22,7 @@ from agent.fastagent.dspy_agent import (
     DspyModuleArgs,
     build_dspy_agent_class,
 )
+from agent.telemetry import get_tracer
 
 THIS_FILE_DIR = Path(__name__).parent
 CONF_FILE = THIS_FILE_DIR.parent.parent / "config" / "fastagent.config.yaml"
@@ -115,32 +117,48 @@ async def agent(
     Returns:
         AgentResult with diagram info, updated history, and trace ID
     """
-    async with fast.run() as agents:
-        dspy_agent = agents.default
-
-        # 1. Load previous history if continuing conversation
-        if previous_history_json:
-            restored_messages = from_json(previous_history_json)
-            dspy_agent.load_message_history(restored_messages)
-
-        # 2. Call agent (uses generate_impl override → DSPy)
-        await dspy_agent.send(user_instruction)
-
-        # 3. Extract last tool result directly (no AI rewriting)
-        tool_result = dspy_agent.extract_last_tool_result()
-
-        # 4. Serialize updated history
-        history_json = to_json(dspy_agent.message_history)
-
-        # 5. Get trace ID from last generation
-        trace_id = dspy_agent.last_trace_id
-
-        return AgentResult(
-            diagram_title=tool_result.get("title", "Untitled"),
-            media_uri=tool_result.get("uri", ""),
-            history_json=history_json,
-            trace_id=trace_id,
+    tracer = get_tracer()
+    with tracer.start_as_current_span("agent.generate_diagram") as span:
+        span.set_attribute("agent.has_history", previous_history_json is not None)
+        span.set_attribute(
+            "agent.instruction_length", len(user_instruction) if user_instruction else 0
         )
+
+        async with fast.run() as agents:
+            dspy_agent = agents.default
+
+            # 1. Load previous history if continuing conversation
+            if previous_history_json:
+                restored_messages = from_json(previous_history_json)
+                dspy_agent.load_message_history(restored_messages)
+                span.set_attribute(
+                    "agent.restored_message_count", len(restored_messages)
+                )
+
+            # 2. Call agent (uses generate_impl override → DSPy)
+            await dspy_agent.send(user_instruction)
+
+            # 3. Extract last tool result directly (no AI rewriting)
+            tool_result = dspy_agent.extract_last_tool_result()
+            span.set_attribute("agent.has_tool_result", bool(tool_result))
+
+            # 4. Serialize updated history
+            history_json = to_json(dspy_agent.message_history)
+            span.set_attribute(
+                "agent.final_message_count", len(dspy_agent.message_history)
+            )
+
+            # 5. Get trace ID from last generation
+            trace_id = dspy_agent.last_trace_id
+            if trace_id:
+                span.set_attribute("agent.dspy_trace_id", trace_id)
+
+            return AgentResult(
+                diagram_title=tool_result.get("title", "Untitled"),
+                media_uri=tool_result.get("uri", ""),
+                history_json=history_json,
+                trace_id=trace_id,
+            )
 
 
 async def main():
