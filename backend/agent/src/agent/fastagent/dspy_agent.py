@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING, Any, Callable
 import dspy
 from fast_agent import Context
 from fast_agent.agents import AgentConfig, McpAgent
-from mcp.types import CallToolResult, TextContent, Tool as FastAgentTool
+from mcp.types import CallToolResult, TextContent
+from mcp.types import Tool as FastAgentTool
 from pydantic import BaseModel
 
 from agent.config import get_configured_lm
@@ -164,6 +165,15 @@ class DspyAgent(McpAgent):
 
         return response
 
+    async def initialize(self) -> None:
+        """Initialize agent and build DSPy modules after MCP connection.
+
+        Overrides McpAgent.initialize() to ensure DSPy modules are constructed
+        after MCP connections are established (so tools are available).
+        """
+        await super().initialize()
+        self._ensure_main_module
+
     async def _ensure_main_module(self) -> dspy.Module:
         """Lazily construct main_module after MCP connection is ready.
 
@@ -175,16 +185,8 @@ class DspyAgent(McpAgent):
         Raises:
             RuntimeError: If called before MCP connection is ready
         """
-        if self._main_module is not None:
-            return self._main_module
-
-        if not self.initialized:
-            raise RuntimeError(
-                "Cannot construct DSPy module before MCP connection is ready"
-            )
-
-        # Build tool wrappers and initialize modules
-        self._main_module = await self._construct_main_module()
+        if self._main_module is None:
+            self._main_module = await self._construct_main_module()
         return self._main_module
 
     async def _construct_main_module(self) -> dspy.Module:
