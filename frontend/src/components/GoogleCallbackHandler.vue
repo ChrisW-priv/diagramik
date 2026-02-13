@@ -7,6 +7,17 @@ const loading = ref(true);
 
 onMounted(async () => {
   const urlParams = new URLSearchParams(window.location.search);
+
+  // Check for OAuth pending flow (new user needs to accept terms)
+  const oauthPending = urlParams.get('oauth_pending');
+  const stateToken = urlParams.get('state');
+
+  if (oauthPending === 'google' && stateToken) {
+    // New user - redirect to register with state
+    window.location.href = `/auth/register?oauth_pending=google&state=${encodeURIComponent(stateToken)}`;
+    return;
+  }
+
   const accessToken = urlParams.get('access');
   const refreshToken = urlParams.get('refresh');
   const errorParam = urlParams.get('error');

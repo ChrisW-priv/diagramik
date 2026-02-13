@@ -137,7 +137,8 @@ export const authApi = {
     email: string,
     password1: string,
     password2: string,
-    firstName?: string
+    firstName?: string,
+    termsAccepted?: boolean
   ) {
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/registration/`,
@@ -146,6 +147,7 @@ export const authApi = {
         password1,
         password2,
         first_name: firstName || '',
+        terms_accepted: termsAccepted || false,
       }
     );
     const { access, refresh, user } = response.data;
@@ -205,10 +207,17 @@ export const authApi = {
     return response.data;
   },
 
-  async getGoogleAuthUrl() {
-    const response = await axios.get(
-      `${API_BASE_URL}/api/v1/auth/social/google/url/`
-    );
+  async getGoogleAuthUrl(fromRegister: boolean = false, termsAccepted: boolean = false) {
+    const params = new URLSearchParams();
+    if (fromRegister) params.append('from_register', 'true');
+    if (termsAccepted) params.append('terms_accepted', 'true');
+
+    const queryString = params.toString();
+    const url = queryString
+      ? `${API_BASE_URL}/api/v1/auth/social/google/url/?${queryString}`
+      : `${API_BASE_URL}/api/v1/auth/social/google/url/`;
+
+    const response = await axios.get(url);
     return response.data.auth_url;
   },
 
@@ -216,6 +225,24 @@ export const authApi = {
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/social/google/`,
       { code }
+    );
+    const { access, refresh, user } = response.data;
+    if (access && refresh) {
+      setTokens({ access, refresh });
+    }
+    if (user) {
+      setUser(user);
+    }
+    return response.data;
+  },
+
+  async completeOAuthRegistration(stateToken: string, termsAccepted: boolean) {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/v1/auth/social/google/complete/`,
+      {
+        state_token: stateToken,
+        terms_accepted: termsAccepted
+      }
     );
     const { access, refresh, user } = response.data;
     if (access && refresh) {
