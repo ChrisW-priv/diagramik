@@ -1,8 +1,206 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import TermsAndConditions from '../components/TermsAndConditions.vue';
+import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
+
+const lastUpdated = new Date().toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
 ---
 
 <Layout>
-  <TermsAndConditions client:load />
+  <div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+      <!-- Back Button -->
+      <a
+        href="javascript:history.back()"
+        class="inline-flex items-center text-blue-400 hover:text-blue-300 mb-6"
+      >
+        <ArrowLeftIcon className="h-5 w-5 mr-2" />
+        Back
+      </a>
+
+      <!-- Header -->
+      <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <h1 class="text-4xl font-bold text-white mb-4">Terms and Conditions</h1>
+        <p class="text-gray-400">Last updated: {lastUpdated}</p>
+      </div>
+
+      <!-- Content -->
+      <div class="bg-gray-800 rounded-lg shadow-lg p-8 space-y-8 text-gray-300">
+
+        <!-- 1. Introduction -->
+        <section>
+          <h2 class="text-2xl font-bold text-white mb-4">1. Welcome to Diagramik</h2>
+          <p class="mb-4">
+            Hi! Welcome to Diagramik, a web-based diagramming tool. This is a <strong class="text-white">private project</strong>,
+            not a commercial service or company. By using Diagramik, you agree to these terms.
+          </p>
+          <p>
+            These terms are kept simple and straightforward. If you have any questions, feel free to reach out!
+          </p>
+        </section>
+
+        <!-- 2. About This Project -->
+        <section>
+          <h2 class="text-2xl font-bold text-white mb-4">2. About This Project</h2>
+          <div class="bg-blue-500/10 border border-blue-500 rounded-lg p-6 mb-4">
+            <p class="mb-2"><strong class="text-white">Operator:</strong> Krzysztof Watras (private individual)</p>
+            <p class="mb-2"><strong class="text-white">Email:</strong> <a href="mailto:chris.watras@gmail.com" class="text-blue-400 hover:text-blue-300 underline">chris.watras@gmail.com</a></p>
+            <p><strong class="text-white">Status:</strong> Private project, not a commercial service</p>
+          </div>
+          <p class="mb-4">
+            Important things to understand:
+          </p>
+          <ul class="list-disc list-inside space-y-2 ml-4">
+            <li>This is run by a private individual, not a company</li>
+            <li>I'm not a data processor in the legal/commercial sense</li>
+            <li>This should not be treated as a professional service with SLAs or guarantees</li>
+            <li>I run this project because I enjoy building useful tools</li>
+          </ul>
+        </section>
+
+        <!-- 3. What We Collect -->
+        <section>
+          <h2 class="text-2xl font-bold text-white mb-4">3. What We Collect</h2>
+          <p class="mb-4">
+            I keep data collection minimal. Here's what I collect:
+          </p>
+          <div class="bg-gray-700 rounded-lg p-6 mb-4">
+            <p class="mb-2"><strong class="text-white">Email Address Only</strong></p>
+            <p class="text-sm">That's it. Just your email address for account creation and login.</p>
+          </div>
+          <p class="mb-4">
+            Your email is:
+          </p>
+          <ul class="list-disc list-inside space-y-2 ml-4">
+            <li>Stored securely in a database</li>
+            <li>Never shared with third parties</li>
+            <li>Never used for marketing or sold to anyone</li>
+            <li>Only used to provide you access to the service</li>
+          </ul>
+        </section>
+
+        <!-- 4. How Your Content is Stored -->
+        <section>
+          <h2 class="text-2xl font-bold text-white mb-4">4. How Your Content is Stored</h2>
+          <div class="bg-yellow-500/10 border border-yellow-500 rounded-lg p-6 mb-4">
+            <p class="mb-2"><strong class="text-white">⚠️ Important: Plain Text Storage</strong></p>
+            <p>All diagrams and conversations are stored in <strong>plain text</strong> format.</p>
+          </div>
+          <p class="mb-4">
+            What this means for you:
+          </p>
+          <ul class="list-disc list-inside space-y-2 ml-4 mb-4">
+            <li><strong class="text-white">Do NOT include sensitive information</strong> in your diagrams or conversations</li>
+            <li>Do not include passwords, API keys, secrets, or confidential data</li>
+            <li>Assume that diagram content is readable (even though I won't look at it without reason)</li>
+            <li>This storage method keeps the service simple and fast</li>
+          </ul>
+          <p>
+            Your content is stored on servers in the European Union with standard security measures in place.
+          </p>
+        </section>
+
+        <!-- 5. How We Use Your Data -->
+        <section>
+          <h2 class="text-2xl font-bold text-white mb-4">5. How We Use Your Data</h2>
+          <p class="mb-4">
+            Your data is used to:
+          </p>
+          <ul class="list-disc list-inside space-y-2 ml-4 mb-4">
+            <li>Provide you access to the service (authentication)</li>
+            <li>Store and display your diagrams</li>
+            <li>Improve the product (e.g., understanding which features are used)</li>
+            <li>Fix bugs and issues</li>
+          </ul>
+          <p>
+            I may analyze usage patterns and diagram content to improve Diagramik's features and performance.
+            This helps me understand how people use the tool and what I can improve.
+          </p>
+        </section>
+
+        <!-- 6. Your Rights -->
+        <section>
+          <h2 class="text-2xl font-bold text-white mb-4">6. Your Rights</h2>
+          <p class="mb-4">
+          Because this is a simple site during development, there is no user account management (at this point in time).
+          You have full rights to request account deletion or ask questions about your data, email me at:
+            <a href="mailto:chris.watras@gmail.com" class="text-blue-400 hover:text-blue-300 underline">chris.watras@gmail.com</a>
+          </p>
+          <p class="mt-4 text-sm">
+            When you request deletion, I'll remove your account and data within a reasonable timeframe (usually within 7 days).
+          </p>
+        </section>
+
+        <!-- 7. Acceptable Use -->
+        <section>
+          <h2 class="text-2xl font-bold text-white mb-4">7. Acceptable Use</h2>
+          <p class="mb-4">
+            Please use Diagramik responsibly:
+          </p>
+          <ul class="list-disc list-inside space-y-2 ml-4">
+            <li>Don't use it for illegal purposes</li>
+            <li>Don't try to hack or break the service</li>
+            <li>Don't abuse the service or try to overload it</li>
+            <li>Don't use automated tools to spam or scrape the service</li>
+            <li>Be respectful of the resources (this is a small private project)</li>
+          </ul>
+          <p class="mt-4">
+            If you violate these terms, I may suspend or terminate your account.
+          </p>
+        </section>
+
+        <!-- 8. Disclaimer -->
+        <section>
+          <h2 class="text-2xl font-bold text-white mb-4">8. Disclaimer & Limitations</h2>
+          <p class="mb-4">
+            Because this is a private project, please understand:
+          </p>
+          <ul class="list-disc list-inside space-y-2 ml-4 mb-4">
+            <li>The service is provided "as is" with no warranties</li>
+            <li>I don't guarantee 100% uptime or availability</li>
+            <li>I'm not liable for data loss (please back up important diagrams)</li>
+            <li>The service may change or be discontinued at any time</li>
+            <li>I'm not liable for any damages arising from your use of the service</li>
+          </ul>
+          <p>
+            <strong class="text-white">Translation:</strong> I do my best to keep things running smoothly, but this is a hobby project.
+            Use it at your own risk, and don't store anything critical here without backups.
+          </p>
+        </section>
+
+        <!-- 9. Changes to These Terms -->
+        <section>
+          <h2 class="text-2xl font-bold text-white mb-4">9. Changes to These Terms</h2>
+          <p>
+            I may update these terms occasionally. I'll try to notify you about these changes via email.
+            Continued use of the service after changes means you accept the new terms.
+          </p>
+        </section>
+
+        <!-- 10. Contact -->
+        <section>
+          <h2 class="text-2xl font-bold text-white mb-4">10. Contact</h2>
+          <p class="mb-4">
+            Questions? Concerns?
+          </p>
+          <div class="bg-gray-700 rounded-lg p-6">
+            <p class="mb-2"><strong class="text-white">Krzysztof Watras</strong></p>
+            <p>Email: <a href="mailto:chris.watras@gmail.com" class="text-blue-400 hover:text-blue-300 underline">chris.watras@gmail.com</a></p>
+          </div>
+          <p class="mt-4 text-sm">
+            I'll do my best to respond to all inquiries in a reasonable timeframe.
+          </p>
+        </section>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-8 text-center text-gray-500 text-sm">
+        <p>By using Diagramik, you acknowledge that you have read and agree to these Terms and Conditions.</p>
+      </div>
+    </div>
+  </div>
 </Layout>
