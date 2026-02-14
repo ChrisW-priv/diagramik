@@ -222,7 +222,7 @@ module "django-monolith" {
   # VPC Direct Egress configuration
   vpc_network_self_link    = var.vpc_network_self_link
   vpc_subnetwork_self_link = var.vpc_subnetwork_self_link
-  vpc_egress               = "PRIVATE_RANGES_ONLY"
+  vpc_egress               = "ALL_TRAFFIC"
 
   depends_on = [
     module.django-monolith-secret-key,
