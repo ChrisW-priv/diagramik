@@ -1,0 +1,4 @@
+fastagent.jsonl
+
+# DSPy traces (training data, generated at runtime)
+data/dspy_traces/*.json

@@ -1,9 +1,5 @@
 from available_nodes import *  # noqa
-from diagrams import Cluster, Diagram, Edge, Node  # noqa
-
-
-def AggregatorNode():
-    return Node("", shape="plaintext", height="0.0", width="0.0")
+from diagrams import Diagram, Cluster, Edge  # noqa
 
 
 default_graph_attr = {

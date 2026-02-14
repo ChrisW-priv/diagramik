@@ -38,6 +38,10 @@ includes:
       REGION: "{{.REGION}}"
       PROJECT_ID: "{{.PROJECT_ID}}"
 
+  agent:
+    taskfile: agent/Taskfile.yml
+    dir: agent
+
 tasks:
   # === Python Environment ===
   sync:
@@ -69,6 +73,7 @@ tasks:
     deps:
       - monolith:test
       - mcp:test
+      - agent:test:unit
 
   push:
     desc: Push all backend Docker images to registries
@@ -168,4 +173,77 @@ tasks:
     dir: ./mcp_diagrams/
     cmds:
       - ../.venv/bin/pytest --cov=. --cov-report=term-missing --cov-report=html -vv
+
+  # === Agent Tasks ===
+  agent:test:with-server:
+    desc: Run agent integration tests with real MCP server
+    env:
+      BUCKET_NAME: "{{.DIAGRAMS_BUCKET}}"
+      MCP_SERVICE_URL: http://localhost:8080
+    vars:
+      MCP_LOG: /tmp/mcp_server_integration.log
+      MCP_PID_FILE: /tmp/mcp_server_integration.pid
+      MAX_RETRIES: 30
+      RETRY_DELAY: 1
+    cmds:
+      # Start MCP server in background
+      - echo "Starting MCP server..."
+      - bash -c '.venv/bin/python mcp_diagrams/server.py > {{.MCP_LOG}} 2>&1 & echo $! > {{.MCP_PID_FILE}}'
+      - echo "MCP server process started with PID $(cat {{.MCP_PID_FILE}})"
+
+      - defer: |
+          bash -c '
+          if [ -f {{.MCP_PID_FILE}} ]; then
+            MCP_PID=$(cat {{.MCP_PID_FILE}})
+            if kill -0 "$MCP_PID" 2>/dev/null; then
+              echo "Stopping MCP server (PID: $MCP_PID)..."
+              kill "$MCP_PID" 2>/dev/null || true
+              wait "$MCP_PID" 2>/dev/null || true
+              echo "MCP server stopped"
+            else
+              echo "MCP server (PID: $MCP_PID) already stopped"
+            fi
+          else
+            echo "PID file not found"
+          fi
+          echo "Removing temp files..."
+          rm -f {{.MCP_PID_FILE}} {{.MCP_LOG}}
+          echo "Cleanup complete!"
+          '
+
+        # Poll server with retries
+      - |
+        bash -c '
+        echo "Waiting for MCP server to be ready (max {{.MAX_RETRIES}} attempts)..."
+        while [ {{ .MAX_RETRIES }} -gt 0 ]; do
+          # Check if process is still running
+          if ! kill -0 "$(cat {{.MCP_PID_FILE}})" 2>/dev/null; then
+            echo "ERROR: MCP server process died"
+            echo "Server logs:"
+            cat {{.MCP_LOG}}
+            exit 1
+          fi
+
+          # Try to connect to server
+          if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health > /dev/null 2>&1 || \
+             curl -s -f http://localhost:8080 > /dev/null 2>&1; then
+            echo "MCP server is ready!"
+            exit 0
+          fi
+
+          MAX_RETRIES=$((MAX_RETRIES + 1))
+          echo "Server not ready yet, waiting {{.RETRY_DELAY}}s..."
+          sleep {{.RETRY_DELAY}}
+        done
+
+        echo "ERROR: MCP server failed to become ready after {{.MAX_RETRIES}} attempts"
+        echo "Server logs:"
+        cat {{.MCP_LOG}}
+        exit 1
+        '
+
+      # Run integration tests
+      - echo "Running agent integration tests..."
+      - cd agent && ../.venv/bin/pytest tests/ -v -m integration
+      - echo "Integration tests completed"
 

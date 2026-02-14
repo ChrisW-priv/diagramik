@@ -4,6 +4,8 @@ from django.shortcuts import redirect
 
 from google.oauth2 import service_account
 
+from agent import agent, ClarificationNeeded, CodeGenerationError
+
 from .models import Diagram, DiagramVersion, ChatMessage
 from .serializers import (
     DiagramSerializer,
@@ -17,8 +19,6 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 from django.conf import settings
 from google.cloud.storage import Client, Blob
-
-from .agent import agent
 
 
 def create_publicly_accessible_url(image_uri: str) -> str:
@@ -52,7 +52,19 @@ class DiagramListCreate(generics.ListCreateAPIView):
                 {"error": "Text is required"}, status=status.HTTP_400_BAD_REQUEST
             )
         user = request.user
-        agent_result = asyncio.run(agent(text, previous_history_json=None))
+
+        try:
+            agent_result = asyncio.run(agent(text, previous_history_json=None))
+        except ClarificationNeeded as e:
+            return Response(
+                {"clarification_needed": True, "question": str(e)},
+                status=status.HTTP_200_OK,
+            )
+        except CodeGenerationError as e:
+            return Response(
+                {"error": "Could not generate diagram", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         diagram = Diagram.objects.create(
             title=agent_result.diagram_title,
             owner=user,
@@ -97,7 +109,21 @@ class DiagramVersionCreate(APIView):
 
         # Pass previous history to agent
         previous_history = diagram.agent_history if diagram.agent_history else None
-        agent_result = asyncio.run(agent(text, previous_history_json=previous_history))
+
+        try:
+            agent_result = asyncio.run(
+                agent(text, previous_history_json=previous_history)
+            )
+        except ClarificationNeeded as e:
+            return Response(
+                {"clarification_needed": True, "question": str(e)},
+                status=status.HTTP_200_OK,
+            )
+        except CodeGenerationError as e:
+            return Response(
+                {"error": "Could not generate diagram", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         # Update stored history
         diagram.agent_history = agent_result.history_json
