@@ -4,6 +4,7 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim@sha256:fcb50226f56cc30eb2d9fa
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
+COPY agent/ /app/agent/
 RUN uv sync --group django-monolith
 
 FROM python:3.13-slim AS release

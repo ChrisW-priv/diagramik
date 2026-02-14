@@ -2,26 +2,10 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from draw_diagram import draw_diagram, AggregatorNode
+from draw_diagram import draw_diagram
 
 
 pytestmark = pytest.mark.unit
-
-
-class TestAggregatorNode:
-    """Tests for the AggregatorNode helper function."""
-
-    def test_aggregator_node_returns_node(self):
-        """Test that AggregatorNode returns a Node object."""
-        # This test will need to mock the Node class since it's from diagrams
-        with patch("draw_diagram.Node") as mock_node:
-            # Act
-            AggregatorNode()
-
-            # Assert
-            mock_node.assert_called_once_with(
-                "", shape="plaintext", height="0.0", width="0.0"
-            )
 
 
 class TestDrawDiagram:

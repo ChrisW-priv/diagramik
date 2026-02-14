@@ -4,7 +4,7 @@ from django.shortcuts import redirect
 
 from google.oauth2 import service_account
 
-from agent import agent, ClarificationNeeded, CodeGenerationError
+from agent import agent
 
 from .models import Diagram, DiagramVersion, ChatMessage
 from .serializers import (
@@ -19,6 +19,28 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 from django.conf import settings
 from google.cloud.storage import Client, Blob
+
+
+def _extract_clarification_from_history(history_json: str) -> str:
+    """Extract the last assistant message from history (fallback response).
+
+    Args:
+        history_json: JSON string containing conversation history
+
+    Returns:
+        The clarification message from the fallback agent
+    """
+    from fast_agent.mcp.prompt_serialization import from_json
+
+    messages = from_json(history_json)
+    # Find last assistant message (the fallback agent's response)
+    for msg in reversed(messages):
+        if msg.role == "assistant" and msg.content:
+            for content_item in msg.content:
+                if hasattr(content_item, "text"):
+                    return content_item.text
+
+    return "Could not generate diagram. Please try rephrasing your request."
 
 
 def create_publicly_accessible_url(image_uri: str) -> str:
@@ -53,18 +75,21 @@ class DiagramListCreate(generics.ListCreateAPIView):
             )
         user = request.user
 
-        try:
-            agent_result = asyncio.run(agent(text, previous_history_json=None))
-        except ClarificationNeeded as e:
+        agent_result = asyncio.run(agent(text, previous_history_json=None))
+
+        # Check if diagram was generated (media_uri will be empty if fallback agent was called)
+        if not agent_result.media_uri:
+            # No diagram generated - fallback agent was called
+            # Extract clarification message from history
+            clarification_msg = _extract_clarification_from_history(
+                agent_result.history_json
+            )
             return Response(
-                {"clarification_needed": True, "question": str(e)},
+                {"clarification_needed": True, "question": clarification_msg},
                 status=status.HTTP_200_OK,
             )
-        except CodeGenerationError as e:
-            return Response(
-                {"error": "Could not generate diagram", "details": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+
+        # Success - diagram was generated
         diagram = Diagram.objects.create(
             title=agent_result.diagram_title,
             owner=user,
@@ -110,21 +135,24 @@ class DiagramVersionCreate(APIView):
         # Pass previous history to agent
         previous_history = diagram.agent_history if diagram.agent_history else None
 
-        try:
-            agent_result = asyncio.run(
-                agent(text, previous_history_json=previous_history)
+        agent_result = asyncio.run(agent(text, previous_history_json=previous_history))
+
+        # Check if diagram was generated (media_uri will be empty if fallback agent was called)
+        if not agent_result.media_uri:
+            # No diagram generated - fallback agent was called
+            # Extract clarification message from history
+            clarification_msg = _extract_clarification_from_history(
+                agent_result.history_json
             )
-        except ClarificationNeeded as e:
+            # Update stored history even for clarifications
+            diagram.agent_history = agent_result.history_json
+            diagram.save(update_fields=["agent_history"])
             return Response(
-                {"clarification_needed": True, "question": str(e)},
+                {"clarification_needed": True, "question": clarification_msg},
                 status=status.HTTP_200_OK,
             )
-        except CodeGenerationError as e:
-            return Response(
-                {"error": "Could not generate diagram", "details": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
 
+        # Success - diagram was generated
         # Update stored history
         diagram.agent_history = agent_result.history_json
         diagram.save(update_fields=["agent_history"])
