@@ -155,10 +155,10 @@ tasks:
       DJANGO_SECRET_KEY: "789123456123123123123123123123123123123123123123123123arstqwfpzxcv"  # Has to be long and have many unique chars
     cmds:
       - mkdir -p django_monolith/backend/temp_settings
+      - defer: rm -r django_monolith/backend/temp_settings
       - cp -r django_monolith/backend/settings/* django_monolith/backend/temp_settings
       - cp -r django_monolith/backend/deployed_settings/* django_monolith/backend/temp_settings
       - .venv/bin/python django_monolith/manage.py check --deploy --fail-level WARNING --settings=backend.temp_settings
-      - rm -r django_monolith/backend/temp_settings
 
   # === MCP Custom Tasks ===
   mcp:dev:
@@ -246,4 +246,3 @@ tasks:
       - echo "Running agent integration tests..."
       - cd agent && ../.venv/bin/pytest tests/ -v -m integration
       - echo "Integration tests completed"
-

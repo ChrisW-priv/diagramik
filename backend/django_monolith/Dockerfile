@@ -11,6 +11,7 @@ FROM python:3.13-slim AS release
 
 WORKDIR /app
 COPY --from=base /app/.venv /app/.venv
+COPY --from=base /app/agent /app/agent
 
 COPY django_monolith/ /app/django_monolith/
 RUN chmod +x /app/django_monolith/entrypoint.sh

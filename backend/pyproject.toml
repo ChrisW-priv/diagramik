@@ -38,7 +38,7 @@ django-monolith = [
     "djangorestframework-simplejwt>=5.4.0",
     "requests>=2.32.0",
     "django-cors-headers>=4.9.0",
-    "text-diagrams-agent",
+    "agent",
 ]
 
 [tool.uv.workspace]
@@ -47,4 +47,4 @@ members = [
 ]
 
 [tool.uv.sources]
-text-diagrams-agent = { workspace = true }
+agent = { workspace = true }

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from uuid_utils import uuid7
 from mcp.server.fastmcp import FastMCP
@@ -6,6 +7,11 @@ from draw_diagram import draw_diagram as draw_diagram_tool
 from draw_mermaid import draw_mermaid_diagram
 from move_file_to_gcs import move_file_to_gcs
 from pydantic import BaseModel, Field
+
+
+_USER_MANUAL_DIR = Path(__file__).parent / "data" / "user_manual"
+_PYTHON_DIAGRAMS_GUIDE = (_USER_MANUAL_DIR / "python_diagrams.md").read_text()
+_MERMAID_GUIDE = (_USER_MANUAL_DIR / "mermaid.md").read_text()
 
 
 # Environment configuration
@@ -52,12 +58,8 @@ class TechnicalDiagramArgs(BaseModel):
     )
 
 
-@mcp.tool()
+@mcp.tool(description=_PYTHON_DIAGRAMS_GUIDE)
 async def draw_technical_diagram(args: TechnicalDiagramArgs) -> DrawResult:
-    """
-    Draws diagram with `diagrams` library python template. Has access to icons of common IT technologies you may need.
-    Best for system design, architecture diagrams, high level architectures. Returns URI to internal storage.
-    """
     filename = str(uuid7())
     kwargs = args.model_dump()
 
@@ -87,13 +89,8 @@ class MermaidArgs(BaseModel):
     )
 
 
-@mcp.tool()
+@mcp.tool(description=_MERMAID_GUIDE)
 async def draw_mermaid(args: MermaidArgs) -> DrawResult:
-    """
-    Creates a Mermaid diagram and returns a URL to view it.
-    Supports flowcharts, sequence diagrams, class diagrams, state diagrams, ER diagrams, and more.
-    Returns mermaid URI that you can render.
-    """
     result = draw_mermaid_diagram(args.code, args.output_format)
     return DrawResult(uri=result.get("url"), title=args.title)
 

@@ -25,7 +25,7 @@ from agent.fastagent.dspy_agent import (
 )
 from agent.telemetry import get_tracer
 
-THIS_FILE_DIR = Path(__name__).parent
+THIS_FILE_DIR = Path(__file__).parent
 CONF_FILE = THIS_FILE_DIR.parent.parent / "config" / "fastagent.config.yaml"
 
 # Patch FastAgent OAuth for CloudRun service-to-service auth
