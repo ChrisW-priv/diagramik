@@ -46,16 +46,30 @@ tasks:
     cmds:
       - "{{.VENV}}/ruff check src/ tests/"
 
-  # Future optimization tasks (when enough data collected)
   optimize:
-    desc: Optimize all DSPy modules (requires 100+ examples)
+    desc: Optimize all DSPy modules
     cmds:
       - "{{.VENV}}/python -m agent.optimization.compile"
 
   optimize:router:
-    desc: Optimize router only
+    desc: Optimize router classifier
     cmds:
       - "{{.VENV}}/python -m agent.optimization.compile router"
+
+  optimize:technical:
+    desc: Optimize technical diagram agent
+    cmds:
+      - "{{.VENV}}/python -m agent.optimization.compile technical"
+
+  optimize:mermaid:
+    desc: Optimize mermaid diagram agent
+    cmds:
+      - "{{.VENV}}/python -m agent.optimization.compile mermaid"
+
+  optimize:fallback:
+    desc: Optimize fallback agent
+    cmds:
+      - "{{.VENV}}/python -m agent.optimization.compile fallback"
 
   collect-data:
     desc: Export production logs to dataset format

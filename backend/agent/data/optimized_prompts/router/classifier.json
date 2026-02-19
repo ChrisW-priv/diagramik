@@ -1,0 +1,85 @@
+{
+  "classifier.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [
+      {
+        "augmented": true,
+        "conversation_history": "",
+        "user_request": "Create a 3-tier web application on GCP with CloudRun, PostgreSQL, and GCS",
+        "reasoning": "The request involves creating a web application on GCP using CloudRun, PostgreSQL, and GCS. This describes a cloud infrastructure setup.",
+        "diagram_type": "cloud"
+      },
+      {
+        "augmented": true,
+        "conversation_history": "",
+        "user_request": "Show a GCP infrastructure with Cloud Run, PubSub, and BigQuery",
+        "reasoning": "The request explicitly mentions GCP and services like Cloud Run, PubSub, and BigQuery, which are related to cloud infrastructure. Therefore, the diagram type is cloud.",
+        "diagram_type": "cloud"
+      },
+      {
+        "augmented": true,
+        "conversation_history": "",
+        "user_request": "Design a monitoring stack with Prometheus, Grafana, and Sentry",
+        "reasoning": "The request involves designing a monitoring stack, which implies the arrangement and interaction of software components. The specific tools mentioned (Prometheus, Grafana, and Sentry) are related to monitoring and observability. Therefore, the diagram type should reflect the architecture or system design.",
+        "diagram_type": "architecture"
+      },
+      {
+        "augmented": true,
+        "conversation_history": "",
+        "user_request": "Draw a Kubernetes deployment with Nginx ingress and Redis cache",
+        "reasoning": "The request describes a deployment on Kubernetes, which is a cloud technology. It includes components like Nginx ingress and Redis cache, which are often part of cloud infrastructure. Therefore, the diagram type is cloud.",
+        "diagram_type": "cloud"
+      },
+      {
+        "conversation_history": "",
+        "user_request": "Show the cloud infrastructure for our ML training platform",
+        "expected_route": "draw_technical_diagram"
+      },
+      {
+        "conversation_history": "",
+        "user_request": "Make a git graph showing our release branching strategy",
+        "expected_route": "draw_mermaid"
+      },
+      {
+        "conversation_history": "",
+        "user_request": "Create a pie chart showing budget allocation by department",
+        "expected_route": "draw_mermaid"
+      },
+      {
+        "conversation_history": "",
+        "user_request": "Microservices architecture with Docker containers and RabbitMQ",
+        "expected_route": "draw_technical_diagram"
+      }
+    ],
+    "signature": {
+      "instructions": "Classify the diagram request type based on keywords: technical, architecture, cloud, infrastructure, system, flow, sequence, flowchart, process, state, class, clarify, error, unknown, cannot, unable, help",
+      "fields": [
+        {
+          "prefix": "Conversation History:",
+          "description": "${conversation_history}"
+        },
+        {
+          "prefix": "User Request:",
+          "description": "${user_request}"
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Diagram Type:",
+          "description": "${diagram_type}"
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.13",
+      "dspy": "3.1.3",
+      "cloudpickle": "3.1"
+    }
+  }
+}
