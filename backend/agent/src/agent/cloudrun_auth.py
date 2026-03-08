@@ -12,6 +12,7 @@ CloudRun authentication requires:
 import logging
 import os
 from typing import Generator
+from urllib.parse import urlparse
 
 import httpx
 from google.auth.transport.requests import Request
@@ -23,12 +24,8 @@ logger = logging.getLogger(__name__)
 class CloudRunAuth(httpx.Auth):
     """HTTPX auth for CloudRun service-to-service calls using OIDC identity tokens.
 
-    This auth class generates OIDC identity tokens with the target service URL
-    as the audience claim. Tokens are fetched from the GCP metadata server
-    using the service account attached to the CloudRun service.
-
-    Args:
-        target_audience: The target service URL (e.g., https://service.run.app)
+    Generates OIDC identity tokens with the target service URL as the audience
+    claim, fetched from the GCP metadata server using the attached service account.
     """
 
     def __init__(self, target_audience: str):
@@ -38,20 +35,10 @@ class CloudRunAuth(httpx.Auth):
     def auth_flow(
         self, request: httpx.Request
     ) -> Generator[httpx.Request, httpx.Response, None]:
-        """Inject OIDC identity token into request Authorization header.
-
-        Args:
-            request: The outgoing HTTP request
-
-        Yields:
-            The request with Authorization header added
-        """
         try:
-            # Fetch identity token from GCP metadata server
-            # This uses Application Default Credentials (service account in CloudRun)
             token = id_token.fetch_id_token(Request(), self.target_audience)
             request.headers["Authorization"] = f"Bearer {token}"
-            logger.debug(f"Added OIDC identity token to request for {request.url}")
+            logger.debug(f"Added OIDC identity token for {request.url}")
         except Exception as e:
             logger.error(f"Failed to fetch OIDC identity token: {e}")
             raise
@@ -60,25 +47,18 @@ class CloudRunAuth(httpx.Auth):
 
 
 def is_running_in_cloudrun() -> bool:
-    """Detect if running in CloudRun environment.
-
-    CloudRun sets the K_SERVICE environment variable with the service name.
-
-    Returns:
-        True if running in CloudRun, False otherwise
-    """
+    """Detect if running in CloudRun (K_SERVICE env var is set)."""
     return os.getenv("K_SERVICE") is not None
 
 
 def patch_fastagent_oauth():
     """Patch FastAgent's OAuth provider to use CloudRun OIDC auth when deployed.
 
-    This function intercepts FastAgent's `build_oauth_provider()` to return
-    CloudRunAuth instead of the OAuth 2.0 authorization code flow when running
-    in CloudRun environments.
+    Replaces `build_oauth_provider` in `fast_agent.mcp.oauth_client` so that
+    HTTP/SSE connections to MCP servers use OIDC identity tokens instead of
+    the interactive OAuth 2.0 authorization code flow.
 
-    The patch only applies in CloudRun (detected via K_SERVICE env var).
-    In local development, the original OAuth flow is preserved.
+    No-op when not running in CloudRun (detected via K_SERVICE env var).
     """
     if not is_running_in_cloudrun():
         logger.info("Not running in CloudRun - skipping OAuth patch")
@@ -88,41 +68,34 @@ def patch_fastagent_oauth():
         "Running in CloudRun - patching FastAgent OAuth for OIDC identity tokens"
     )
 
-    # Import FastAgent's auth module
     try:
-        from fast_agent_mcp import auth as fastagent_auth
+        from fast_agent.mcp import oauth_client as fastagent_oauth
+        from fast_agent.mcp import mcp_connection_manager
     except ImportError:
-        logger.warning("Could not import fast_agent_mcp.auth - OAuth patch skipped")
+        logger.warning(
+            "Could not import fast_agent.mcp.oauth_client - OAuth patch skipped"
+        )
         return
 
-    # Store original OAuth builder
-    _ = fastagent_auth.build_oauth_provider
+    # Store original for reference
+    _original_build_oauth_provider = fastagent_oauth.build_oauth_provider
 
-    def patched_build_oauth(
-        mcp_url: str, client_id: str | None = None, client_secret: str | None = None
-    ):
-        """Patched OAuth builder that returns CloudRunAuth in CloudRun environments.
+    def patched_build_oauth_provider(server_config):
+        """Return CloudRunAuth for OIDC-based service-to-service auth."""
+        if server_config.transport not in ("sse", "http"):
+            return None
 
-        Args:
-            mcp_url: The MCP service URL
-            client_id: OAuth client ID (ignored in CloudRun)
-            client_secret: OAuth client secret (ignored in CloudRun)
-
-        Returns:
-            CloudRunAuth instance configured with mcp_url as audience
-        """
-        logger.info(f"Using CloudRunAuth for MCP service at {mcp_url}")
-
-        # Extract base URL for audience (remove path components)
-        # MCP URL format: https://service.run.app/mcp
-        # Audience should be: https://service.run.app
-        from urllib.parse import urlparse
-
-        parsed = urlparse(mcp_url)
+        url = server_config.url or ""
+        parsed = urlparse(url)
         audience = f"{parsed.scheme}://{parsed.netloc}"
 
+        logger.info(
+            f"Using CloudRunAuth for MCP service at {url} (audience: {audience})"
+        )
         return CloudRunAuth(target_audience=audience)
 
-    # Apply patch
-    fastagent_auth.build_oauth_provider = patched_build_oauth
+    # Patch in both modules (mcp_connection_manager imports it at module level)
+    fastagent_oauth.build_oauth_provider = patched_build_oauth_provider
+    mcp_connection_manager.build_oauth_provider = patched_build_oauth_provider
+
     logger.info("FastAgent OAuth successfully patched for CloudRun OIDC authentication")
