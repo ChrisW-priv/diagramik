@@ -71,8 +71,8 @@ def sample_diagram_code():
 user = User("User")
 browser = Client("Browser")
 with Cluster("Our VPC"):
-    lb = LoadBalancing("Load Balancer")
-    lb >> [Run("CloudRun Service"), Storage("GCS Bucket")]
+    lb = Nginx("Load Balancer")
+    lb >> [CloudRun("CloudRun Service"), Storage("GCS Bucket")]
 user >> browser >> lb
 """
 

@@ -12,12 +12,12 @@ class UserProfile(models.Model):
     )
     terms_accepted = models.BooleanField(
         default=False,
-        help_text="Whether the user has accepted the terms and conditions"
+        help_text="Whether the user has accepted the terms and conditions",
     )
     terms_accepted_at = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="When the user accepted the terms and conditions"
+        help_text="When the user accepted the terms and conditions",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

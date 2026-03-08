@@ -1,8 +1,8 @@
-module "vertex-ai-secret" {
+module "ai-secret" {
   source            = "./modules/secret"
   google_project_id = var.google_project_id
   location          = var.google_region
-  secret_name       = "VERTEX_AI_API_SECRET_KEY"
+  secret_name       = "AI_SECRET_KEY"
   secret_data       = var.gcs_sa_key_json
 }
 
@@ -110,13 +110,13 @@ module "diagramik" {
     "GOOGLE_OAUTH_CLIENT_SECRET" = {
       secret_id = module.oauth-client-secret.secret_id
     }
-    "GOOGLE_API_KEY" = {
-      secret_id = module.vertex-ai-secret.secret_id
+    "OPENAI_API_KEY" = {
+      secret_id = module.ai-secret.secret_id
     }
   }
   extra_secret_access = [
     module.gcs-sa-key-secret.secret_id,
-    module.vertex-ai-secret.secret_id,
+    module.ai-secret.secret_id,
     module.oauth-client-id.secret_id,
     module.oauth-client-secret.secret_id,
     module.email-labs-api-app-key.secret_id,

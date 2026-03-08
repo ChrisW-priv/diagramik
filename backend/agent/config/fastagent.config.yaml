@@ -1,4 +1,4 @@
-default_model: gemini25
+default_model: google.gemini-2.5-pro
 logger:
   progress_display: true
   show_chat: true

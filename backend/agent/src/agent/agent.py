@@ -16,7 +16,6 @@ from fast_agent import FastAgent
 from fast_agent.mcp.prompt_serialization import from_json, to_json
 from pydantic import BaseModel, Field
 
-from agent.cloudrun_auth import patch_fastagent_oauth
 from agent.dspy_modules import DiagramRouter, FallbackAgent
 from agent.fastagent.dspy_agent import (
     DspyFastAgentConfig,
@@ -28,9 +27,6 @@ from agent.telemetry import get_tracer
 THIS_FILE_DIR = Path(__file__).parent
 CONF_FILE = THIS_FILE_DIR.parent.parent / "config" / "fastagent.config.yaml"
 OPTIMIZED_DIR = THIS_FILE_DIR.parent.parent / "data" / "optimized_prompts"
-
-# Patch FastAgent OAuth for CloudRun service-to-service auth
-patch_fastagent_oauth()
 
 fast = FastAgent(
     "Diagramming Agent",
@@ -110,8 +106,7 @@ def _create_dspy_config() -> DspyFastAgentConfig:
 DspyAgent = build_dspy_agent_class(_create_dspy_config())
 
 
-@fast.custom(
-    DspyAgent,
+@fast.agent(
     servers=["diagramming"],
 )
 async def agent(

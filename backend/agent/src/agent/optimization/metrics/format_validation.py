@@ -128,6 +128,32 @@ def technical_format_metric(example, prediction, trace=None) -> float:
     return 1.0
 
 
+def no_imports_metric(example, prediction, trace=None) -> float:
+    """Penalize code that contains import statements.
+
+    The technical diagram tool pre-imports all nodes externally.
+    Any import statement in the generated code is a critical error
+    that causes the tool to fail.
+
+    Returns:
+        1.0 if code contains no imports, 0.0 if imports found or no code.
+    """
+    code = _extract_code_from_trajectory(prediction)
+    if not code:
+        return 0.0
+
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return 0.0
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            return 0.0
+
+    return 1.0
+
+
 def mermaid_format_metric(example, prediction, trace=None) -> float:
     """Validate mermaid diagram code format.
 

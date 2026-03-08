@@ -35,8 +35,8 @@ if __name__ == "__main__":
 user = User("User")
 browser = Client("Browser")
 with Cluster("Our VPC"):
-    lb = LoadBalancing("Load Balancer")
-    lb >> [Run("CloudRun Service\\n(Django server)"), Storage("GCS Bucket\\n(Static HTML)")]
+    lb = Nginx("Load Balancer")
+    lb >> [CloudRun("CloudRun Service\\n(Django server)"), Storage("GCS Bucket\\n(Static HTML)")]
 user >> browser >> lb
 """,
         filename="temp",

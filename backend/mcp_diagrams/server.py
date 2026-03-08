@@ -3,6 +3,7 @@ from pathlib import Path
 
 from uuid_utils import uuid7
 from mcp.server.fastmcp import FastMCP
+from available_nodes import get_node_reference
 from draw_diagram import draw_diagram as draw_diagram_tool
 from draw_mermaid import draw_mermaid_diagram
 from move_file_to_gcs import move_file_to_gcs
@@ -11,6 +12,7 @@ from pydantic import BaseModel, Field
 
 _USER_MANUAL_DIR = Path(__file__).parent / "data" / "user_manual"
 _PYTHON_DIAGRAMS_GUIDE = (_USER_MANUAL_DIR / "python_diagrams.md").read_text()
+_FULL_PYTHON_DIAGRAMS_GUIDE = _PYTHON_DIAGRAMS_GUIDE + "\n\n" + get_node_reference()
 _MERMAID_GUIDE = (_USER_MANUAL_DIR / "mermaid.md").read_text()
 
 
@@ -58,7 +60,7 @@ class TechnicalDiagramArgs(BaseModel):
     )
 
 
-@mcp.tool(description=_PYTHON_DIAGRAMS_GUIDE)
+@mcp.tool(description=_FULL_PYTHON_DIAGRAMS_GUIDE)
 async def draw_technical_diagram(args: TechnicalDiagramArgs) -> DrawResult:
     filename = str(uuid7())
     kwargs = args.model_dump()

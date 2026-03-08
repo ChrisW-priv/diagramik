@@ -6,7 +6,7 @@ from pathlib import Path
 import dspy
 
 from ..datasets import get_technical_diagram_examples
-from ..metrics import iteration_count_metric, technical_format_metric
+from ..metrics import iteration_count_metric, no_imports_metric, technical_format_metric
 from ..mock_tools import create_mock_draw_technical_diagram
 
 logger = logging.getLogger(__name__)
@@ -20,14 +20,20 @@ SAVE_DIR = (
 
 
 def _combined_technical_metric(example, prediction, trace=None) -> float:
-    """Combined metric: format (0.4) + iterations (0.3) + node validation (0.3)."""
+    """Combined metric: format (0.3) + iterations (0.2) + nodes (0.25) + no-imports (0.25)."""
     format_score = technical_format_metric(example, prediction, trace)
     iteration_score = iteration_count_metric(example, prediction, trace)
+    no_imports_score = no_imports_metric(example, prediction, trace)
 
     # Node validation: check if expected nodes appear in the trajectory
     node_score = _node_presence_score(example, prediction)
 
-    combined = 0.4 * format_score + 0.3 * iteration_score + 0.3 * node_score
+    combined = (
+        0.3 * format_score
+        + 0.2 * iteration_score
+        + 0.25 * node_score
+        + 0.25 * no_imports_score
+    )
     return combined
 
 
@@ -68,9 +74,9 @@ def optimize_technical(lm: dspy.LM) -> dspy.Module:
     """
     examples = get_technical_diagram_examples()
 
-    # Train/dev split: 12/3
-    train_examples = examples[:12]
-    dev_examples = examples[12:]
+    # Train/dev split: 14/3
+    train_examples = examples[:14]
+    dev_examples = examples[14:]
 
     logger.info(
         "Technical optimization: %d train, %d dev examples",
