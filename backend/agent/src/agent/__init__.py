@@ -18,6 +18,11 @@ Example:
 """
 
 from agent.agent import AgentResult, agent
+from agent.cloudrun_auth import patch_fastagent_oauth
+
+# Patch FastAgent's OAuth to use OIDC identity tokens in CloudRun.
+# No-op in local development (checks K_SERVICE env var).
+patch_fastagent_oauth()
 
 __all__ = [
     "agent",
