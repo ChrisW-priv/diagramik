@@ -4,29 +4,21 @@ This module provides the public API for the diagram generation agent.
 It handles:
 1. History persistence between sessions
 2. Direct tool result extraction
-3. DSPy-driven generation via DspyAgent
-4. OpenTelemetry tracing for monitoring
+3. OpenTelemetry tracing for monitoring
 """
 
 import asyncio
+import json
 from pathlib import Path
 
-import dspy
 from fast_agent import FastAgent
 from fast_agent.mcp.prompt_serialization import from_json, to_json
 from pydantic import BaseModel, Field
 
-from agent.dspy_modules import DiagramRouter, FallbackAgent
-from agent.fastagent.dspy_agent import (
-    DspyFastAgentConfig,
-    DspyModuleArgs,
-    build_dspy_agent_class,
-)
 from agent.telemetry import get_tracer
 
 THIS_FILE_DIR = Path(__file__).parent
 CONF_FILE = THIS_FILE_DIR.parent.parent / "config" / "fastagent.config.yaml"
-OPTIMIZED_DIR = THIS_FILE_DIR.parent.parent / "data" / "optimized_prompts"
 
 fast = FastAgent(
     "Diagramming Agent",
@@ -52,58 +44,20 @@ class AgentResult(BaseModel):
     )
 
 
-def _resolve_load_path(subdir: str, filename: str) -> str | None:
-    """Return the load_path string if an optimized state file exists, else None."""
-    path = OPTIMIZED_DIR / subdir / filename
-    return str(path) if path.exists() else None
-
-
-def _create_dspy_config() -> DspyFastAgentConfig:
-    """Create DspyAgent configuration with router, ReAct modules, and fallback."""
-
-    technical_diagram_module = DspyModuleArgs(
-        module_type=dspy.ReAct,
-        name="technical_diagram_agent",
-        args=("conversation_history, user_request -> diagram_code: str, title: str",),
-        tools=["draw_technical_diagram"],
-        load_path=_resolve_load_path("technical_diagram", "react_agent.json"),
-    )
-
-    mermaid_diagram_module = DspyModuleArgs(
-        module_type=dspy.ReAct,
-        name="mermaid_diagram_agent",
-        args=("conversation_history, user_request -> diagram_code: str, title: str",),
-        tools=["draw_mermaid"],
-        load_path=_resolve_load_path("mermaid", "react_agent.json"),
-    )
-
-    fallback_module = DspyModuleArgs(
-        module_type=FallbackAgent,
-        name="fallback_agent",
-        args=(),  # No args for __init__
-        tools=[],  # No tools needed
-        load_path=_resolve_load_path("fallback", "predict_agent.json"),
-    )
-
-    router_module = DspyModuleArgs(
-        module_type=DiagramRouter,
-        name="diagram_router",
-        args=(),  # Router receives agents as kwargs
-        tools=[],
-        load_path=_resolve_load_path("router", "classifier.json"),
-    )
-
-    return DspyFastAgentConfig(
-        router_module=router_module,
-        react_modules=[
-            technical_diagram_module,
-            mermaid_diagram_module,
-            fallback_module,
-        ],
-    )
-
-
-DspyAgent = build_dspy_agent_class(_create_dspy_config())
+def _extract_last_tool_result(message_history) -> dict:
+    """Extract the last diagram tool result from message history."""
+    for msg in reversed(message_history):
+        if msg.tool_results:
+            for _call_id, result in msg.tool_results.items():
+                for content in result.content:
+                    if hasattr(content, "text"):
+                        try:
+                            parsed = json.loads(content.text)
+                            if "uri" in parsed:
+                                return parsed
+                        except json.JSONDecodeError:
+                            continue
+    return {}
 
 
 @fast.agent(
@@ -114,7 +68,7 @@ async def agent(
 ) -> AgentResult:
     """Main entry point for diagram generation.
 
-    Handles history persistence at this level (not in DspyAgent class).
+    Handles history persistence and tool result extraction.
 
     Args:
         user_instruction: The user's request for diagram generation
@@ -131,39 +85,34 @@ async def agent(
         )
 
         async with fast.run() as agents:
-            dspy_agent = agents.default
+            diagramming_agent = agents.default
 
             # 1. Load previous history if continuing conversation
             if previous_history_json:
                 restored_messages = from_json(previous_history_json)
-                dspy_agent.load_message_history(restored_messages)
+                diagramming_agent.load_message_history(restored_messages)
                 span.set_attribute(
                     "agent.restored_message_count", len(restored_messages)
                 )
 
-            # 2. Call agent (uses generate_impl override → DSPy)
-            await dspy_agent.send(user_instruction)
+            # 2. Call agent
+            await diagramming_agent.send(user_instruction)
 
             # 3. Extract last tool result directly (no AI rewriting)
-            tool_result = dspy_agent.extract_last_tool_result()
+            tool_result = _extract_last_tool_result(diagramming_agent.message_history)
             span.set_attribute("agent.has_tool_result", bool(tool_result))
 
             # 4. Serialize updated history
-            history_json = to_json(dspy_agent.message_history)
+            history_json = to_json(diagramming_agent.message_history)
             span.set_attribute(
-                "agent.final_message_count", len(dspy_agent.message_history)
+                "agent.final_message_count", len(diagramming_agent.message_history)
             )
-
-            # 5. Get trace ID from last generation
-            trace_id = dspy_agent.last_trace_id
-            if trace_id:
-                span.set_attribute("agent.dspy_trace_id", trace_id)
 
             return AgentResult(
                 diagram_title=tool_result.get("title", "Untitled"),
                 media_uri=tool_result.get("uri", ""),
                 history_json=history_json,
-                trace_id=trace_id,
+                trace_id=None,
             )
 
 
