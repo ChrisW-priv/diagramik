@@ -35,8 +35,8 @@ Label each node with:
 
 ### Examples
 
-- Weekly scheduler: `scheduler = Scheduler("Scheduler\\n(Weekly)")`
-- Cloud Function querying SQL: `fetch_function = Functions("Cloud Function\\n(SQL data qry)")`
+- Weekly scheduler: `scheduler = GcpCloudScheduler("Scheduler\\n(Weekly)")`
+- Cloud Function querying SQL: `fetch_function = GcpCloudFunctions("Cloud Func\\n(SQL data qry)")`
 - FTP Server for audio files: `ftp_server = Server("FTP Server\\n(Audio Files)")`
 
 **IMPORTANT:** Use `\\n` (double backslash) for newlines in code!
@@ -72,7 +72,7 @@ Represents boundaries between:
 
 ```python
 with Cluster("Source Team"):
-    cloudrun_ingest = Run("CloudRun Job\\n(Data Ingest)")
+    cloudrun_ingest = CloudRun("CloudRun Job\\n(Data Ingest)")
 
 with Cluster("Team1"):
     storage_team1 = Storage("GCS Bucket\\n(Data Sink)")
@@ -91,11 +91,11 @@ Represents N replicas of the same element serving the same purpose.
 #### Example: Multiple Workers
 
 ```python
-ELB("lb") >> [EC2("worker1"),
-              EC2("worker2"),
-              EC2("worker3"),
-              EC2("worker4"),
-              EC2("worker5")] >> RDS("events")
+Nginx("lb") >> [Server("worker1"),
+                Server("worker2"),
+                Server("worker3"),
+                Server("worker4"),
+                Server("worker5")] >> PostgreSQL("events")
 ```
 
 ## Complete Examples
@@ -108,8 +108,8 @@ ELB("lb") >> [EC2("worker1"),
 user = User("User")
 browser = Client("Browser")
 with Cluster("Our VPC"):
-    lb = LoadBalancing("Load Balancer")
-    lb >> [Run("CloudRun Service\\n(Django server)"), Storage("GCS Bucket\\n(Static HTML)")]
+    lb = Nginx("Load Balancer")
+    lb >> [CloudRun("CloudRun Service\\n(Django server)"), Storage("GCS Bucket\\n(Static HTML)")]
 user >> browser >> lb
 ```
 
@@ -120,11 +120,11 @@ user >> browser >> lb
 ```python
 with Cluster("inc.1"):
     with Cluster("main team"):
-        cloudrun_import = Run("CloudRun Job\\n(File Import)")
+        cloudrun_import = CloudRun("CloudRun Job\\n(File Import)")
         raw_storage = Storage("GCS Bucket\\n(Raw Storage)")
         eventarc = PubSub("EventArc")
         cloudrun_import >> Edge(label="Saves into") >> raw_storage >> eventarc
-        cloud_functions = [Functions("Cloud Function\\n(Copy data)") for _ in range(2)]
+        cloud_functions = [GcpCloudFunctions("Cloud Func\\n(Copy data)") for _ in range(2)]
         eventarc >> Edge(label="Triggers") >> cloud_functions
     for cf, team in zip(cloud_functions, ["Team1", "Team2"]):
         with Cluster(team):
@@ -135,9 +135,3 @@ with Cluster("inc.2"):
 
 cloudrun_import >> Edge(label="Requests") >> files
 ```
-
-## Available Diagram Icons
-
-**THESE ARE THE ONLY NAMES AVAILABLE:**
-
-AIPlatform, ALB, APIGateway, ActiveMQ, Aerospike, Airflow, Ambassador, Ansible, Apache, AppEngine, ArgoCD, Athena, Atlantis, Auditbeat, Aurora, AutoML, AwsBackup, AwsEndpoint, AwsStorage, Awx, Batch, Beats, BigQuery, Bigtable, Bitwarden, CLB, Caddy, Cassandra, Celery, CertManager, ChaosMesh, CircleCI, CiscoRouter, CiscoSwitchL2, CiscoSwitchL3, ClickHouse, CloudArmor, CloudDNS, CloudFront, CloudSQL, CockroachDB, Cognito, Composer, Comprehend, ComputeEngine, Consul, Containerd, Cortex, Couchbase, CronJob, DaemonSet, Databricks, Datadog, Dataflow, Dataproc, Datastore, Dbt, DedicatedInterconnect, Deployment, Dgraph, Digdag, DirectConnect, Docker, DocumentDB, DroneCI, Druid, DuckDB, DynamoDB, Dynamodb, Dynatrace, EBS, EC2, ECE, ECK, ECS, EFS, EKS, ELB, EMQX, EMR, ElastiCache, ElasticAPM, ElasticAPMBeat, ElasticAgent, ElasticAgentEndpoint, ElasticCloud, ElasticFleet, ElasticIntegrations, ElasticLogs, ElasticML, ElasticMetrics, ElasticMonitoring, ElasticObservability, ElasticSIEM, ElasticSQL, ElasticSaas, ElasticSecurity, ElasticSecurityEndpoint, ElasticUptime, ElasticXDR, Elasticsearch, Envoy, Etcd, ExternalDns, FCM, FSx, Fargate, Filebeat, Filestore, Firebase, FirebaseABTesting, FirebaseAuth, FirebaseCrashlytics, FirebaseDynamicLinks, FirebaseFirestore, FirebaseFunctions, FirebaseHosting, FirebaseMLKit, FirebasePerformance, FirebaseRealtimeDB, FirebaseRemoteConfig, FirebaseStorage, FirebaseTestLab, Firecracker, FirewallRules, Flagger, Flink, FluentBit, Fluentd, Flux, Functionbeat, Functions, GAX, GCS, GcpStorage, GcsBucket, GKE, GcpCDN, GcpLoadBalancing, GcpNAT, GcpRouter, GcpVPC, VirtualPrivateCloud, GcpVPN, GenericAndroid, GenericCentos, GenericDatacenter, GenericDebian, GenericFirewall, GenericIOS, GenericLinux, GenericMobile, GenericQemu, GenericRack, GenericRaspbian, GenericRedHat, GenericRouter, GenericStorage, GenericSubnet, GenericSuse, GenericSwitch, GenericTablet, GenericUbuntu, GenericVPN, GenericVirtualbox, GenericVmware, GenericWindows, GenericXEN, Git, Gitea, Github, GithubActions, Gitlab, GitlabCI, Glue, Grafana, Graylog, Gunicorn, HAProxy, HBase, HPA, Hadoop, Hazelcast, Heartbeat, Helm, Hive, Humio, IAM, InfluxDB, Internet, InternetGateway, Istio, Jaeger, JanusGraph, Jenkins, Jetty, Job, K3S, K8sAPIServer, K8sCRD, K8sClusterRole, K8sClusterRoleBinding, K8sConfigMap, K8sControllerManager, K8sETCD, K8sEndpoint, K8sGroup, K8sIngress, K8sLimitRange, K8sMaster, K8sNamespace, K8sNetworkPolicy, K8sNode, K8sPSP, K8sPersistentVolume, K8sPersistentVolumeClaim, K8sQuota, K8sRole, K8sRoleBinding, K8sScheduler, K8sSecret, K8sService, K8sServiceAccount, K8sStorageClass, K8sUser, K8sVolume, KMS, Kafka, Kibana, Kinesis, Kong, Krew, KubeProxy, Kubeflow, Kubelet, Kustomize, LXC, LakeFormation, Lambda, LetsEncrypt, Lex, Lightsail, Linkerd, LitmusChaos, Logstash, Loki, MSSQL, MariaDB, Memcached, Memorystore, Metabase, Metricbeat, Mikrotik, Mimir, Mlflow, MongoDB, MySQL, NATGateway, NLB, Nacl, Nagios, Nats, NaturalLanguageAPI, Neo4J, Neptune, NetworkFirewall, Newrelic, Nginx, NiFi, Nomad, OPNSense, Client, User, Users, Oracle, PFSense, Packetbeat, PersistentDisk, Pod, Polly, Polyaxon, Pomerium, PostgreSQL, PowerBI, Presto, PrivateSubnet, Prometheus, PrometheusOperator, ProxmoxVE, PubSub, PublicSubnet, Pulumi, Puppet, QLDB, Qdrant, Quicksight, RDS, RSyslog, RabbitMQ, Redis, Redshift, Rekognition, ReplicaSet, Route53, Run, S3, S3Bucket, Sagemaker, Scylla, SecretsManager, Sentry, Server, Shield, Snowball, SnowballEdge, Snowmobile, Spanner, Spark, SpeechToText, Splunk, Stack, StatefulSet, Superset, Svn, SyslogNg, Tableau, Teamcity, Tempo, Terraform, Textract, Thanos, Timestream, Tomcat, Traefik, TrafficDirector, TransitGateway, TravisCI, Trino, Trivy, Tyk, VPC, Vault, Vector, VisionAPI, VyOS, WAF, Winlogbeat, Yarp, Zabbix, ZeroMQ, Zookeeper

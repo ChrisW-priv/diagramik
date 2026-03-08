@@ -1,4 +1,4 @@
-default_model: gemini25
+default_model: openai.gpt-4.1
 logger:
   progress_display: true
   show_chat: true

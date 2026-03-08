@@ -227,6 +227,7 @@ class DspyAgent(McpAgent):
             # Load optimized state if available
             if module_args.load_path:
                 module.load(module_args.load_path)
+                module._compiled = True  # Prevent router.load() from re-traversing this module's params
 
             react_modules_dict[module_args.name] = module
 

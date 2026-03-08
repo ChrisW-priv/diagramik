@@ -16,7 +16,6 @@ from fast_agent import FastAgent
 from fast_agent.mcp.prompt_serialization import from_json, to_json
 from pydantic import BaseModel, Field
 
-from agent.cloudrun_auth import patch_fastagent_oauth
 from agent.dspy_modules import DiagramRouter, FallbackAgent
 from agent.fastagent.dspy_agent import (
     DspyFastAgentConfig,
@@ -27,9 +26,7 @@ from agent.telemetry import get_tracer
 
 THIS_FILE_DIR = Path(__file__).parent
 CONF_FILE = THIS_FILE_DIR.parent.parent / "config" / "fastagent.config.yaml"
-
-# Patch FastAgent OAuth for CloudRun service-to-service auth
-patch_fastagent_oauth()
+OPTIMIZED_DIR = THIS_FILE_DIR.parent.parent / "data" / "optimized_prompts"
 
 fast = FastAgent(
     "Diagramming Agent",
@@ -55,6 +52,12 @@ class AgentResult(BaseModel):
     )
 
 
+def _resolve_load_path(subdir: str, filename: str) -> str | None:
+    """Return the load_path string if an optimized state file exists, else None."""
+    path = OPTIMIZED_DIR / subdir / filename
+    return str(path) if path.exists() else None
+
+
 def _create_dspy_config() -> DspyFastAgentConfig:
     """Create DspyAgent configuration with router, ReAct modules, and fallback."""
 
@@ -63,7 +66,7 @@ def _create_dspy_config() -> DspyFastAgentConfig:
         name="technical_diagram_agent",
         args=("conversation_history, user_request -> diagram_code: str, title: str",),
         tools=["draw_technical_diagram"],
-        load_path=None,
+        load_path=_resolve_load_path("technical_diagram", "react_agent.json"),
     )
 
     mermaid_diagram_module = DspyModuleArgs(
@@ -71,7 +74,7 @@ def _create_dspy_config() -> DspyFastAgentConfig:
         name="mermaid_diagram_agent",
         args=("conversation_history, user_request -> diagram_code: str, title: str",),
         tools=["draw_mermaid"],
-        load_path=None,
+        load_path=_resolve_load_path("mermaid", "react_agent.json"),
     )
 
     fallback_module = DspyModuleArgs(
@@ -79,7 +82,7 @@ def _create_dspy_config() -> DspyFastAgentConfig:
         name="fallback_agent",
         args=(),  # No args for __init__
         tools=[],  # No tools needed
-        load_path=None,
+        load_path=_resolve_load_path("fallback", "predict_agent.json"),
     )
 
     router_module = DspyModuleArgs(
@@ -87,7 +90,7 @@ def _create_dspy_config() -> DspyFastAgentConfig:
         name="diagram_router",
         args=(),  # Router receives agents as kwargs
         tools=[],
-        load_path=None,
+        load_path=_resolve_load_path("router", "classifier.json"),
     )
 
     return DspyFastAgentConfig(
@@ -103,8 +106,7 @@ def _create_dspy_config() -> DspyFastAgentConfig:
 DspyAgent = build_dspy_agent_class(_create_dspy_config())
 
 
-@fast.custom(
-    DspyAgent,
+@fast.agent(
     servers=["diagramming"],
 )
 async def agent(
