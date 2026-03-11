@@ -1,0 +1,38 @@
+name: Request Arch Diagram Node Support
+description: Request support for a new node in architecture diagrams
+title: "[Node Request] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to request a new node to be added to the available nodes list.
+
+        **Important:** Please use the full Python import path for the node (e.g. `diagrams.gcp.network.LoadBalancing`).
+        The full path tells us exactly which package and module the node comes from.
+
+        You can browse all available nodes in the [diagrams library](https://diagrams.mingrammer.com/docs/nodes/gcp).
+
+        Nodes are registered in `backend/mcp_diagrams/available_nodes.py`.
+
+  - type: input
+    id: node_path
+    attributes:
+      label: Full node path(s)
+      description: >
+        Provide the full Python import path for the node(s) you want added.
+        Use one path per line if requesting multiple nodes.
+      placeholder: |
+        diagrams.gcp.network.LoadBalancing
+        diagrams.gcp.database.SQL
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case / Description
+      description: Briefly describe what this node represents and why it would be useful in architecture diagrams.
+      placeholder: "e.g. GCP Cloud Load Balancing distributes traffic across backend services. Needed for diagrams showing GCP-hosted web applications."
+    validations:
+      required: true
