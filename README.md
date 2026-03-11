@@ -10,105 +10,108 @@
 
 ## What is diagramik?
 
-**diagramik** is an agentic AI application built for everyone — not just engineers.
+**diagramik** is an agentic AI application that converts plain-English descriptions into clean, exportable diagrams.
 
-You describe the diagram you want in plain English. The AI figures out the rest: what type of diagram fits your intent, how to structure it, and how to render it into a clean, exportable image. No prompting skills. No tooling knowledge. Just describe what you want and get something you can actually use. That's all it takes.
+You describe what you want. The AI agent classifies your intent, selects the right diagram type, constructs the rendering call, and returns an image — no tooling knowledge required. The architecture also exposes a programmatic interface for users who want to integrate the agent layer directly into their own workflows.
 
-However, if you already know the agentic principles, you will also benefit. Architecture is purpusefully created to support programatic hooks and access to agentic layer.
+**diagramik** is also a personal portfolio project — demonstrating what a production-ready AI system looks like end-to-end: secure cloud infrastructure, agentic AI with structured optimization, and a CI/CD pipeline that enforces quality at every step.
 
 ---
 
-**diagramik** is also a personal showcase — a living portfolio of the technologies I work with daily. Every layer of this project reflects real-world production patterns: infrastructure-as-code, access separation, CI/CD automation and more. The stack is chosen for its pragmatism and modernity.
-
 ## User Flow
-
-The experience is intentionally simple:
 
 1. **Sign in** — via Google OAuth or email/password
 2. **Describe your diagram** — in a chat interface, as you would to a colleague
 3. **Get an image** — the AI agent selects the right diagram type and renders it
-4. **Edit with history** — you can modify diagrams iteratively and have full access to version history
-5. **Save or share** — download the image, use it wherever you need it, or reference it with share links
+4. **Edit with history** — modify diagrams iteratively with full version history
+5. **Save or share** — download the image or reference it with a share link
 
-<!-- TODO: replace placeholder with generated screenshot -->
-> *Diagram placeholder — generate this with diagramik:*
-> ```
-> Draw a simple user flow: user opens browser, logs in, describes a diagram in a chat, receives the generated image, and saves it. Use a flowchart with left-to-right direction. Label each step clearly.
-> ```
+<!-- TODO: add screenshot -->
+
+---
 
 ## Technical Architecture
 
-The architecture is deliberately layered. Each concern lives in its own well-defined boundary — making the system easy to reason about, extend, and deploy.
+The architecture is deliberately layered. Each concern lives in its own well-defined boundary — making the system easy to reason about, extend, and secure.
 
-### Deployed Infrastructure
+### Cloud Infrastructure (GCP + Terraform)
 
-The production environment runs on **Google Cloud Platform** and is fully defined with IaC (Terraform). There are no manual steps in the deployment — infrastructure is code.
+Production runs on **Google Cloud Platform**, fully defined with Terraform — no manual steps in the deployment pipeline.
 
-<!-- TODO: replace placeholder with generated diagram -->
-> *Architecture diagram placeholder — generate this with diagramik:*
-> ```
-> Draw a cloud architecture diagram for a web application on GCP. Include: a Global Load Balancer at the top that routes traffic to a Cloud Run service (Django API) and a GCS static frontend bucket. The Django API sits inside a VPC and connects privately to a Cloud SQL database and to an internal-only MCP Cloud Run service. The MCP service uses Cloud Router with NAT to reach external APIs. Add a GCS bucket for storing generated images connected to the MCP service. Use a top-down layout.
-> ```
+<!-- TODO: add architecture diagram -->
 
 **Key components:**
 
-- **VPC Network** — a private Virtual Private Cloud (`diagramik-vpc`, `10.0.0.0/24`) isolates internal services from the public internet
-- **Global Load Balancer** — a single entry point for all traffic, with path-based routing and CDN enabled for the frontend
-- **Cloud Router + NAT** — internal services can reach the internet (e.g., LLM APIs) without being reachable from it
-- **Django Monolith** — the REST API runs on Cloud Run; handles authentication, diagram management, quota enforcement, and agent orchestration. The only service exposed to the public internet.
-- **MCP Service** — a second Cloud Run service for diagram rendering, accessible only via internal VPC. No public ingress. Authenticated service-to-service calls only.
-- **Cloud SQL** — PostgreSQL database with private IP only; no public endpoint
-- **GCS Bucket** — stores rendered diagram images, served via signed URLs
-- **Frontend Bucket** — Frontend assets are static; served via the Load Balancer with CDN
+- **VPC Network** — private VPC (`10.0.0.0/24`) isolates all internal services from the public internet
+- **Global Load Balancer** — single entry point for all traffic; path-based routing with CDN for the static frontend
+- **Cloud Router + NAT** — internal services can reach external APIs (e.g., LLM providers) without exposing a public IP
+- **Django Monolith** — REST API on Cloud Run; handles authentication, data models, quota enforcement, and agent orchestration. The **only** service with public ingress.
+- **MCP Service** — diagram rendering on a second Cloud Run instance; accessible only over the internal VPC. No public ingress. All calls are service-to-service authenticated.
+- **Cloud SQL** — PostgreSQL with **private IP only**; no public endpoint
+- **GCS Bucket** — rendered images served via signed URLs; no public bucket ACLs
+
+**Security posture:** The attack surface is minimal by design. Only the load balancer and the Django API are publicly reachable. All other services operate inside the VPC with no public ingress, and inter-service calls use GCP IAM-based authentication.
 
 ---
 
-### Release Cycle
+### CI/CD and Code Quality
 
-The project follows **GitHub Flow**: all development happens on feature branches, merged to `main` via pull requests. Releases are created as GitHub Releases (semantic versioning), which automatically trigger the full production deployment pipeline.
+The project follows **GitHub Flow**: feature branches, pull requests to `main`, and GitHub Releases that trigger the full production deployment.
 
-On each new release, the pipeline:
+#### Release Pipeline
+
+On each new release tag, the pipeline:
 
 1. Builds Docker images for all backend services
-2. Pushes images to GitHub Container Registry and Google Artifact Registry
-3. Applies Terraform - `terraform apply` resolves the diff and builds new infrastructure
-4. Renders frontend as a static site (SSG) and publishes it to GCS
+2. Pushes to GitHub Container Registry and Google Artifact Registry
+3. Runs `terraform apply` — infrastructure changes are resolved automatically
+4. Builds the Astro frontend (SSG) and publishes to GCS
 
 One release tag. One pipeline run. Everything is live.
 
-<!-- TODO: replace placeholder with generated diagram -->
-> *Release pipeline diagram placeholder — generate this with diagramik:*
-> ```
-> Draw a CI/CD pipeline diagram. Start with a developer pushing a Git tag on GitHub. This triggers a GitHub Actions workflow with the following sequential steps: Checkout code, Build Docker images (two parallel boxes: Django Monolith and MCP Service), Push images to registries (two parallel: GHCR and Google Artifact Registry), Run Terraform apply, Build Astro frontend, Publish frontend to GCS. Use a top-down flowchart.
-> ```
+<!-- TODO: add pipeline diagram -->
+
+#### Pre-commit Hooks
+
+Code quality is enforced locally before anything reaches CI. The pre-commit configuration covers:
+
+| Hook | What it enforces |
+|---|---|
+| `ruff` + `ruff-format` | Python linting and formatting |
+| `actionlint` | GitHub Actions workflow correctness |
+| `yamlfmt` | YAML formatting |
+| `mdformat` | Markdown consistency |
+| `terraform fmt` + `terraform validate` | Terraform syntax and schema validation |
+| `gitleaks` + `talisman` | Secret scanning — blocks credential leaks at commit time |
+| Backend tests + static checks | Run on pre-push via `task be:test` and `task check` |
+
+Secret scanning (gitleaks + talisman) runs on every commit — credentials cannot be pushed accidentally. Container vulnerability scanning with **Trivy** is planned for the CI pipeline.
 
 ---
 
-### Internal Architecture: REST Layer and Agent Development
+### Agentic AI Architecture
 
 One of the most deliberate decisions in this project is the **strict separation between the REST API and the AI agent layer**.
 
-The Django monolith handles everything a production web service needs — authentication, data models, user quotas, API routing, email. It is a stable, well-tested service.
+The Django monolith handles everything a production web service needs — auth, data models, quotas, routing. It is stable and independently deployable.
 
-The agent logic lives in a completely separate Python package (`backend/agent/`). It can be run, tested, and iterated on locally with zero Django dependency. This separation means:
+The agent logic lives in a completely separate Python package (`backend/agent/`). It can be run, tested, and iterated on locally with zero Django dependency. This decoupling enables fast experimentation without touching the production service.
 
-- **Fast local experimentation** — spin up the agent against a local or remote MCP server in seconds
-- **Independent iteration** — prompt changes, routing logic, and diagram strategies evolve on their own cadence
-- **Clean interfaces** — the REST layer calls the agent through a well-defined boundary; the agent calls diagram tools through MCP
+**Agent design principles:**
 
-**The agent stack:**
+- **Model Context Protocol (MCP)** — the agent communicates with diagram tools through a standardized, transport-agnostic protocol. Tools are defined as MCP endpoints; the agent discovers and calls them dynamically.
+- **Structured prompt optimization (DSPy)** — routing and diagram-type selection are not hand-crafted prompt strings. They are compiled programs, optimized against real examples using DSPy. This makes the decision logic testable and improvable as a function.
+- **Clean interfaces** — the REST layer calls the agent through a single well-defined boundary. The agent calls diagram tools through MCP. Neither layer knows about the internals of the other.
 
-- **[fast-agent-mcp](https://github.com/evalstate/fast-agent)** — orchestrates multi-step agentic workflows using the Model Context Protocol
-- **[DSPy](https://dspy.ai/)** — used for structured prompt optimization; the routing and diagram-type selection logic is compiled against real examples, not hand-crafted prompts
-- **[fast-mcp](...)** - go to library for mcp development alows trivial mcp server definition.
+<!-- TODO: add internal architecture diagram -->
 
-**The MCP tool server** (`backend/mcp_diagrams/`) exposes diagram rendering tools HTTP. The agent decides which tool fits the user's request, constructs the arguments, calls the tool, and returns the GCS URI of the result.
+**Agent stack:**
 
-<!-- TODO: replace placeholder with generated diagram -->
-> *Internal architecture diagram placeholder — generate this with diagramik:*
-> ```
-> Draw a component diagram showing the internal architecture of the backend. On the left, show a User making an HTTP request to a Django REST API. The Django API talks to a PostgreSQL database and also calls an Agent module. The Agent module uses DSPy for routing decisions, then calls a FastAgent orchestrator. The FastAgent connects over HTTP/2 to an MCP Server. The MCP Server has two tools: draw_technical_diagram (using Python Diagrams library) and draw_mermaid (using Mermaid renderer). Both tools save output to a GCS Bucket. Use a left-to-right layout.
-> ```
+- **[fast-agent-mcp](https://github.com/evalstate/fast-agent)** — multi-step agentic workflow orchestration over MCP
+- **[DSPy](https://dspy.ai/)** — structured prompt optimization; routing logic is compiled, not hardcoded
+- **[FastMCP](https://github.com/jlowin/fastmcp)** — MCP server definition with minimal boilerplate
+
+The **MCP tool server** (`backend/mcp_diagrams/`) exposes diagram rendering tools over HTTP. The agent selects the appropriate tool, constructs the arguments, invokes it, and returns the GCS URI of the result.
 
 ---
 
@@ -122,6 +125,7 @@ The agent logic lives in a completely separate Python package (`backend/agent/`)
 | Prompt Optimization | [DSPy](https://dspy.ai/) |
 | Infrastructure | [Terraform](https://www.terraform.io/) on [Google Cloud Platform](https://cloud.google.com/) |
 | CI/CD | [GitHub Actions](https://github.com/features/actions) |
+| Code Quality | pre-commit · ruff · actionlint · gitleaks · talisman · Trivy *(planned)* |
 | Observability | [OpenTelemetry](https://opentelemetry.io/) |
 
 ---
@@ -133,7 +137,7 @@ diagramik/
 ├── frontend/          # Astro SSG application
 ├── backend/
 │   ├── django_monolith/   # REST API, auth, data models
-│   ├── agent/             # AI agent (DSPy + FastAgent) — independently runnable
+│   ├── agent/             # AI agent (DSPy + fast-agent) — independently runnable
 │   └── mcp_diagrams/      # MCP tool server for diagram rendering
 └── infrastructure/    # Terraform — all GCP resources defined as code
 ```
