@@ -110,6 +110,9 @@ from diagrams.gcp.ml import (
 from diagrams.gcp.ml import (
     VisionAPI as GcpVisionAPI,
 )
+from diagrams.gcp.database import (
+    SQL as GcpCloudSQL,
+)
 from diagrams.gcp.network import (
     CDN as GcpCDN,
 )
@@ -124,6 +127,12 @@ from diagrams.gcp.network import (
 )
 from diagrams.gcp.network import (
     FirewallRules as GcpFirewallRules,
+)
+from diagrams.gcp.network import (
+    LoadBalancing as GcpLoadBalancing,
+)
+from diagrams.gcp.network import (
+    NAT as GcpNAT,
 )
 from diagrams.gcp.operations import (
     Logging as GcpLogging,
@@ -407,12 +416,16 @@ NODE_CATALOG: dict[str, tuple[str, str]] = {
     "VertexAI": ("GCP ML/AI", "Unified ML platform for training and deployment"),
     "GcpVideoIntelligenceAPI": ("GCP ML/AI", "Video content analysis and annotation"),
     "GcpVisionAPI": ("GCP ML/AI", "Image analysis and recognition"),
+    # GCP Database
+    "GcpCloudSQL": ("GCP Database", "Managed relational database service (MySQL, PostgreSQL, SQL Server)"),
     # GCP Network
     "GcpCDN": ("GCP Network", "Content delivery network"),
     "GcpDNS": ("GCP Network", "Managed DNS service"),
     "GcpVPC": ("GCP Network", "Virtual private cloud network"),
     "GcpCloudArmor": ("GCP Network", "DDoS protection and WAF"),
     "GcpFirewallRules": ("GCP Network", "VPC firewall rules"),
+    "GcpLoadBalancing": ("GCP Network", "Cloud load balancing for distributing traffic"),
+    "GcpNAT": ("GCP Network", "Cloud NAT for outbound internet access from private instances"),
     # GCP Operations
     "GcpLogging": ("GCP Operations", "Centralized log management"),
     "GcpMonitoring": ("GCP Operations", "Infrastructure and application monitoring"),
