@@ -1,0 +1,474 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "There are 2 connectors that implement one abstract one. One is mock, other is api connector. There exists client that is composed of one connector. Draw as class "
+        }
+      ],
+      "is_template": false
+    },
+    {
+      "role": "assistant",
+      "content": [],
+      "tool_calls": {
+        "call_H3jSAbb2DRdWAgxmPFJ18mEA": {
+          "method": "tools/call",
+          "params": {
+            "name": "diagramming__draw_mermaid",
+            "arguments": {
+              "args": {
+                "code": "classDiagram\nclass Connector {\n  <<abstract>>\n}\nclass MockConnector {\n}\nclass ApiConnector {\n}\nclass Client {\n  -connector: Connector\n}\nConnector <|-- MockConnector\nConnector <|-- ApiConnector\nClient *-- Connector",
+                "title": "Client-Connector Class Composition Diagram"
+              }
+            }
+          }
+        }
+      },
+      "channels": {
+        "fast-agent-timing": [
+          {
+            "type": "text",
+            "text": "{\"start_time\": 211.557199064, \"end_time\": 214.253709062, \"duration_ms\": 2696.51}"
+          }
+        ],
+        "fast-agent-usage": [
+          {
+            "type": "text",
+            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 5895, \"output_tokens\": 87, \"total_tokens\": 5982, \"timestamp\": 1773524884.3093994, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 0, \"total_cache_tokens\": 0, \"has_cache_activity\": false}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 1, \"current_context_tokens\": 5982, \"effective_input_tokens\": 5895, \"display_input_tokens\": 5895}, \"raw_usage\": {\"completion_tokens\": 87, \"prompt_tokens\": 5895, \"total_tokens\": 5982, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 0}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 1, \"cumulative_input_tokens\": 5895, \"cumulative_output_tokens\": 87, \"cumulative_billing_tokens\": 5982, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 5982, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.5710325551559028, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 0, \"cache_hit_rate_percent\": 0.0, \"cumulative_effective_input_tokens\": 5895}}"
+          }
+        ]
+      },
+      "stop_reason": "toolUse",
+      "is_template": false
+    },
+    {
+      "role": "user",
+      "content": [],
+      "tool_results": {
+        "call_H3jSAbb2DRdWAgxmPFJ18mEA": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"uri\": \"https://mermaid.ink/svg/pako:eNptkLsOwjAMRX8l8ojoD1RVJVRWJtYuxjEQ0SQodQZU-u9EfVLB6HtOfOV0QF4z5AqowbY9GrwFtLUbJlV555jEB9XVTqmiwEsrAUnKsnb9bJ08PTbmQg5P8x9UjWEn49aMZiVfCwd3fVu8s2zb80O_uxIcC3YJLCnsFVgOFo1OB3cgd7bD6ZqvGBuBPgkYxZ9fjlIuIXJK4lOj8PQzU9x_AIh1b8M=\",\n  \"title\": \"Client-Connector Class Composition Diagram\"\n}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "channels": {
+        "fast-agent-tool-timing": [
+          {
+            "type": "text",
+            "text": "{\"call_H3jSAbb2DRdWAgxmPFJ18mEA\": {\"timing_ms\": 42.44, \"transport_channel\": \"post-sse\"}}"
+          }
+        ],
+        "mcp-ui": []
+      },
+      "is_template": false
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Here is the class diagram showing your described structure:\n\n- An abstract Connector class/interface.\n- MockConnector and ApiConnector both implement (inherit from) Connector.\n- Client is composed of one Connector.\n\n```mermaid\nclassDiagram\nclass Connector {\n  <<abstract>>\n}\nclass MockConnector {\n}\nclass ApiConnector {\n}\nclass Client {\n  -connector: Connector\n}\nConnector <|-- MockConnector\nConnector <|-- ApiConnector\nClient *-- Connector\n```\n\nYou can view the rendered class diagram here:  \n![Client-Connector Class Composition Diagram](https://mermaid.ink/svg/pako:eNptkLsOwjAMRX8l8ojoD1RVJVRWJtYuxjEQ0SQodQZU-u9EfVLB6HtOfOV0QF4z5AqowbY9GrwFtLUbJlV555jEB9XVTqmiwEsrAUnKsnb9bJ08PTbmQg5P8x9UjWEn49aMZiVfCwd3fVu8s2zb80O_uxIcC3YJLCnsFVgOFo1OB3cgd7bD6ZqvGBuBPgkYxZ9fjlIuIXJK4lOj8PQzU9x_AIh1b8M=)"
+        }
+      ],
+      "channels": {
+        "fast-agent-timing": [
+          {
+            "type": "text",
+            "text": "{\"start_time\": 214.338952915, \"end_time\": 218.11167733, \"duration_ms\": 3772.72}"
+          }
+        ],
+        "fast-agent-usage": [
+          {
+            "type": "text",
+            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 6185, \"output_tokens\": 286, \"total_tokens\": 6471, \"timestamp\": 1773524888.1676981, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 0, \"total_cache_tokens\": 0, \"has_cache_activity\": false}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 0, \"current_context_tokens\": 6471, \"effective_input_tokens\": 6185, \"display_input_tokens\": 6185}, \"raw_usage\": {\"completion_tokens\": 286, \"prompt_tokens\": 6185, \"total_tokens\": 6471, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 0}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 2, \"cumulative_input_tokens\": 12080, \"cumulative_output_tokens\": 373, \"cumulative_billing_tokens\": 12453, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 6471, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.6177117459735618, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 0, \"cache_hit_rate_percent\": 0.0, \"cumulative_effective_input_tokens\": 12080}}"
+          }
+        ]
+      },
+      "stop_reason": "endTurn",
+      "is_template": false
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "That is exactly correct, now add \"ETL\" class that will be composed of one or more connectors"
+        }
+      ],
+      "is_template": false
+    },
+    {
+      "role": "assistant",
+      "content": [],
+      "tool_calls": {
+        "call_4AqgfOKd7piAW92Y9CsiiWKZ": {
+          "method": "tools/call",
+          "params": {
+            "name": "diagramming__draw_mermaid",
+            "arguments": {
+              "args": {
+                "code": "classDiagram\nclass Connector {\n  <<abstract>>\n}\nclass MockConnector {\n}\nclass ApiConnector {\n}\nclass Client {\n  -connector: Connector\n}\nclass ETL {\n  -connectors: Connector[*]\n}\nConnector <|-- MockConnector\nConnector <|-- ApiConnector\nClient *-- Connector\nETL *-- \"1..*\" Connector",
+                "title": "Client, ETL and Connector Class Model"
+              }
+            }
+          }
+        }
+      },
+      "channels": {
+        "fast-agent-timing": [
+          {
+            "type": "text",
+            "text": "{\"start_time\": 329.281550172, \"end_time\": 331.282550121, \"duration_ms\": 2001.0}"
+          }
+        ],
+        "fast-agent-usage": [
+          {
+            "type": "text",
+            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 6499, \"output_tokens\": 116, \"total_tokens\": 6615, \"timestamp\": 1773525001.3385231, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 0, \"total_cache_tokens\": 0, \"has_cache_activity\": false}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 1, \"current_context_tokens\": 6615, \"effective_input_tokens\": 6499, \"display_input_tokens\": 6499}, \"raw_usage\": {\"completion_tokens\": 116, \"prompt_tokens\": 6499, \"total_tokens\": 6615, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 0}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 1, \"cumulative_input_tokens\": 6499, \"cumulative_output_tokens\": 116, \"cumulative_billing_tokens\": 6615, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 6615, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.6314577653554492, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 0, \"cache_hit_rate_percent\": 0.0, \"cumulative_effective_input_tokens\": 6499}}"
+          }
+        ]
+      },
+      "stop_reason": "toolUse",
+      "is_template": false
+    },
+    {
+      "role": "user",
+      "content": [],
+      "tool_results": {
+        "call_4AqgfOKd7piAW92Y9CsiiWKZ": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"uri\": \"https://mermaid.ink/svg/pako:eNptkMsOgjAQRX-lmSUREreEkBh0pyvdWRdjqUqkLSnDwiD_bnkJPpa956R3cmsQJpUQMhA5luU6w6tFxXX3YonRWgoyltVcMxZFeC7JoqA45roZrZ0R9w_zTVZF9h8keSY19b_6YlTCqXDmbg7bb7GcmUfv1MlTUfT0_c-jfuj8MAf7azwHZmnb20YclkHgcZgYLBgoaRVmqVuuBrpJ1W2YygtWOUHjBKzI7B9auJxsJV1SFSmSHCYe4uYF-CWH1w==\",\n  \"title\": \"Client, ETL and Connector Class Model\"\n}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "channels": {
+        "fast-agent-tool-timing": [
+          {
+            "type": "text",
+            "text": "{\"call_4AqgfOKd7piAW92Y9CsiiWKZ\": {\"timing_ms\": 40.95, \"transport_channel\": \"post-sse\"}}"
+          }
+        ],
+        "mcp-ui": []
+      },
+      "is_template": false
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Here is the updated class diagram with an ETL class:\n\n- ETL is composed of one or more Connector instances (composition, multiplicity 1..*)\n- All other relationships remain as previously described.\n\n```mermaid\nclassDiagram\nclass Connector {\n  <<abstract>>\n}\nclass MockConnector {\n}\nclass ApiConnector {\n}\nclass Client {\n  -connector: Connector\n}\nclass ETL {\n  -connectors: Connector[*]\n}\nConnector <|-- MockConnector\nConnector <|-- ApiConnector\nClient *-- Connector\nETL *-- \"1..*\" Connector\n```\n\nYou can view the rendered diagram here:  \n![Client, ETL and Connector Class Model](https://mermaid.ink/svg/pako:eNptkMsOgjAQRX-lmSUREreEkBh0pyvdWRdjqUqkLSnDwiD_bnkJPpa956R3cmsQJpUQMhA5luU6w6tFxXX3YonRWgoyltVcMxZFeC7JoqA45roZrZ0R9w_zTVZF9h8keSY19b_6YlTCqXDmbg7bb7GcmUfv1MlTUfT0_c-jfuj8MAf7azwHZmnb20YclkHgcZgYxBRY0IhLKtUq90Bd0jqtsxJRSsw5QeMErMj8KZPXU4FSCVdUgUpkhw1F8xcwvwJQfnw==)"
+        }
+      ],
+      "channels": {
+        "fast-agent-timing": [
+          {
+            "type": "text",
+            "text": "{\"start_time\": 331.333056558, \"end_time\": 336.1360207, \"duration_ms\": 4802.96}"
+          }
+        ],
+        "fast-agent-usage": [
+          {
+            "type": "text",
+            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 6835, \"output_tokens\": 332, \"total_tokens\": 7167, \"timestamp\": 1773525006.192018, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 5888, \"total_cache_tokens\": 5888, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 0, \"current_context_tokens\": 7167, \"effective_input_tokens\": 947, \"display_input_tokens\": 6835}, \"raw_usage\": {\"completion_tokens\": 332, \"prompt_tokens\": 6835, \"total_tokens\": 7167, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 5888}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 2, \"cumulative_input_tokens\": 13334, \"cumulative_output_tokens\": 448, \"cumulative_billing_tokens\": 13782, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 7167, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.6841508396526839, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 5888, \"cache_hit_rate_percent\": 30.63156799500572, \"cumulative_effective_input_tokens\": 7446}}"
+          }
+        ]
+      },
+      "stop_reason": "endTurn",
+      "is_template": false
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Sorry, one or more connectors"
+        }
+      ],
+      "is_template": false
+    },
+    {
+      "role": "assistant",
+      "content": [],
+      "tool_calls": {
+        "call_iiuPiO5QfoWsjGuuzSh74KB8": {
+          "method": "tools/call",
+          "params": {
+            "name": "diagramming__draw_mermaid",
+            "arguments": {
+              "args": {
+                "code": "classDiagram\nclass Connector {\n  <<abstract>>\n}\nclass MockConnector {\n}\nclass ApiConnector {\n}\nclass Client {\n  -connector: Connector\n}\nclass ETL {\n  -connectors: Connector[1..*]\n}\nConnector <|-- MockConnector\nConnector <|-- ApiConnector\nClient *-- Connector\nETL *-- \"1..*\" Connector",
+                "title": "Client, ETL and Connector Class Model (With 1 or More Connectors)"
+              }
+            }
+          }
+        }
+      },
+      "channels": {
+        "fast-agent-timing": [
+          {
+            "type": "text",
+            "text": "{\"start_time\": 363.596693077, \"end_time\": 365.578858925, \"duration_ms\": 1982.17}"
+          }
+        ],
+        "fast-agent-usage": [
+          {
+            "type": "text",
+            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 7179, \"output_tokens\": 128, \"total_tokens\": 7307, \"timestamp\": 1773525035.6348708, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 6400, \"total_cache_tokens\": 6400, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 1, \"current_context_tokens\": 7307, \"effective_input_tokens\": 779, \"display_input_tokens\": 7179}, \"raw_usage\": {\"completion_tokens\": 128, \"prompt_tokens\": 7179, \"total_tokens\": 7307, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 6400}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 1, \"cumulative_input_tokens\": 7179, \"cumulative_output_tokens\": 128, \"cumulative_billing_tokens\": 7307, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 7307, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.6975150251628521, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 6400, \"cache_hit_rate_percent\": 47.13160026511525, \"cumulative_effective_input_tokens\": 779}}"
+          }
+        ]
+      },
+      "stop_reason": "toolUse",
+      "is_template": false
+    },
+    {
+      "role": "user",
+      "content": [],
+      "tool_results": {
+        "call_iiuPiO5QfoWsjGuuzSh74KB8": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"uri\": \"https://mermaid.ink/svg/pako:eNptkMsOgjAQRX-lmSUREreEkBh0pyvdWRdjqUqkLSnDwiD_bnkJPpa956R3cmsQJpUQMhA5luU6w6tFxXX3YonRWgoyltVcMxZFeC7JoqA45roZrZ0R9w_zTVZF9h8keSY19b_6YlTCqXDmbg7bb7GcmcdlEHinzp-6oqfvf971Q-e3Odgf5DkwS9vqNuLQlnCYGCwYKGkVZqkbrwa6SdXNmMoLVjlB4wSsyOwfWricbCVdUhUpkhxWHuLmBTmaiGQ=\",\n  \"title\": \"Client, ETL and Connector Class Model (With 1 or More Connectors)\"\n}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "channels": {
+        "fast-agent-tool-timing": [
+          {
+            "type": "text",
+            "text": "{\"call_iiuPiO5QfoWsjGuuzSh74KB8\": {\"timing_ms\": 39.87, \"transport_channel\": \"post-sse\"}}"
+          }
+        ],
+        "mcp-ui": []
+      },
+      "is_template": false
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Here is the updated diagram, now explicitly showing that ETL is composed of one or more Connector instances (1..*):\n\n```mermaid\nclassDiagram\nclass Connector {\n  <<abstract>>\n}\nclass MockConnector {\n}\nclass ApiConnector {\n}\nclass Client {\n  -connector: Connector\n}\nclass ETL {\n  -connectors: Connector[1..*]\n}\nConnector <|-- MockConnector\nConnector <|-- ApiConnector\nClient *-- Connector\nETL *-- \"1..*\" Connector\n```\n\nYou can view the rendered diagram here:  \n![Client, ETL and Connector Class Model (With 1 or More Connectors)](https://mermaid.ink/svg/pako:eNptkMsOgjAQRX-lmSUREreEkBh0pyvdWRdjqUqkLSnDwiD_bnkJPpa956R3cmsQJpUQMhA5luU6w6tFxXX3YonRWgoyltVcMxZFeC7JoqA45roZrZ0R9w_zTVZF9h8keSY19b_6YlTCqXDmbg7bb7GcmcdlEHinzp-6oqfvf971Q-e3Odgf5DkwS9vqNuLQlnCYGCwYKGkVZqkbrwa6SdXNmMoLVjlB4wSsyOwfWricbCVdUhUpkhxWHuLmBTmaiGQ=)"
+        }
+      ],
+      "channels": {
+        "fast-agent-timing": [
+          {
+            "type": "text",
+            "text": "{\"start_time\": 365.628671651, \"end_time\": 368.305881106, \"duration_ms\": 2677.21}"
+          }
+        ],
+        "fast-agent-usage": [
+          {
+            "type": "text",
+            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 7531, \"output_tokens\": 319, \"total_tokens\": 7850, \"timestamp\": 1773525038.3618999, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 7040, \"total_cache_tokens\": 7040, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 0, \"current_context_tokens\": 7850, \"effective_input_tokens\": 491, \"display_input_tokens\": 7531}, \"raw_usage\": {\"completion_tokens\": 319, \"prompt_tokens\": 7531, \"total_tokens\": 7850, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 7040}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 2, \"cumulative_input_tokens\": 14710, \"cumulative_output_tokens\": 447, \"cumulative_billing_tokens\": 15157, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 7850, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.749348973248719, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 13440, \"cache_hit_rate_percent\": 47.744227353463586, \"cumulative_effective_input_tokens\": 1270}}"
+          }
+        ]
+      },
+      "stop_reason": "endTurn",
+      "is_template": false
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Sorry, clients "
+        }
+      ],
+      "is_template": false
+    },
+    {
+      "role": "assistant",
+      "content": [],
+      "tool_calls": {
+        "call_XmHnrwtUXhnX188PxmGAYKDh": {
+          "method": "tools/call",
+          "params": {
+            "name": "diagramming__draw_mermaid",
+            "arguments": {
+              "args": {
+                "code": "classDiagram\nclass Connector {\n  <<abstract>>\n}\nclass MockConnector {\n}\nclass ApiConnector {\n}\nclass Client {\n  -connector: Connector\n}\nclass ETL {\n  -clients: Client[1..*]\n}\nConnector <|-- MockConnector\nConnector <|-- ApiConnector\nClient *-- Connector\nETL *-- \"1..*\" Client",
+                "title": "ETL with Multiple Clients and Connectors Class Model"
+              }
+            }
+          }
+        }
+      },
+      "channels": {
+        "fast-agent-timing": [
+          {
+            "type": "text",
+            "text": "{\"start_time\": 393.462823155, \"end_time\": 395.366469986, \"duration_ms\": 1903.65}"
+          }
+        ],
+        "fast-agent-usage": [
+          {
+            "type": "text",
+            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 7861, \"output_tokens\": 120, \"total_tokens\": 7981, \"timestamp\": 1773525065.4224863, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 0, \"total_cache_tokens\": 0, \"has_cache_activity\": false}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 1, \"current_context_tokens\": 7981, \"effective_input_tokens\": 7861, \"display_input_tokens\": 7861}, \"raw_usage\": {\"completion_tokens\": 120, \"prompt_tokens\": 7861, \"total_tokens\": 7981, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 0}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 1, \"cumulative_input_tokens\": 7861, \"cumulative_output_tokens\": 120, \"cumulative_billing_tokens\": 7981, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 7981, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.7618540325475192, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 0, \"cache_hit_rate_percent\": 0.0, \"cumulative_effective_input_tokens\": 7861}}"
+          }
+        ]
+      },
+      "stop_reason": "toolUse",
+      "is_template": false
+    },
+    {
+      "role": "user",
+      "content": [],
+      "tool_results": {
+        "call_XmHnrwtUXhnX188PxmGAYKDh": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"uri\": \"https://mermaid.ink/svg/pako:eNptkDEPgjAUhP9K80YiJK6EkBh000k36_AsVYnQkvIYDPLfLQUEomPvvte7XANCpxJCBiLHqtpmeDdYcOVeLNFKSUHasIYrxqIIrxUZFBTHXLUjddDiuSC_zqbM_htJnklF_a--GJFwCpyxu9N-BN1VFQ7n53UQeBdHTinR2_eXjX7ceStr9lU8a8zULrSTOHQhHIZIWDEopCkwS-1mDdBDFm69VN6wzglaC2BN-vhSwupkammVukyR5DDuILcf8c6EgA==\",\n  \"title\": \"ETL with Multiple Clients and Connectors Class Model\"\n}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "channels": {
+        "fast-agent-tool-timing": [
+          {
+            "type": "text",
+            "text": "{\"call_XmHnrwtUXhnX188PxmGAYKDh\": {\"timing_ms\": 37.3, \"transport_channel\": \"post-sse\"}}"
+          }
+        ],
+        "mcp-ui": []
+      },
+      "is_template": false
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Here is the new class diagram, showing that ETL is composed of one or more Client instances (each of which is composed of one Connector):\n\n```mermaid\nclassDiagram\nclass Connector {\n  <<abstract>>\n}\nclass MockConnector {\n}\nclass ApiConnector {\n}\nclass Client {\n  -connector: Connector\n}\nclass ETL {\n  -clients: Client[1..*]\n}\nConnector <|-- MockConnector\nConnector <|-- ApiConnector\nClient *-- Connector\nETL *-- \"1..*\" Client\n```\n\nYou can view the rendered diagram here:  \n![ETL with Multiple Clients and Connectors Class Model](https://mermaid.ink/svg/pako:eNptkDEPgjAUhP9K80YiJK6EkBh000k36_AsVYnQkvIYDPLfLQUEomPvvte7XANCpxJCBiLHqtpmeDdYcOVeLNFKSUHasIYrxqIIrxUZFBTHXLUjddDiuSC_zqbM_htJnklF_a--GJFwCpyxu9N-BN1VFQ7n53UQeBdHTinR2_eXjX7ceStr9lU8a8zULrSTOHQhHIZIWDEopCkwS-1mDdBDFm69VN6wzglaC2BN-vhSwupkammVukyR5DDuILcf8c6EgA==)"
+        }
+      ],
+      "channels": {
+        "fast-agent-timing": [
+          {
+            "type": "text",
+            "text": "{\"start_time\": 395.413399188, \"end_time\": 398.322582523, \"duration_ms\": 2909.18}"
+          }
+        ],
+        "fast-agent-usage": [
+          {
+            "type": "text",
+            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 8194, \"output_tokens\": 310, \"total_tokens\": 8504, \"timestamp\": 1773525068.3786187, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 7936, \"total_cache_tokens\": 7936, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 0, \"current_context_tokens\": 8504, \"effective_input_tokens\": 258, \"display_input_tokens\": 8194}, \"raw_usage\": {\"completion_tokens\": 310, \"prompt_tokens\": 8194, \"total_tokens\": 8504, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 7936}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 2, \"cumulative_input_tokens\": 16055, \"cumulative_output_tokens\": 430, \"cumulative_billing_tokens\": 16485, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 8504, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.8117788112747906, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 7936, \"cache_hit_rate_percent\": 33.07907131841107, \"cumulative_effective_input_tokens\": 8119}}"
+          }
+        ]
+      },
+      "stop_reason": "endTurn",
+      "is_template": false
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Add also \"CLI\" class that will always have exactly one client "
+        }
+      ],
+      "is_template": false
+    },
+    {
+      "role": "assistant",
+      "content": [],
+      "tool_calls": {
+        "call_IbUUPiexqNCtQmxyClkYcsXQ": {
+          "method": "tools/call",
+          "params": {
+            "name": "diagramming__draw_mermaid",
+            "arguments": {
+              "args": {
+                "code": "classDiagram\nclass Connector {\n  <<abstract>>\n}\nclass MockConnector {\n}\nclass ApiConnector {\n}\nclass Client {\n  -connector: Connector\n}\nclass ETL {\n  -clients: Client[1..*]\n}\nclass CLI {\n  -client: Client\n}\nConnector <|-- MockConnector\nConnector <|-- ApiConnector\nClient *-- Connector\nETL *-- \"1..*\" Client\nCLI *-- \"1\" Client",
+                "title": "CLI, ETL, Client, and Connector Class Model"
+              }
+            }
+          }
+        }
+      },
+      "channels": {
+        "fast-agent-timing": [
+          {
+            "type": "text",
+            "text": "{\"start_time\": 734.919189279, \"end_time\": 737.069977311, \"duration_ms\": 2150.79}"
+          }
+        ],
+        "fast-agent-usage": [
+          {
+            "type": "text",
+            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 8525, \"output_tokens\": 141, \"total_tokens\": 8666, \"timestamp\": 1773525407.125938, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 6528, \"total_cache_tokens\": 6528, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 1, \"current_context_tokens\": 8666, \"effective_input_tokens\": 1997, \"display_input_tokens\": 8525}, \"raw_usage\": {\"completion_tokens\": 141, \"prompt_tokens\": 8525, \"total_tokens\": 8666, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 6528}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 1, \"cumulative_input_tokens\": 8525, \"cumulative_output_tokens\": 141, \"cumulative_billing_tokens\": 8666, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 8666, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.8272430830794137, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 6528, \"cache_hit_rate_percent\": 43.366770743373415, \"cumulative_effective_input_tokens\": 1997}}"
+          }
+        ]
+      },
+      "stop_reason": "toolUse",
+      "is_template": false
+    },
+    {
+      "role": "user",
+      "content": [],
+      "tool_results": {
+        "call_IbUUPiexqNCtQmxyClkYcsXQ": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"uri\": \"https://mermaid.ink/svg/pako:eNptkT0PgjAQhv9Kc6MREldCSAw6mOCkm3U4S1UitKQcg0H-u-UbomPf9-ndk7YCoWMJHgORYlHsEnwYzLhqTyzUSklB2rCKK8Z8H28FGRQUBFzVA3XU4rUgx2abJ_-LME2kom6qIwbEmxbO2P05GsD2VuH11y8b111d51Ojw4IcwBaZRPyP4yylf9q5uC0725UtZmnj1UQcGg8O47JGoy_GFNYMMmkyTGL72BXQU2bts8fyjmVKUFsAS9KntxI2J1NKm5R5jCT7X-nj-guNXpa7\",\n  \"title\": \"CLI, ETL, Client, and Connector Class Model\"\n}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "channels": {
+        "fast-agent-tool-timing": [
+          {
+            "type": "text",
+            "text": "{\"call_IbUUPiexqNCtQmxyClkYcsXQ\": {\"timing_ms\": 41.13, \"transport_channel\": \"post-sse\"}}"
+          }
+        ],
+        "mcp-ui": []
+      },
+      "is_template": false
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Here is your revised class diagram, now including a CLI class that always has exactly one Client:\n\n```mermaid\nclassDiagram\nclass Connector {\n  <<abstract>>\n}\nclass MockConnector {\n}\nclass ApiConnector {\n}\nclass Client {\n  -connector: Connector\n}\nclass ETL {\n  -clients: Client[1..*]\n}\nclass CLI {\n  -client: Client\n}\nConnector <|-- MockConnector\nConnector <|-- ApiConnector\nClient *-- Connector\nETL *-- \"1..*\" Client\nCLI *-- \"1\" Client\n```\n\nYou can view the rendered diagram here:  \n![CLI, ETL, Client, and Connector Class Model](https://mermaid.ink/svg/pako:eNptkT0PgjAQhv9Kc6MREldCSAw6mOCkm3U4S1UitKQcg0H-u-UbomPf9-ndk7YCoWMJHgORYlHsEnwYzLhqTyzUSklB2rCKK8Z8H28FGRQUBFzVA3XU4rUgx2abJ_-LME2kom6qIwbEmxbO2P05GsD2VuH11y8b111d51Ojw4IcwBaZRPyP4yylf9q5uC0725UtZmnj1UQcGg8O47JGoy_GFNYMMmkyTGL72BXQU2bts8fyjmVKUFsAS9KntxI2J1NKm5R5jCT7X-nj-guNXpa7)"
+        }
+      ],
+      "channels": {
+        "fast-agent-timing": [
+          {
+            "type": "text",
+            "text": "{\"start_time\": 737.121447427, \"end_time\": 740.309936194, \"duration_ms\": 3188.49}"
+          }
+        ],
+        "fast-agent-usage": [
+          {
+            "type": "text",
+            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 8904, \"output_tokens\": 343, \"total_tokens\": 9247, \"timestamp\": 1773525410.3659642, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 7808, \"total_cache_tokens\": 7808, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 0, \"current_context_tokens\": 9247, \"effective_input_tokens\": 1096, \"display_input_tokens\": 8904}, \"raw_usage\": {\"completion_tokens\": 343, \"prompt_tokens\": 8904, \"total_tokens\": 9247, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 7808}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 2, \"cumulative_input_tokens\": 17429, \"cumulative_output_tokens\": 484, \"cumulative_billing_tokens\": 17913, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 9247, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.8827044529466119, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 14336, \"cache_hit_rate_percent\": 45.131433968204, \"cumulative_effective_input_tokens\": 3093}}"
+          }
+        ]
+      },
+      "stop_reason": "endTurn",
+      "is_template": false
+    }
+  ]
+}
