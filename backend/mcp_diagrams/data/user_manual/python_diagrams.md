@@ -7,7 +7,7 @@ Generate Python code using the `diagrams` library to create cloud architecture a
 ## CRITICAL RULES
 
 1. **NO import statements** - All imports are handled externally
-1. **NO with statement** - The Diagram context manager is handled externally
+1. **NO with statement for Diagram** - The top-level `Diagram` context manager is handled externally; `with Cluster(...)` and `with C4SystemBoundary(...)` / `with C4ContainerBoundary(...)` are allowed inside your code
 1. Code will be inserted into this template:
 
 ```python
@@ -134,4 +134,61 @@ with Cluster("inc.2"):
     files = Server("FTP server\\n(Videos)")
 
 cloudrun_import >> Edge(label="Requests") >> files
+```
+
+## C4 Diagrams
+
+Use C4-style diagrams when the request is about **system context**, **container architecture**, or **component relationships** — especially when the user wants clean, readable high-level views (C4 model level 1–3).
+
+### C4 Node Types
+
+C4 nodes take `name`, `technology` (optional), and `description` (optional) keyword arguments:
+
+```
+C4Person(name="...", description="...")
+C4Container(name="...", technology="...", description="...")
+C4SystemBoundary("System Name")   # context manager, like Cluster
+C4Relationship("label")           # used between >> operators, like Edge
+```
+
+### C4 Example: System Context Diagram (Level 1)
+
+**INPUT:** Show how a Personal Banking Customer uses the Internet Banking System. The system sends emails via an Email System and connects to a Mainframe Banking System.
+
+```python
+customer = C4Person(name="Personal Banking\nCustomer", description="A customer\nof the bank")
+email = C4SystemExt(name="E-mail System", description="Microsoft Exchange")
+mainframe = C4SystemExt(name="Mainframe Banking\nSystem", description="Stores all banking\ncustomer data")
+
+with C4SystemBoundary("Internet Banking System"):
+    web_app = C4System(name="Web Application", description="Delivers the static\ncontent and SPA")
+    api = C4System(name="API Application", description="Provides banking\nfunctionality via API")
+    db = C4SystemDb(name="Database", description="Stores user\ncredentials, etc.")
+    api >> C4Relationship("Reads from\nand writes to") >> db
+    web_app >> C4Relationship("Delivers to\ncustomer's browser") >> customer
+
+customer >> C4Relationship("Uses") >> web_app
+customer >> C4Relationship("Uses") >> api
+api >> C4Relationship("Sends email\nusing") >> email
+api >> C4Relationship("Makes API\ncalls to") >> mainframe
+```
+
+### C4 Example: Container Diagram (Level 2)
+
+**INPUT:** Show containers inside the Internet Banking System: a Single-Page App (Angular), an API Application (Java/Spring MVC), and a Database (Oracle). An external customer uses the SPA, which calls the API, which reads/writes to the DB.
+
+```python
+customer = C4Person(name="Personal Banking\nCustomer", description="A customer\nof the bank")
+
+with C4SystemBoundary("Internet Banking System"):
+    spa = C4Container(name="Single-Page App", technology="Angular", description="Provides banking\nfunctionality")
+    api = C4Container(name="API Application", technology="Java/Spring MVC", description="Provides banking\nfunctionality via API")
+    db = C4ContainerDb(name="Database", technology="Oracle", description="Stores user data,\nhashed credentials")
+    queue = C4ContainerQueue(name="Message Bus", technology="RabbitMQ", description="Async event\npublishing")
+
+    spa >> C4Relationship("Makes API\ncalls to") >> api
+    api >> C4Relationship("Reads from\nand writes to") >> db
+    api >> C4Relationship("Publishes\nevents to") >> queue
+
+customer >> C4Relationship("Uses") >> spa
 ```
