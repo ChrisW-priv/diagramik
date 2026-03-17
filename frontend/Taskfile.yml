@@ -25,6 +25,11 @@ tasks:
       - task: build
       - task: push
 
+  check:
+    desc: Run static type checks on all frontend files (Astro, Vue, TS)
+    cmds:
+      - npm run check
+
   install:
     desc: Install npm dependencies
     cmds:

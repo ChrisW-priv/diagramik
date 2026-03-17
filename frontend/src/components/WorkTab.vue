@@ -1,13 +1,13 @@
 <template>
-  <div class="flex flex-col h-full w-full">
+  <div class="flex flex-col h-full w-full min-h-0">
     <!-- Error Banner -->
-    <div v-if="generationError" class="mb-3 p-3 bg-red-900/50 border border-red-500 rounded-lg flex items-start gap-2">
-      <ExclamationCircleIcon class="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+    <div v-if="generationError" aria-live="assertive" role="alert" class="mb-3 p-3 bg-red-900/50 border border-red-500 rounded-lg flex items-start gap-2">
+      <ExclamationCircleIcon class="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
       <div class="flex-grow">
         <p class="text-red-200 text-sm">{{ generationError }}</p>
         <button
           @click="generationError = null"
-          class="text-red-300 hover:text-red-100 text-xs underline mt-1"
+          class="text-red-300 hover:text-red-100 text-sm underline mt-1"
         >
           Dismiss
         </button>
@@ -15,46 +15,75 @@
     </div>
 
     <div class="flex-grow overflow-y-auto p-2 md:p-4 bg-gray-800 rounded-lg" ref="chatHistoryContainer">
-      <div class="flex flex-col space-y-2">
+      <div class="flex flex-col space-y-3">
         <div
           v-for="(message, index) in localChatHistory"
           :key="message.id"
-          :class="[
-            'p-2 rounded-lg relative w-full',
-            message.role === 'user' ? 'bg-gray-700' : 'bg-blue-800',
-            message.role === 'assistant' ? 'cursor-pointer hover:bg-blue-700' : '',
-            isSelected(message, index) ? 'border-2 border-blue-500' : ''
-          ]"
-          @click="handleMessageClick(message, index)"
+          :class="message.role === 'user' ? 'flex justify-end' : 'flex justify-start'"
         >
-          <span>{{ message.role === 'user' ? 'You' : 'AI' }}: {{ formatMessageContent(message.content) }}</span>
-          <div v-if="isSelected(message, index)" class="text-xs text-right text-blue-300 mt-1">
-            current
+          <!-- User message -->
+          <div
+            v-if="message.role === 'user'"
+            class="max-w-[85%] px-3 py-2 text-sm leading-relaxed break-words bg-gray-700 text-white rounded-lg rounded-br-sm"
+          >
+            {{ formatMessageContent(message.content) }}
+          </div>
+
+          <!-- Assistant message -->
+          <div
+            v-else
+            :class="[
+              'max-w-[88%] px-3 py-2 text-sm leading-relaxed break-words rounded-r-lg rounded-tl-lg border-l-2 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400',
+              isSelected(message, index)
+                ? 'bg-blue-600/20 border-blue-400 text-gray-100'
+                : 'bg-gray-900/40 border-blue-500/25 text-gray-300 hover:bg-blue-500/8 hover:border-blue-400/50'
+            ]"
+            role="button"
+            tabindex="0"
+            :aria-label="`View diagram version: ${formatMessageContent(message.content)}`"
+            :aria-pressed="isSelected(message, index)"
+            @click="handleMessageClick(message, index)"
+            @keydown.enter.prevent="handleMessageClick(message, index)"
+            @keydown.space.prevent="handleMessageClick(message, index)"
+          >
+            {{ formatMessageContent(message.content) }}
+            <span :class="['mt-1.5 flex items-center gap-1 text-xs transition-colors', isSelected(message, index) ? 'text-blue-300' : 'text-gray-500']">
+              <EyeIcon class="h-3 w-3" aria-hidden="true" />
+              {{ isSelected(message, index) ? 'Previewing this version' : 'View this diagram' }}
+            </span>
           </div>
         </div>
-        <div v-if="generating" class="p-2 bg-blue-800 rounded-lg self-start animate-pulse">
-          AI: Generating diagram...
+
+        <!-- Generating indicator -->
+        <div v-if="generating" class="flex justify-start" aria-live="polite" aria-busy="true" aria-label="Generating diagram…">
+          <div class="px-3 py-2.5 rounded-r-lg rounded-tl-lg border-l-2 border-blue-500/30 bg-gray-900/40 flex items-center gap-1.5">
+            <span class="typing-dot" style="animation-delay: 0ms"></span>
+            <span class="typing-dot" style="animation-delay: 160ms"></span>
+            <span class="typing-dot" style="animation-delay: 320ms"></span>
+          </div>
         </div>
       </div>
     </div>
 
-    <form @submit.prevent="submitPrompt" class="mt-4 flex">
+    <form @submit.prevent="submitPrompt" class="mt-4 flex flex-shrink-0">
       <textarea
+        ref="promptTextarea"
         v-model="prompt"
         @keydown.enter="handleEnter"
-        placeholder="Describe you idea here..."
-        class="flex-grow p-2 bg-gray-800 rounded-l-lg border border-gray-700 focus:outline-none focus:border-blue-500 resize-none h-10 overflow-hidden"
+        placeholder="Describe your idea here..."
+        aria-label="Diagram prompt"
+        class="flex-grow p-2.5 sm:p-2 bg-gray-800 rounded-l-lg border border-r-0 border-gray-700 focus-visible:outline-none focus-visible:border-blue-500 resize-none h-10 overflow-hidden focus-visible:ring-2 focus-visible:ring-blue-400 transition-colors text-base"
         :disabled="generating"
         rows="1"
       ></textarea>
       <button
         type="submit"
-        class="flex items-center justify-center px-3 py-2 bg-gray-700 text-white rounded-r-lg hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+        class="flex items-center justify-center px-3 py-2 sm:px-4 bg-gray-700 text-white rounded-r-lg border border-gray-700 hover:bg-gray-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400"
         :disabled="generating || !prompt.trim()"
         aria-label="Send prompt"
         title="Send prompt"
       >
-        <PaperAirplaneIcon class="h-6 w-6" />
+        <PaperAirplaneIcon class="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
     </form>
   </div>
@@ -62,7 +91,7 @@
 
 <script setup>
 import { ref, watch, nextTick, computed } from 'vue';
-import { ExclamationCircleIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline';
+import { ExclamationCircleIcon, PaperAirplaneIcon, EyeIcon } from '@heroicons/vue/24/outline';
 import { createDiagramVersion, createDiagram } from '../lib/api';
 
 const props = defineProps({
@@ -76,6 +105,7 @@ const prompt = ref('');
 const generating = ref(false);
 const generationError = ref(null);
 const chatHistoryContainer = ref(null);
+const promptTextarea = ref(null);
 const localChatHistory = ref([]);
 
 const scrollToBottom = () => {
@@ -92,10 +122,9 @@ watch(() => props.diagram ? props.diagram.chat_history : [], (newHistory) => {
 }, { deep: true, immediate: true });
 
 watch(prompt, () => {
-  const textarea = chatHistoryContainer.value?.nextElementSibling?.querySelector('textarea');
-  if (textarea) {
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
+  if (promptTextarea.value) {
+    promptTextarea.value.style.height = 'auto';
+    promptTextarea.value.style.height = promptTextarea.value.scrollHeight + 'px';
   }
 });
 
@@ -208,3 +237,24 @@ const submitPrompt = async () => {
   }
 };
 </script>
+
+<style scoped>
+.typing-dot {
+  display: block;
+  width: 0.375rem;  /* 6px */
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: rgb(96 165 250); /* blue-400 */
+  opacity: 0.3;
+  animation: typing-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes typing-pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+</style>

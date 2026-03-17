@@ -122,11 +122,11 @@ const handleSubmit = async () => {
         </p>
       </div>
 
-      <div v-if="error" class="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded">
+      <div v-if="error" role="alert" aria-live="assertive" class="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded text-sm">
         {{ error }}
       </div>
 
-      <div v-if="success" class="bg-green-500/10 border border-green-500 text-green-400 px-4 py-3 rounded">
+      <div v-if="success" role="status" aria-live="polite" class="bg-green-500/10 border border-green-500 text-green-400 px-4 py-3 rounded">
         <p class="font-semibold">Verification email sent!</p>
         <p class="text-sm mt-1">Please check your inbox for the verification link.</p>
         <p class="text-xs mt-2 text-gray-400">
@@ -158,7 +158,7 @@ const handleSubmit = async () => {
             spellcheck="false"
             required
             :disabled="loading"
-            class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+            class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent disabled:opacity-50 text-base"
             placeholder="Enter your email"
           />
         </div>
@@ -166,11 +166,10 @@ const handleSubmit = async () => {
         <button
           type="submit"
           :disabled="!canResend"
-          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Resend verification email"
-          title="Resend verification email"
+          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          <ArrowPathIcon class="h-6 w-6" :class="{ 'animate-spin': loading }" />
+          <ArrowPathIcon class="h-5 w-5 mr-2" :class="{ 'animate-spin': loading }" aria-hidden="true" />
+          <span>{{ loading ? 'Sending...' : 'Resend verification email' }}</span>
         </button>
       </form>
 

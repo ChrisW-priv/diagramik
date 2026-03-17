@@ -1,10 +1,12 @@
 <template>
-  <div class="flex flex-col h-full">
-    <p v-if="!selectedVersion">No diagram version selected. Go to the Work tab to choose one!</p>
-    <div v-else class="flex flex-col h-full p-2 md:p-4 bg-gray-800 rounded-lg">
-      <div class="flex-grow flex justify-center items-center overflow-auto">
+  <div class="flex flex-col h-full min-h-0">
+    <div v-if="!selectedVersion" class="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
+      <p class="text-sm">Describe your diagram in the chat panel to get started.</p>
+    </div>
+    <div v-else class="flex flex-col h-full min-h-0 p-2 md:p-4 bg-gray-800 rounded-lg">
+      <div class="flex-grow flex justify-center items-center overflow-auto min-h-0">
         <!-- Image Display -->
-        <img v-if="imageUrl" :src="imageUrl" alt="Diagram" class="max-w-full max-h-full h-auto rounded-lg">
+        <img v-if="imageUrl" :src="imageUrl" :alt="diagram?.title ? `Diagram: ${diagram.title}` : 'Generated diagram'" class="max-w-full max-h-full h-auto rounded-lg">
 
         <!-- Error State -->
         <div v-else-if="imageError" class="flex flex-col items-center gap-3 p-6 bg-red-900/30 border border-red-500/50 rounded-lg max-w-md">
@@ -20,12 +22,12 @@
         </div>
 
         <!-- Loading State -->
-        <p v-else>Loading diagram...</p>
+        <div v-else class="w-full max-w-2xl aspect-video bg-gray-700 rounded-lg animate-pulse"></div>
       </div>
       <div class="flex-shrink-0 pt-4 flex justify-end">
         <button
             @click="downloadDiagram"
-            class="flex items-center justify-center p-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+            class="flex items-center justify-center p-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400"
             :disabled="!imageUrl"
             aria-label="Download diagram"
             title="Download diagram"

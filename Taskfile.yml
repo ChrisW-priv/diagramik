@@ -27,7 +27,13 @@ tasks:
   check:
     desc: Runs static type checks to make sure any obvious errors are not present
     cmds:
+      - task: fe:check
       - task: be:monolith:check-prod
+
+  setup:
+    desc: Set up local development environment
+    cmds:
+      - task: be:monolith:setup-local
 
   dev:
     desc: Runs dev env for frontend and backend

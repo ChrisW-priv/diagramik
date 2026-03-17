@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { LockClosedIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
+import { ArrowPathIcon } from '@heroicons/vue/24/outline';
 import { authApi } from '../lib/api';
+import { CONFIG } from '../lib/config';
+import FormContainer from './base/FormContainer.vue';
+import FormField from './base/FormField.vue';
+import AlertError from './base/AlertError.vue';
+import AlertSuccess from './base/AlertSuccess.vue';
 
 const props = defineProps<{
   uid?: string;
@@ -26,7 +31,7 @@ const canSubmit = computed(() => {
   if (loading.value) return false;
   if (!newPassword.value || !confirmPassword.value) return false;
   if (!passwordsMatch.value) return false;
-  
+
   if (isTokenMethod.value) {
     return props.uid && props.token;
   } else {
@@ -50,8 +55,8 @@ const handleSubmit = async () => {
   }
 
   // Validate password length
-  if (newPassword.value.length < 8) {
-    error.value = 'Password must be at least 8 characters long.';
+  if (newPassword.value.length < CONFIG.VALIDATION.PASSWORD_MIN_LENGTH) {
+    error.value = `Password must be at least ${CONFIG.VALIDATION.PASSWORD_MIN_LENGTH} characters long.`;
     return;
   }
 
@@ -102,126 +107,78 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-900">
-    <div class="max-w-md w-full space-y-4 md:space-y-8 p-4 md:p-8 bg-gray-800 rounded-lg shadow-lg">
-      <div>
-        <h2 class="text-center text-2xl md:text-3xl font-bold text-white">
-          Set New Password
-        </h2>
-        <p class="mt-2 text-center text-sm text-gray-400">
-          <span v-if="isTokenMethod">Enter your new password below</span>
-          <span v-else>Enter your current password and new password</span>
-        </p>
-      </div>
+  <FormContainer
+    title="Set New Password"
+    :subtitle="isTokenMethod ? 'Enter your new password below' : 'Enter your current password and new password'"
+  >
+    <!-- Error Alert -->
+    <AlertError v-if="error" :message="error" dismissible @dismiss="error = ''" />
 
-      <div v-if="error" class="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded">
-        {{ error }}
-      </div>
+    <!-- Success Alert -->
+    <AlertSuccess
+      v-if="success"
+      message="Password changed successfully! You are now logged in. Redirecting to your diagrams..."
+    />
 
-      <div v-if="success" class="bg-green-500/10 border border-green-500 text-green-400 px-4 py-3 rounded">
-        <p class="font-semibold">Password changed successfully!</p>
-        <p class="text-sm mt-1">You are now logged in. Redirecting to your diagrams...</p>
-      </div>
+    <form v-if="!success" class="space-y-4" @submit.prevent="handleSubmit">
+      <!-- Old Password Method Fields -->
+      <template v-if="!isTokenMethod">
+        <FormField
+          id="email"
+          v-model="email"
+          label="Email Address"
+          type="email"
+          required
+          autocomplete="email"
+          placeholder="your@email.com"
+          :error="error && error.includes('email') ? error : undefined"
+        />
 
-      <form class="space-y-6" @submit.prevent="handleSubmit">
-        <!-- Old Password Method Fields -->
-        <div v-if="!isTokenMethod" class="space-y-4">
-          <div>
-            <label for="email" class="block text-sm font-medium text-gray-300">
-              Email Address
-            </label>
-            <input
-              id="email"
-              v-model="email"
-              name="email"
-              type="email"
-              autocomplete="email"
-              required
-              :disabled="loading"
-              class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-              placeholder="Enter your email"
-            />
-          </div>
+        <FormField
+          id="oldPassword"
+          v-model="oldPassword"
+          label="Current Password"
+          type="password"
+          required
+          autocomplete="current-password"
+          placeholder="Enter your current password"
+          :error="error && error.includes('Invalid') ? error : undefined"
+        />
+      </template>
 
-          <div>
-            <label for="old-password" class="block text-sm font-medium text-gray-300">
-              Current Password
-            </label>
-            <input
-              id="old-password"
-              v-model="oldPassword"
-              name="old-password"
-              type="password"
-              autocomplete="current-password"
-              required
-              :disabled="loading"
-              class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-              placeholder="Enter your current password"
-            />
-          </div>
-        </div>
+      <!-- Password Fields (both methods) -->
+      <FormField
+        id="newPassword"
+        v-model="newPassword"
+        label="New Password"
+        type="password"
+        required
+        autocomplete="new-password"
+        placeholder="Enter your new password"
+        :error="error && error.includes('Password') && error.includes('least') ? error : undefined"
+      />
 
-        <!-- New Password Fields (both methods) -->
-        <div class="space-y-4">
-          <div>
-            <label for="new-password" class="block text-sm font-medium text-gray-300">
-              New Password
-            </label>
-            <input
-              id="new-password"
-              v-model="newPassword"
-              name="new-password"
-              type="password"
-              autocomplete="new-password"
-              required
-              :disabled="loading"
-              class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-              placeholder="Enter new password"
-            />
-            <p class="mt-1 text-xs text-gray-400">
-              Must be at least 8 characters long
-            </p>
-          </div>
+      <FormField
+        id="confirmPassword"
+        v-model="confirmPassword"
+        label="Confirm New Password"
+        type="password"
+        required
+        autocomplete="new-password"
+        placeholder="Confirm your new password"
+        :error="error && error.includes('do not match') ? error : undefined"
+      />
 
-          <div>
-            <label for="confirm-password" class="block text-sm font-medium text-gray-300">
-              Confirm New Password
-            </label>
-            <input
-              id="confirm-password"
-              v-model="confirmPassword"
-              name="confirm-password"
-              type="password"
-              autocomplete="new-password"
-              required
-              :disabled="loading"
-              class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-              :class="{ 'border-red-500': confirmPassword && !passwordsMatch }"
-              placeholder="Confirm new password"
-            />
-            <p v-if="confirmPassword && !passwordsMatch" class="mt-1 text-xs text-red-400">
-              Passwords do not match
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          :disabled="!canSubmit"
-          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Set new password"
-          title="Set new password"
-        >
-          <ArrowPathIcon v-if="loading" class="h-6 w-6 animate-spin" />
-          <LockClosedIcon v-else class="h-6 w-6" />
-        </button>
-      </form>
-
-      <p class="text-center text-sm text-gray-400">
-        <a href="/login" class="text-blue-400 hover:text-blue-300">
-          Back to login
-        </a>
-      </p>
-    </div>
-  </div>
+      <button
+        type="submit"
+        :disabled="!canSubmit"
+        :aria-busy="loading"
+        class="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none transition-colors font-medium"
+      >
+        <ArrowPathIcon v-if="loading" class="h-5 w-5 animate-spin mr-2" aria-hidden="true" />
+        <span v-if="loading">Updating...</span>
+        <span v-else>Update Password</span>
+      </button>
+    </form>
+  </FormContainer>
 </template>
