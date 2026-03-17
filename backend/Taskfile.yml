@@ -130,18 +130,9 @@ tasks:
       - monolith:dev
       - mcp:dev
 
-  # === Database Seeding ===
-  seed:
-    desc: Create default user and load sample conversation data
-    env:
-      DEPLOYMENT_ENVIRONMENT: DEBUG
-    cmds:
-      - .venv/bin/python django_monolith/manage.py create_default_user
-      - .venv/bin/python django_monolith/manage.py load_conversations
-
   # === Django Monolith Custom Tasks ===
   monolith:setup-local:
-    desc: Set up local dev environment (venv, DB, migrations, admin, test user)
+    desc: Set up local dev environment (venv, DB, migrations, admin, test user, sample data)
     env:
       DEPLOYMENT_ENVIRONMENT: DEBUG
       DJANGO_SUPERUSER_USERNAME: admin
@@ -152,6 +143,7 @@ tasks:
       - .venv/bin/python django_monolith/manage.py migrate
       - .venv/bin/python django_monolith/manage.py ensuresuperuser
       - .venv/bin/python django_monolith/manage.py create_default_user
+      - .venv/bin/python django_monolith/manage.py load_conversations
 
   monolith:dev:
     desc: Run Django dev server locally

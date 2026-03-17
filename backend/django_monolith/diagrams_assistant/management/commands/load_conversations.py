@@ -25,6 +25,12 @@ class Command(BaseCommand):
             default=str(DEFAULT_CONVERSATIONS_DIR),
             help="Directory containing conversation JSON files (default: <repo>/conversations/)",
         )
+        parser.add_argument(
+            "--user",
+            type=str,
+            default="testuser@example.com",
+            help="Email of the user to assign conversations to (default: testuser@example.com)",
+        )
 
     def handle(self, *args, **options):
         conversations_dir = Path(options["dir"])
@@ -34,7 +40,7 @@ class Command(BaseCommand):
             )
             return
 
-        owner = self._ensure_user()
+        owner = self._get_user(options["user"])
         json_files = sorted(conversations_dir.glob("*.json"))
 
         if not json_files:
@@ -46,19 +52,17 @@ class Command(BaseCommand):
         for json_file in json_files:
             self._load_conversation(json_file, owner)
 
-    def _ensure_user(self):
-        username = "testuser"
-        user, created = User.objects.get_or_create(
-            username=username,
-            defaults={
-                "password": "!"
-            },  # unusable password; create_default_user sets real one
-        )
-        if created:
-            user.set_password("testpassword")
-            user.save()
-            self.stdout.write(self.style.SUCCESS(f"Created user: {username}"))
-        return user
+    def _get_user(self, email):
+        try:
+            return User.objects.get(email=email)
+        except User.DoesNotExist:
+            self.stderr.write(
+                self.style.ERROR(
+                    f"User with email '{email}' not found. "
+                    f"Run 'manage.py ensuresuperuser' or 'manage.py create_default_user' first."
+                )
+            )
+            raise
 
     @transaction.atomic
     def _load_conversation(self, json_file, owner):
