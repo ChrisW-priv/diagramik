@@ -130,6 +130,15 @@ tasks:
       - monolith:dev
       - mcp:dev
 
+  # === Database Seeding ===
+  seed:
+    desc: Create default user and load sample conversation data
+    env:
+      DEPLOYMENT_ENVIRONMENT: DEBUG
+    cmds:
+      - .venv/bin/python django_monolith/manage.py create_default_user
+      - .venv/bin/python django_monolith/manage.py load_conversations
+
   # === Django Monolith Custom Tasks ===
   monolith:dev:
     desc: Run Django dev server locally
