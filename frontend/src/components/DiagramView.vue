@@ -30,13 +30,10 @@
 
     <div class="p-2 md:p-4 flex-grow flex flex-col min-h-0">
       <div v-if="loading" aria-live="polite" aria-busy="true" class="flex flex-col gap-4 flex-grow min-h-0 animate-pulse">
-        <div class="h-8 md:h-10 bg-gray-700 rounded-md w-1/2"></div>
         <div class="flex-1 bg-gray-800 rounded-lg"></div>
       </div>
       <p v-else-if="error" aria-live="assertive" role="alert" class="text-red-400 bg-red-500/10 border border-red-500 rounded px-3 py-2">{{ error }}</p>
       <div v-else class="flex flex-col flex-grow min-h-0">
-        <h2 class="text-xl md:text-3xl font-bold mb-2 md:mb-4 truncate" :title="diagram ? diagram.title : 'New Diagram'">{{ diagram ? diagram.title : 'New Diagram' }}</h2>
-        
         <!-- Responsive layout -->
         <div class="flex flex-col md:flex-row flex-grow min-h-0" ref="containerRef">
           <!-- WorkTab -->
