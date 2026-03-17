@@ -1,6 +1,8 @@
 import asyncio
 from datetime import timedelta
 from django.shortcuts import redirect
+from django.db.models import Max
+from django.db.models.functions import Coalesce
 
 from google.oauth2 import service_account
 
@@ -65,7 +67,11 @@ class DiagramListCreate(generics.ListCreateAPIView):
         return []
 
     def get_queryset(self):
-        return Diagram.objects.filter(owner=self.request.user)
+        return (
+            Diagram.objects.filter(owner=self.request.user)
+            .annotate(latest_version_at=Max("versions__created_at"))
+            .order_by(Coalesce("latest_version_at", "created_at").desc())
+        )
 
     def create(self, request, *args, **kwargs):
         text = request.data.get("text")

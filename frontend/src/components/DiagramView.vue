@@ -1,36 +1,46 @@
 <template>
-  <div class="border border-gray-700 rounded-lg flex flex-col h-[calc(100vh-12rem)]">
+  <div id="main-content" class="border border-gray-700 rounded-lg flex flex-col h-full">
     <!-- Tab buttons for small screens -->
-    <div class="flex border-b border-gray-700 md:hidden">
+    <div class="flex border-b border-gray-700 md:hidden" role="tablist" aria-label="Diagram panels">
       <button
+        id="tab-work"
+        role="tab"
         @click="activeTab = 'work'"
-        :class="['flex items-center justify-center p-3', activeTab === 'work' ? 'bg-gray-700' : '']"
-        aria-label="Work tab"
-        title="Work tab"
+        :class="['flex flex-col items-center justify-center gap-1 flex-1 py-2.5 px-3 min-h-12', activeTab === 'work' ? 'bg-gray-700 text-white' : 'text-gray-400', 'hover:bg-gray-700/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 transition-colors']"
+        :aria-selected="activeTab === 'work'"
+        aria-controls="panel-work"
       >
-        <PencilIcon class="h-6 w-6" />
+        <PencilIcon class="h-5 w-5" aria-hidden="true" />
+        <span class="text-xs font-medium">Edit</span>
       </button>
       <button
+        id="tab-display"
+        role="tab"
         @click="activeTab = 'display'"
-        :class="['flex items-center justify-center p-3', activeTab === 'display' ? 'bg-gray-700' : '']"
+        :class="['flex flex-col items-center justify-center gap-1 flex-1 py-2.5 px-3 min-h-12', activeTab === 'display' ? 'bg-gray-700 text-white' : 'text-gray-400', 'hover:bg-gray-700/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed']"
         :disabled="!diagram"
-        aria-label="Display tab"
-        title="Display tab"
+        :aria-disabled="!diagram"
+        :aria-selected="activeTab === 'display'"
+        aria-controls="panel-display"
       >
-        <EyeIcon class="h-6 w-6" />
+        <EyeIcon class="h-5 w-5" aria-hidden="true" />
+        <span class="text-xs font-medium">Preview</span>
       </button>
     </div>
 
-    <div class="p-2 md:p-4 flex-grow flex flex-col">
-      <p v-if="loading" class="text-white">Loading diagram...</p>
-      <p v-else-if="error" class="text-red-500">Error loading diagram: {{ error }}</p>
-      <div v-else>
-        <h2 class="text-xl md:text-3xl font-bold mb-2 md:mb-4">{{ diagram ? diagram.title : 'New Diagram' }}</h2>
+    <div class="p-2 md:p-4 flex-grow flex flex-col min-h-0">
+      <div v-if="loading" aria-live="polite" aria-busy="true" class="flex flex-col gap-4 flex-grow min-h-0 animate-pulse">
+        <div class="h-8 md:h-10 bg-gray-700 rounded-md w-1/2"></div>
+        <div class="flex-1 bg-gray-800 rounded-lg"></div>
+      </div>
+      <p v-else-if="error" aria-live="assertive" role="alert" class="text-red-400 bg-red-500/10 border border-red-500 rounded px-3 py-2">{{ error }}</p>
+      <div v-else class="flex flex-col flex-grow min-h-0">
+        <h2 class="text-xl md:text-3xl font-bold mb-2 md:mb-4 truncate" :title="diagram ? diagram.title : 'New Diagram'">{{ diagram ? diagram.title : 'New Diagram' }}</h2>
         
         <!-- Responsive layout -->
-        <div class="flex flex-col md:flex-row flex-grow" ref="containerRef">
+        <div class="flex flex-col md:flex-row flex-grow min-h-0" ref="containerRef">
           <!-- WorkTab -->
-          <div :class="['w-full', activeTab === 'work' ? 'block' : 'hidden', 'md:flex']" :style="isDesktop ? { width: `calc(${dividerPosition}% - 0.5rem)` } : {}">
+          <div id="panel-work" role="tabpanel" aria-labelledby="tab-work" :class="['w-full flex-col min-h-0', activeTab === 'work' ? 'block' : 'hidden', 'md:flex']" :style="isDesktop ? { width: `calc(${dividerPosition}% - 0.5rem)` } : {}">
             <WorkTab
               :diagram="diagram"
               :selected-version-id="selectedVersionId"
@@ -44,12 +54,19 @@
           <div
             class="hidden md:flex items-center cursor-col-resize px-1"
             @mousedown="startResize"
+            @keydown="handleResizerKeydown"
+            role="slider"
+            :aria-valuenow="dividerPosition"
+            aria-valuemin="15"
+            aria-valuemax="85"
+            aria-label="Resize panels divider"
+            tabindex="0"
           >
-            <div class="w-1.5 h-full bg-ray-600 rounded-full hover:bg-blue-500 transition-colors"></div>
+            <div class="w-1.5 h-full bg-gray-600 rounded-full hover:bg-blue-500 focus-visible:bg-blue-500 transition-colors"></div>
           </div>
 
           <!-- DisplayTab -->
-          <div :class="['w-full', activeTab === 'display' ? 'block' : 'hidden', 'md:flex']" :style="isDesktop ? { width: `calc(${100 - dividerPosition}% - 0.5rem)` } : {}">
+          <div id="panel-display" role="tabpanel" aria-labelledby="tab-display" :class="['w-full flex-col min-h-0', activeTab === 'display' ? 'block' : 'hidden', 'md:flex']" :style="isDesktop ? { width: `calc(${100 - dividerPosition}% - 0.5rem)` } : {}">
             <DisplayTab :diagram="diagram" :selected-version="selectedVersion" />
           </div>
         </div>
@@ -75,7 +92,7 @@ const loading = ref(true);
 const error = ref(null);
 const selectedVersionId = ref(null);
 const isResizing = ref(false);
-const dividerPosition = ref(50); // Initial position in percentage
+const dividerPosition = ref(25); // Initial position in percentage (1:3 work:display ratio)
 const containerRef = ref(null);
 const isDesktop = ref(typeof window !== 'undefined' && window.innerWidth >= 768);
 
@@ -118,6 +135,19 @@ const handleKeyDown = (event) => {
   if (event.altKey && event.key === 'Tab') {
     event.preventDefault();
     activeTab.value = activeTab.value === 'work' ? 'display' : 'work';
+  }
+};
+
+const handleResizerKeydown = (event) => {
+  // Keyboard support for resizable splitter
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    const step = event.shiftKey ? 10 : 5; // Shift for larger steps
+    dividerPosition.value = Math.max(15, dividerPosition.value - step);
+  } else if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    const step = event.shiftKey ? 10 : 5; // Shift for larger steps
+    dividerPosition.value = Math.min(85, dividerPosition.value + step);
   }
 };
 

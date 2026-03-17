@@ -35,6 +35,12 @@ class DiagramSerializer(serializers.ModelSerializer):
 
 
 class DiagramListItemSerializer(serializers.ModelSerializer):
+    updated_at = serializers.SerializerMethodField()
+
     class Meta:
         model = Diagram
-        fields = ["id", "title"]
+        fields = ["id", "title", "updated_at"]
+
+    def get_updated_at(self, obj):
+        # Use annotated latest version date if available, fall back to diagram creation date
+        return getattr(obj, "latest_version_at", None) or obj.created_at

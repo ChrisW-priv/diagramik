@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { LockClosedIcon, ArrowPathIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/outline';
+import { ArrowPathIcon } from '@heroicons/vue/24/outline';
 import { authApi } from '../lib/api';
+import FormContainer from './base/FormContainer.vue';
+import FormField from './base/FormField.vue';
+import AlertError from './base/AlertError.vue';
+import AlertSuccess from './base/AlertSuccess.vue';
 
 const uid = ref('');
 const token = ref('');
@@ -65,94 +69,67 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-900">
-    <div class="max-w-md w-full space-y-4 md:space-y-8 p-4 md:p-8 bg-gray-800 rounded-lg shadow-lg">
-      <div>
-        <h2 class="text-center text-2xl md:text-3xl font-bold text-white">
-          Set new password
-        </h2>
-        <p class="mt-2 text-center text-sm text-gray-400">
-          Enter your new password below
-        </p>
-      </div>
-
-      <div v-if="invalidLink" class="space-y-6">
-        <div class="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded">
-          This password reset link is invalid. Please request a new one.
-        </div>
-        <a
-          href="/auth/forgot-password"
-          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-          aria-label="Request new link"
-          title="Request new link"
-        >
-          <ArrowPathIcon class="h-6 w-6" />
-        </a>
-      </div>
-
-      <div v-else-if="error" class="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded">
-        {{ error }}
-      </div>
-
-      <div v-if="success" class="space-y-6">
-        <div class="bg-green-500/10 border border-green-500 text-green-400 px-4 py-3 rounded">
-          Your password has been reset successfully!
-        </div>
-        <a
-          href="/login"
-          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-          aria-label="Go to login"
-          title="Go to login"
-        >
-          <ArrowRightCircleIcon class="h-6 w-6" />
-        </a>
-      </div>
-
-      <form v-else-if="!invalidLink" class="mt-8 space-y-6" @submit.prevent="handleSubmit">
-        <div class="space-y-4">
-          <div>
-            <label for="password1" class="block text-sm font-medium text-gray-300">
-              New Password
-            </label>
-            <input
-              id="password1"
-              v-model="password1"
-              name="password1"
-              type="password"
-              autocomplete="new-password"
-              required
-              class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter new password"
-            />
-          </div>
-          <div>
-            <label for="password2" class="block text-sm font-medium text-gray-300">
-              Confirm New Password
-            </label>
-            <input
-              id="password2"
-              v-model="password2"
-              name="password2"
-              type="password"
-              autocomplete="new-password"
-              required
-              class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Confirm new password"
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full flex items-center justify-center p-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Reset password"
-          title="Reset password"
-        >
-          <ArrowPathIcon v-if="loading" class="h-6 w-6 animate-spin" />
-          <LockClosedIcon v-else class="h-6 w-6" />
-        </button>
-      </form>
+  <FormContainer title="Set new password" subtitle="Enter your new password below">
+    <!-- Invalid Link -->
+    <div v-if="invalidLink" class="space-y-4">
+      <AlertError message="This password reset link is invalid. Please request a new one." />
+      <a
+        href="/auth/forgot-password"
+        class="w-full inline-flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400 transition-colors font-medium"
+      >
+        <ArrowPathIcon class="h-5 w-5 mr-2" aria-hidden="true" />
+        Request new link
+      </a>
     </div>
-  </div>
+
+    <!-- Error Alert -->
+    <AlertError v-if="error && !invalidLink" :message="error" dismissible @dismiss="error = ''" />
+
+    <!-- Success Alert -->
+    <div v-if="success" class="space-y-4">
+      <AlertSuccess message="Your password has been reset successfully!" />
+      <a
+        href="/login"
+        class="w-full inline-flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400 transition-colors font-medium"
+      >
+        Go to sign in
+      </a>
+    </div>
+
+    <!-- Form -->
+    <form v-if="!invalidLink && !success" class="space-y-4" @submit.prevent="handleSubmit">
+      <FormField
+        id="password1"
+        v-model="password1"
+        label="New Password"
+        type="password"
+        required
+        autocomplete="new-password"
+        placeholder="Enter your new password"
+        :error="error && error.includes('password') ? error : undefined"
+      />
+
+      <FormField
+        id="password2"
+        v-model="password2"
+        label="Confirm New Password"
+        type="password"
+        required
+        autocomplete="new-password"
+        placeholder="Confirm your new password"
+        :error="error && error.includes('do not match') ? error : undefined"
+      />
+
+      <button
+        type="submit"
+        :disabled="loading"
+        :aria-busy="loading"
+        class="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none transition-colors font-medium"
+      >
+        <ArrowPathIcon v-if="loading" class="h-5 w-5 animate-spin mr-2" aria-hidden="true" />
+        <span v-if="loading">Updating...</span>
+        <span v-else>Set Password</span>
+      </button>
+    </form>
+  </FormContainer>
 </template>

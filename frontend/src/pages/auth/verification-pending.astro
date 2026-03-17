@@ -10,9 +10,10 @@ const emailParam = url.searchParams.get('email');
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>Verify Your Email - Diagramik</title>
+    <meta name="description" content="Generate technical diagrams from natural language. Describe your architecture in plain text and get a diagram instantly." />
+    <title>Diagramik | Verify Your Email</title>
   </head>
   <body>
-    <VerificationPendingView initialEmail={emailParam} client:only="vue" />
+    <VerificationPendingView initialEmail={emailParam ?? undefined} client:only="vue" />
   </body>
 </html>
