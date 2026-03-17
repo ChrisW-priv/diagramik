@@ -1,5 +1,24 @@
 # ruff: noqa
 
+from diagrams.c4 import (
+    Person as C4Person,
+    PersonExt as C4PersonExt,
+    System as C4System,
+    SystemDb as C4SystemDb,
+    SystemExt as C4SystemExt,
+    SystemDbExt as C4SystemDbExt,
+    Container as C4Container,
+    ContainerDb as C4ContainerDb,
+    ContainerQueue as C4ContainerQueue,
+    ContainerExt as C4ContainerExt,
+    Component as C4Component,
+    ComponentDb as C4ComponentDb,
+    ComponentExt as C4ComponentExt,
+    SystemBoundary as C4SystemBoundary,
+    ContainerBoundary as C4ContainerBoundary,
+    Relationship as C4Relationship,
+)
+
 from diagrams.aws.general import (
     InternetAlt2,
     OfficeBuilding,
@@ -338,6 +357,23 @@ from diagrams.saas.payment import (
 
 
 NODE_CATALOG: dict[str, tuple[str, str]] = {
+    # C4 Model
+    "C4Person": ("C4 Model", "A person (user) of the system — internal user"),
+    "C4PersonExt": ("C4 Model", "An external person/user outside the system boundary"),
+    "C4System": ("C4 Model", "A software system — the highest level of abstraction"),
+    "C4SystemDb": ("C4 Model", "A software system represented as a database shape"),
+    "C4SystemExt": ("C4 Model", "An external software system outside the boundary"),
+    "C4SystemDbExt": ("C4 Model", "An external software system shown as a database shape"),
+    "C4Container": ("C4 Model", "A container: application, microservice, serverless function, database, etc."),
+    "C4ContainerDb": ("C4 Model", "A container represented as a database shape"),
+    "C4ContainerQueue": ("C4 Model", "A container represented as a queue/message bus shape"),
+    "C4ContainerExt": ("C4 Model", "An external container outside the system boundary"),
+    "C4Component": ("C4 Model", "A component within a container"),
+    "C4ComponentDb": ("C4 Model", "A component represented as a database shape"),
+    "C4ComponentExt": ("C4 Model", "An external component outside the container boundary"),
+    "C4SystemBoundary": ("C4 Model", "Context manager: groups containers inside a system boundary — use with `with C4SystemBoundary('name'):`"),
+    "C4ContainerBoundary": ("C4 Model", "Context manager: groups components inside a container boundary — use with `with C4ContainerBoundary('name'):`"),
+    "C4Relationship": ("C4 Model", "Labeled relationship/edge between C4 elements — use like `element1 >> C4Relationship('label') >> element2`"),
     # AWS General
     "InternetAlt2": ("AWS General", "Internet or external network endpoint"),
     "OfficeBuilding": ("AWS General", "Office or corporate building"),
