@@ -157,13 +157,13 @@ C4Relationship("label")           # used between >> operators, like Edge
 
 ```python
 customer = C4Person(name="Personal Banking\nCustomer", description="A customer\nof the bank")
-email = C4SystemExt(name="E-mail System", description="Microsoft Exchange")
-mainframe = C4SystemExt(name="Mainframe Banking\nSystem", description="Stores all banking\ncustomer data")
+email = C4System(name="E-mail System", description="Microsoft Exchange")
+mainframe = C4System(name="Mainframe Banking\nSystem", description="Stores all banking\ncustomer data")
 
 with C4SystemBoundary("Internet Banking System"):
     web_app = C4System(name="Web Application", description="Delivers the static\ncontent and SPA")
     api = C4System(name="API Application", description="Provides banking\nfunctionality via API")
-    db = C4SystemDb(name="Database", description="Stores user\ncredentials, etc.")
+    db = C4Database(name="Database", description="Stores user\ncredentials, etc.")
     api >> C4Relationship("Reads from\nand writes to") >> db
     web_app >> C4Relationship("Delivers to\ncustomer's browser") >> customer
 
@@ -183,8 +183,8 @@ customer = C4Person(name="Personal Banking\nCustomer", description="A customer\n
 with C4SystemBoundary("Internet Banking System"):
     spa = C4Container(name="Single-Page App", technology="Angular", description="Provides banking\nfunctionality")
     api = C4Container(name="API Application", technology="Java/Spring MVC", description="Provides banking\nfunctionality via API")
-    db = C4ContainerDb(name="Database", technology="Oracle", description="Stores user data,\nhashed credentials")
-    queue = C4ContainerQueue(name="Message Bus", technology="RabbitMQ", description="Async event\npublishing")
+    db = C4Database(name="Database", technology="Oracle", description="Stores user data,\nhashed credentials")
+    queue = C4Container(name="Message Bus", technology="RabbitMQ", description="Async event\npublishing")
 
     spa >> C4Relationship("Makes API\ncalls to") >> api
     api >> C4Relationship("Reads from\nand writes to") >> db
