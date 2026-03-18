@@ -15,6 +15,12 @@
       </div>
     </div>
 
+    <!-- Branched from banner -->
+    <div v-if="parentCheckpointName" class="mb-2 px-3 py-1.5 bg-blue-900/30 border border-blue-500/30 rounded-lg text-xs text-blue-300 flex items-center gap-1.5">
+      <ArrowUturnLeftIcon class="h-3.5 w-3.5" aria-hidden="true" />
+      Branched from: <span class="font-medium">{{ parentCheckpointName }}</span>
+    </div>
+
     <div class="flex-grow overflow-y-auto p-2 md:p-4 bg-gray-800 rounded-lg" ref="chatHistoryContainer">
       <div class="flex flex-col space-y-3">
         <div
@@ -47,11 +53,29 @@
             @keydown.enter.prevent="handleMessageClick(message, index)"
             @keydown.space.prevent="handleMessageClick(message, index)"
           >
-            {{ formatMessageContent(message.content) }}
-            <span :class="['mt-1.5 flex items-center gap-1 text-xs transition-colors', isSelected(message, index) ? 'text-blue-300' : 'text-gray-500']">
-              <EyeIcon class="h-3 w-3" aria-hidden="true" />
-              {{ isSelected(message, index) ? 'Previewing this version' : 'View this diagram' }}
-            </span>
+            <div class="flex items-start justify-between gap-2">
+              <span>{{ formatMessageContent(message.content) }}</span>
+              <!-- Checkpoint badge -->
+              <CheckpointBadge
+                v-if="getCheckpointForMessage(message, index)"
+                :name="getCheckpointForMessage(message, index)"
+              />
+            </div>
+            <div class="mt-1.5 flex items-center justify-between">
+              <span :class="['flex items-center gap-1 text-xs transition-colors', isSelected(message, index) ? 'text-blue-300' : 'text-gray-500']">
+                <EyeIcon class="h-3 w-3" aria-hidden="true" />
+                {{ isSelected(message, index) ? 'Previewing this version' : 'View this diagram' }}
+              </span>
+              <button
+                v-if="isSelected(message, index) && getVersionForMessage(message, index)"
+                @click.stop="$emit('tag-version', getVersionForMessage(message, index))"
+                class="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-300 transition-colors"
+                title="Tag as checkpoint"
+              >
+                <TagIcon class="h-3 w-3" />
+                Tag
+              </button>
+            </div>
           </div>
         </div>
 
@@ -91,15 +115,16 @@
 
 <script setup>
 import { ref, watch, nextTick, computed } from 'vue';
-import { ExclamationCircleIcon, PaperAirplaneIcon, EyeIcon } from '@heroicons/vue/24/outline';
+import { ExclamationCircleIcon, PaperAirplaneIcon, EyeIcon, TagIcon, ArrowUturnLeftIcon } from '@heroicons/vue/24/outline';
 import { createDiagramVersion, createDiagram } from '../lib/api';
+import CheckpointBadge from './CheckpointBadge.vue';
 
 const props = defineProps({
   diagram: Object,
   selectedVersionId: [String, Number],
 });
 
-const emit = defineEmits(['diagram-updated', 'diagram-created', 'version-selected']);
+const emit = defineEmits(['diagram-updated', 'diagram-created', 'version-selected', 'tag-version']);
 
 const prompt = ref('');
 const generating = ref(false);
@@ -107,6 +132,10 @@ const generationError = ref(null);
 const chatHistoryContainer = ref(null);
 const promptTextarea = ref(null);
 const localChatHistory = ref([]);
+
+const parentCheckpointName = computed(() => {
+  return props.diagram?.active_session?.parent_checkpoint_name || null;
+});
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -144,17 +173,26 @@ const formatMessageContent = (content) => {
   return content;
 };
 
+const getVersionForMessage = (message, index) => {
+  if (message.role !== 'assistant' || !props.diagram?.versions) return null;
+  const versionIndex = (localChatHistory.value.length - 1 - index) / 2;
+  if (versionIndex >= 0 && versionIndex < props.diagram.versions.length) {
+    return props.diagram.versions[versionIndex];
+  }
+  return null;
+};
+
+const getCheckpointForMessage = (message, index) => {
+  const version = getVersionForMessage(message, index);
+  return version?.checkpoint_name || null;
+};
+
 const handleMessageClick = (message, index) => {
   if (message.role !== 'assistant' || !props.diagram || !props.diagram.versions) return;
 
-  // Chat messages come in user/assistant pairs; divide by 2 to map assistant message index to version index
-  const versionIndex = (localChatHistory.value.length - 1 - index) / 2;
-
-  if (versionIndex >= 0 && versionIndex < props.diagram.versions.length) {
-    const selectedVersion = props.diagram.versions[versionIndex];
-    if (selectedVersion) {
-      emit('version-selected', selectedVersion);
-    }
+  const version = getVersionForMessage(message, index);
+  if (version) {
+    emit('version-selected', version);
   }
 };
 
@@ -168,7 +206,7 @@ const isSelected = (message, index) => {
 
   // Map version index back to chat index: each version corresponds to a user/assistant pair (* 2)
   const expectedChatIndex = localChatHistory.value.length - 1 - (versionIndex * 2);
-  
+
   return index === expectedChatIndex;
 };
 

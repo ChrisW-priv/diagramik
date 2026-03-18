@@ -118,6 +118,51 @@ export const deleteDiagramVersion = (diagramId: string, versionId: string) => {
   return apiClient.delete(`/diagrams/${diagramId}/versions/${versionId}/`);
 };
 
+// Checkpoints
+export const getCheckpoints = (diagramId: string) => {
+  return apiClient.get(`/diagrams/${diagramId}/checkpoints/`);
+};
+
+export const createCheckpoint = (
+  diagramId: string,
+  versionId: string,
+  name: string,
+  description?: string
+) => {
+  return apiClient.post(`/diagrams/${diagramId}/checkpoints/`, {
+    version_id: versionId,
+    name,
+    description: description || '',
+  });
+};
+
+export const deleteCheckpoint = (diagramId: string, checkpointId: string) => {
+  return apiClient.delete(`/diagrams/${diagramId}/checkpoints/${checkpointId}/`);
+};
+
+export const branchFromCheckpoint = (
+  diagramId: string,
+  checkpointId: string,
+  text: string
+) => {
+  return apiClient.post(
+    `/diagrams/${diagramId}/checkpoints/${checkpointId}/branch/`,
+    { text }
+  );
+};
+
+// Direct rendering
+export const renderCode = (
+  diagramId: string,
+  code: string,
+  diagramType: 'technical' | 'mermaid'
+) => {
+  return apiClient.post(`/diagrams/${diagramId}/versions/render/`, {
+    code,
+    diagram_type: diagramType,
+  });
+};
+
 // Auth API
 export const authApi = {
   async login(email: string, password: string) {
