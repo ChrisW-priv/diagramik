@@ -30,20 +30,6 @@
           }
         }
       },
-      "channels": {
-        "fast-agent-timing": [
-          {
-            "type": "text",
-            "text": "{\"start_time\": 253.440712983, \"end_time\": 256.04575934, \"duration_ms\": 2605.05}"
-          }
-        ],
-        "fast-agent-usage": [
-          {
-            "type": "text",
-            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 5801, \"output_tokens\": 206, \"total_tokens\": 6007, \"timestamp\": 1773145647.3439846, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 4864, \"total_cache_tokens\": 4864, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 1, \"current_context_tokens\": 6007, \"effective_input_tokens\": 937, \"display_input_tokens\": 5801}, \"raw_usage\": {\"completion_tokens\": 206, \"prompt_tokens\": 5801, \"total_tokens\": 6007, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 4864}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 1, \"cumulative_input_tokens\": 5801, \"cumulative_output_tokens\": 206, \"cumulative_billing_tokens\": 6007, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 6007, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.5734190168541471, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 4864, \"cache_hit_rate_percent\": 45.60712611345522, \"cumulative_effective_input_tokens\": 937}}"
-          }
-        ]
-      },
       "stop_reason": "toolUse",
       "is_template": false
     },
@@ -61,15 +47,6 @@
           "isError": false
         }
       },
-      "channels": {
-        "fast-agent-tool-timing": [
-          {
-            "type": "text",
-            "text": "{\"call_TelsHgkhmGGEXqZqxljvwAPF\": {\"timing_ms\": 406.65, \"transport_channel\": \"post-sse\"}}"
-          }
-        ],
-        "mcp-ui": []
-      },
       "is_template": false
     },
     {
@@ -80,20 +57,6 @@
           "text": "Here is a basic diagram of an Ecommerce Application Architecture:\n\n- The User accesses the site via a Web Browser.\n- Requests go to a Load Balancer (Entry Point), which routes to the Django App Server (Ecommerce API).\n- The App queries a PostgreSQL Database (for Orders and Products).\n- Static files (like images) are served from Object Storage.\n- Payment requests are processed via Stripe (Payments).\n\nWould you like to see additional details (e.g., for order fulfillment or inventory systems) or a different style (e.g., Mermaid code for editable diagrams)?"
         }
       ],
-      "channels": {
-        "fast-agent-timing": [
-          {
-            "type": "text",
-            "text": "{\"start_time\": 256.460212878, \"end_time\": 258.758308089, \"duration_ms\": 2298.1}"
-          }
-        ],
-        "fast-agent-usage": [
-          {
-            "type": "text",
-            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 6070, \"output_tokens\": 116, \"total_tokens\": 6186, \"timestamp\": 1773145650.0565956, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 5888, \"total_cache_tokens\": 5888, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 0, \"current_context_tokens\": 6186, \"effective_input_tokens\": 182, \"display_input_tokens\": 6070}, \"raw_usage\": {\"completion_tokens\": 116, \"prompt_tokens\": 6070, \"total_tokens\": 6186, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 5888}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 2, \"cumulative_input_tokens\": 11871, \"cumulative_output_tokens\": 322, \"cumulative_billing_tokens\": 12193, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 6186, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.5905060826135765, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 10752, \"cache_hit_rate_percent\": 47.52685320249304, \"cumulative_effective_input_tokens\": 1119}}"
-          }
-        ]
-      },
       "stop_reason": "endTurn",
       "is_template": false
     },
@@ -102,7 +65,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Create a comprehensive system architecture diagram for a real-time global e-commerce platform. The diagram should show the full request lifecycle from user device to data layer and back.\nInclude the following layers and components:\nClient Layer: Mobile app (iOS/Android), Web browser (React SPA), and a Smart TV app \u2014 all connecting through a global CDN with edge caching nodes in North America, Europe, and Asia-Pacific.\nAPI Gateway Layer: Show a load balancer routing to an API Gateway cluster, which fans out to: an Auth Service (JWT + OAuth2), a Rate Limiter, and a GraphQL Federation Gateway that aggregates multiple downstream microservices.\nMicroservices Layer (10+ services): Product Catalog, Inventory, Pricing Engine, User Profile, Cart & Checkout, Order Management, Recommendation Engine (ML-based), Fraud Detection, Notification Service (email/push/SMS), and a Search Service backed by Elasticsearch.\nAsync Communication: Show a central Kafka event bus with named topics (order.created, inventory.updated, fraud.flagged) connecting services that publish and subscribe. Include a dead-letter queue for failed messages.\nData Layer: Each microservice has its own database (polyglot persistence) \u2014 show PostgreSQL, MongoDB, Redis (for caching and sessions), Cassandra (for time-series order history), and S3 (for product images/assets).\nObservability Stack: Show a side-panel with Prometheus scraping all services, feeding into Grafana dashboards, with logs going to an ELK Stack (Elasticsearch, Logstash, Kibana), and distributed tracing via Jaeger.\nCI/CD Pipeline: Illustrate a GitHub Actions pipeline flowing into Docker image builds \u2192 ECR registry \u2192 Helm chart deployments \u2192 Kubernetes cluster (EKS) across 3 availability zones, with ArgoCD for GitOps.\nUse color-coding by layer, dashed lines for async flows, solid lines for synchronous HTTP/gRPC calls, and add latency annotations (e.g., \u201c~12ms\u201d, \u201c~200ms\u201d) on critical paths. Mark failure points with a warning icon and include a legend."
+          "text": "Create a comprehensive system architecture diagram for a real-time global e-commerce platform. The diagram should show the full request lifecycle from user device to data layer and back.\nInclude the following layers and components:\nClient Layer: Mobile app (iOS/Android), Web browser (React SPA), and a Smart TV app — all connecting through a global CDN with edge caching nodes in North America, Europe, and Asia-Pacific.\nAPI Gateway Layer: Show a load balancer routing to an API Gateway cluster, which fans out to: an Auth Service (JWT + OAuth2), a Rate Limiter, and a GraphQL Federation Gateway that aggregates multiple downstream microservices.\nMicroservices Layer (10+ services): Product Catalog, Inventory, Pricing Engine, User Profile, Cart & Checkout, Order Management, Recommendation Engine (ML-based), Fraud Detection, Notification Service (email/push/SMS), and a Search Service backed by Elasticsearch.\nAsync Communication: Show a central Kafka event bus with named topics (order.created, inventory.updated, fraud.flagged) connecting services that publish and subscribe. Include a dead-letter queue for failed messages.\nData Layer: Each microservice has its own database (polyglot persistence) — show PostgreSQL, MongoDB, Redis (for caching and sessions), Cassandra (for time-series order history), and S3 (for product images/assets).\nObservability Stack: Show a side-panel with Prometheus scraping all services, feeding into Grafana dashboards, with logs going to an ELK Stack (Elasticsearch, Logstash, Kibana), and distributed tracing via Jaeger.\nCI/CD Pipeline: Illustrate a GitHub Actions pipeline flowing into Docker image builds → ECR registry → Helm chart deployments → Kubernetes cluster (EKS) across 3 availability zones, with ArgoCD for GitOps.\nUse color-coding by layer, dashed lines for async flows, solid lines for synchronous HTTP/gRPC calls, and add latency annotations (e.g., “~12ms”, “~200ms”) on critical paths. Mark failure points with a warning icon and include a legend."
         }
       ],
       "is_template": false
@@ -127,20 +90,6 @@
           }
         }
       },
-      "channels": {
-        "fast-agent-timing": [
-          {
-            "type": "text",
-            "text": "{\"start_time\": 304.873789345, \"end_time\": 328.164324337, \"duration_ms\": 23290.53}"
-          }
-        ],
-        "fast-agent-usage": [
-          {
-            "type": "text",
-            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 6609, \"output_tokens\": 1577, \"total_tokens\": 8186, \"timestamp\": 1773145719.4625456, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 6144, \"total_cache_tokens\": 6144, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 1, \"current_context_tokens\": 8186, \"effective_input_tokens\": 465, \"display_input_tokens\": 6609}, \"raw_usage\": {\"completion_tokens\": 1577, \"prompt_tokens\": 6609, \"total_tokens\": 8186, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 6144}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 1, \"cumulative_input_tokens\": 6609, \"cumulative_output_tokens\": 1577, \"cumulative_billing_tokens\": 8186, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 1, \"current_context_tokens\": 8186, \"context_window_size\": 1047576, \"context_usage_percentage\": 0.7814230184731227, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 6144, \"cache_hit_rate_percent\": 48.17689955304634, \"cumulative_effective_input_tokens\": 465}}"
-          }
-        ]
-      },
       "stop_reason": "toolUse",
       "is_template": false
     },
@@ -158,15 +107,6 @@
           "isError": true
         }
       },
-      "channels": {
-        "fast-agent-tool-timing": [
-          {
-            "type": "text",
-            "text": "{\"call_m6oVDPmnczEonnCeuqGSC4iD\": {\"timing_ms\": 77.34, \"transport_channel\": \"post-sse\"}}"
-          }
-        ],
-        "mcp-ui": []
-      },
       "is_template": false
     },
     {
@@ -174,7 +114,7 @@
       "content": [
         {
           "type": "text",
-          "text": "My previous attempt failed due to a non-printable character error when trying to include a warning icon for failure points.\n\nLet me correct the code by using a supported node (e.g., the Alerting or Tempo nodes) for \"Failure Point\" markers, clearly label them, and omit unsupported emoji or special characters.\n\nI\u2019ll also ensure the architecture is comprehensively covered according to your requirements. Here is corrected and comprehensive architecture diagram code:\n\n```python\n# CLIENT LAYER\nuser = User(\"User\")\nmobile = Mobile(\"Mobile App\\\\n(iOS/Android)\")\nweb = React(\"React SPA\\\\n(Web)\")\ntv = Client(\"Smart TV App\")\ncdn_na = Cloudflare(\"CDN\\\\n(N. America)\")\ncdn_eu = Cloudflare(\"CDN\\\\n(Europe)\")\ncdn_apac = Cloudflare(\"CDN\\\\n(APAC)\")\n\nuser >> [mobile, web, tv]\n[mobile, web, tv] >> [cdn_na, cdn_eu, cdn_apac]\n\n# API LAYER\nlb = Nginx(\"Load Balancer\")\napi_gw = APIGateway(\"API Gateway\\\\n(Cluster)\")\nlb >> Edge(label=\"Routes\\\\n~18ms\") >> api_gw\n[cdn_na, cdn_eu, cdn_apac] >> Edge(label=\"Forward\") >> lb\n\nauth = GcpIAM(\"Auth Service\\\\n(JWT+OAuth2)\")\nrate = Server(\"Rate Limiter\")\ngql = GraphQL(\"GraphQL\\\\nFederation GW\")\n\napi_gw >> Edge(label=\"Authorize\\\\n~12ms\") >> auth\napi_gw >> Edge(label=\"Limit reqs\") >> rate\napi_gw >> Edge(label=\"Fan-out\\\\n~20ms\") >> gql\n\n# MICROSERVICES LAYER\nwith Cluster(\"Microservices\"):\n    catalog = Server(\"Product Catalog\")\n    inventory = Server(\"Inventory\")\n    pricing = Server(\"Pricing Engine\")\n    profile = Server(\"User Profile\")\n    cart = Server(\"Cart & Checkout\")\n    order = Server(\"Order Mgmt\")\n    reco = VertexAI(\"Recs Engine\\\\n(ML Based)\")\n    fraud = Server(\"Fraud Detect\")\n    notif = Server(\"Notification\\\\n(Email/SMS/Push)\")\n    search = ElasticSearch(\"Search\\\\nService\")\n\n    gql >> Edge(label=\"HTTP/gRPC\\\\n~20-80ms\") >> [\n        catalog, inventory, pricing, profile, cart, order, reco, fraud, notif, search\n    ]\n\n    # Kafka Event Bus\n    kafka = Kafka(\"Kafka Event Bus\")\n    t_order = Kafka(\"order.created\")\n    t_inventory = Kafka(\"inventory.updated\")\n    t_fraud = Kafka(\"fraud.flagged\")\n    kafka >> [t_order, t_inventory, t_fraud]\n    order >> Edge(style=\"dashed\", label=\"Publishes\") >> t_order\n    inventory >> Edge(style=\"dashed\", label=\"Publishes\") >> t_inventory\n    fraud >> Edge(style=\"dashed\", label=\"Publishes\") >> t_fraud\n    reco >> Edge(style=\"dashed\", label=\"Subscribes\") >> t_order\n    notif >> Edge(style=\"dashed\", label=\"Subscribes\") >> [t_order, t_inventory, t_fraud]\n    cart >> Edge(style=\"dashed\", label=\"Subscribes\") >> t_inventory\n    dlq = Kafka(\"DLQ\\\\n(Failed Msg)\")\n    [t_order, t_inventory, t_fraud] >> Edge(style=\"dashed\", label=\"Fails to\") >> dlq\n\n# DATA LAYER\nwith Cluster(\"Databases\"):\n    db_catalog = PostgreSQL(\"Catalog DB\\\\n(PostgreSQL)\")\n    db_inventory = MongoDB(\"Inventory DB\\\\n(MongoDB)\")\n    db_pricing = Redis(\"Pricing Cache\\\\n(Redis)\")\n    db_profile = PostgreSQL(\"Profile DB\\\\n(PostgreSQL)\")\n    db_cart = Redis(\"Cart DB\\\\n(Redis)\")\n    db_order = Cassandra(\"Order Hist\\\\n(Cassandra)\")\n    db_reco = PostgreSQL(\"Reco ML DB\")\n    db_fraud = PostgreSQL(\"Fraud DB\")\n    db_search = ElasticSearch(\"Search IDX\\\\n(ES)\")\n    assets = Storage(\"S3\\\\n(Product Images)\")\n\n    catalog >> Edge(label=\"Queries/Updates\") >> db_catalog\n    inventory >> Edge(label=\"Queries/Updates\") >> db_inventory\n    pricing >> Edge(label=\"Caches/Reads\") >> db_pricing\n    profile >> Edge(label=\"Queries/Updates\") >> db_profile\n    cart >> Edge(label=\"Reads/Updates\") >> db_cart\n    order >> Edge(label=\"Queries/Updates\") >> db_order\n    reco >> Edge(label=\"Reads/Writes\") >> db_reco\n    fraud >> Edge(label=\"Queries/Updates\") >> db_fraud\n    search >> Edge(label=\"Indexes/Queries\") >> db_search\n    catalog >> Edge(label=\"Stores images\") >> assets\n\n# Observability (side-panel)\nwith Cluster(\"Observability\"):\n    prom = Prometheus(\"Prometheus\")\n    grafana = Grafana(\"Grafana\")\n    elk = Elastic(\"ELK Stack\\\\n(Logs)\")\n    jaeger = Jaeger(\"Jaeger Tracing\")\n    [prom, elk, jaeger] >> Edge(label=\"Scrape/Log/Trace\") >> [\n        catalog, inventory, pricing, profile, cart, order, reco, fraud, notif, search\n    ]\n    prom >> Edge(label=\"Feeds\") >> grafana\n\n# CI/CD Pipeline\nwith Cluster(\"CI/CD Pipeline\"):\n    github = GithubActions(\"GitHub Actions\")\n    docker = Docker(\"Docker Build\")\n    registry = ContainerRegistry(\"ECR Registry\")\n    helm = Server(\"Helm Charts\")\n    eks = GKE(\"Kubernetes\\\\n(EKS, 3AZ)\")\n    argocd = ArgoCD(\"ArgoCD\\\\n(GitOps)\")\n    github >> Edge(label=\"Builds\") >> docker >> Edge(label=\"Pushes\") >> registry\n    registry >> Edge(label=\"Deploys Helm\") >> helm >> Edge(label=\"Deploys on K8s\") >> eks\n    github >> Edge(label=\"Pushes manifests\") >> argocd >> Edge(label=\"Reconciles\") >> eks\n\n# Failure points (marked with Alerting node)\nfail_lb = Alerting(\"Failure\\\\n(lb)\")\nfail_api = Alerting(\"Failure\\\\n(API Gateway)\")\nfail_kafka = Alerting(\"Failure\\\\n(Kafka)\")\nfail_dlq = Alerting(\"Failure\\\\n(DLQ)\")\nfail_eks = Alerting(\"Failure\\\\n(EKS)\")\n\nlb >> Edge(label=\"Fail point\") >> fail_lb\napi_gw >> Edge(label=\"Fail point\") >> fail_api\nkafka >> Edge(label=\"Fail point\") >> fail_kafka\ndlq >> Edge(label=\"Fail point\") >> fail_dlq\neks >> Edge(label=\"Fail point\") >> fail_eks\n\n# Color-coding and latency notes are described in the diagram title/legend for clarity.\n\",\"custom_graph_args\":null,\"custom_node_args\":null,\"custom_edge_args\":null}}"
+          "text": "My previous attempt failed due to a non-printable character error when trying to include a warning icon for failure points.\n\nLet me correct the code by using a supported node (e.g., the Alerting or Tempo nodes) for \"Failure Point\" markers, clearly label them, and omit unsupported emoji or special characters.\n\nI’ll also ensure the architecture is comprehensively covered according to your requirements. Here is corrected and comprehensive architecture diagram code:\n\n```python\n# CLIENT LAYER\nuser = User(\"User\")\nmobile = Mobile(\"Mobile App\\\\n(iOS/Android)\")\nweb = React(\"React SPA\\\\n(Web)\")\ntv = Client(\"Smart TV App\")\ncdn_na = Cloudflare(\"CDN\\\\n(N. America)\")\ncdn_eu = Cloudflare(\"CDN\\\\n(Europe)\")\ncdn_apac = Cloudflare(\"CDN\\\\n(APAC)\")\n\nuser >> [mobile, web, tv]\n[mobile, web, tv] >> [cdn_na, cdn_eu, cdn_apac]\n\n# API LAYER\nlb = Nginx(\"Load Balancer\")\napi_gw = APIGateway(\"API Gateway\\\\n(Cluster)\")\nlb >> Edge(label=\"Routes\\\\n~18ms\") >> api_gw\n[cdn_na, cdn_eu, cdn_apac] >> Edge(label=\"Forward\") >> lb\n\nauth = GcpIAM(\"Auth Service\\\\n(JWT+OAuth2)\")\nrate = Server(\"Rate Limiter\")\ngql = GraphQL(\"GraphQL\\\\nFederation GW\")\n\napi_gw >> Edge(label=\"Authorize\\\\n~12ms\") >> auth\napi_gw >> Edge(label=\"Limit reqs\") >> rate\napi_gw >> Edge(label=\"Fan-out\\\\n~20ms\") >> gql\n\n# MICROSERVICES LAYER\nwith Cluster(\"Microservices\"):\n    catalog = Server(\"Product Catalog\")\n    inventory = Server(\"Inventory\")\n    pricing = Server(\"Pricing Engine\")\n    profile = Server(\"User Profile\")\n    cart = Server(\"Cart & Checkout\")\n    order = Server(\"Order Mgmt\")\n    reco = VertexAI(\"Recs Engine\\\\n(ML Based)\")\n    fraud = Server(\"Fraud Detect\")\n    notif = Server(\"Notification\\\\n(Email/SMS/Push)\")\n    search = ElasticSearch(\"Search\\\\nService\")\n\n    gql >> Edge(label=\"HTTP/gRPC\\\\n~20-80ms\") >> [\n        catalog, inventory, pricing, profile, cart, order, reco, fraud, notif, search\n    ]\n\n    # Kafka Event Bus\n    kafka = Kafka(\"Kafka Event Bus\")\n    t_order = Kafka(\"order.created\")\n    t_inventory = Kafka(\"inventory.updated\")\n    t_fraud = Kafka(\"fraud.flagged\")\n    kafka >> [t_order, t_inventory, t_fraud]\n    order >> Edge(style=\"dashed\", label=\"Publishes\") >> t_order\n    inventory >> Edge(style=\"dashed\", label=\"Publishes\") >> t_inventory\n    fraud >> Edge(style=\"dashed\", label=\"Publishes\") >> t_fraud\n    reco >> Edge(style=\"dashed\", label=\"Subscribes\") >> t_order\n    notif >> Edge(style=\"dashed\", label=\"Subscribes\") >> [t_order, t_inventory, t_fraud]\n    cart >> Edge(style=\"dashed\", label=\"Subscribes\") >> t_inventory\n    dlq = Kafka(\"DLQ\\\\n(Failed Msg)\")\n    [t_order, t_inventory, t_fraud] >> Edge(style=\"dashed\", label=\"Fails to\") >> dlq\n\n# DATA LAYER\nwith Cluster(\"Databases\"):\n    db_catalog = PostgreSQL(\"Catalog DB\\\\n(PostgreSQL)\")\n    db_inventory = MongoDB(\"Inventory DB\\\\n(MongoDB)\")\n    db_pricing = Redis(\"Pricing Cache\\\\n(Redis)\")\n    db_profile = PostgreSQL(\"Profile DB\\\\n(PostgreSQL)\")\n    db_cart = Redis(\"Cart DB\\\\n(Redis)\")\n    db_order = Cassandra(\"Order Hist\\\\n(Cassandra)\")\n    db_reco = PostgreSQL(\"Reco ML DB\")\n    db_fraud = PostgreSQL(\"Fraud DB\")\n    db_search = ElasticSearch(\"Search IDX\\\\n(ES)\")\n    assets = Storage(\"S3\\\\n(Product Images)\")\n\n    catalog >> Edge(label=\"Queries/Updates\") >> db_catalog\n    inventory >> Edge(label=\"Queries/Updates\") >> db_inventory\n    pricing >> Edge(label=\"Caches/Reads\") >> db_pricing\n    profile >> Edge(label=\"Queries/Updates\") >> db_profile\n    cart >> Edge(label=\"Reads/Updates\") >> db_cart\n    order >> Edge(label=\"Queries/Updates\") >> db_order\n    reco >> Edge(label=\"Reads/Writes\") >> db_reco\n    fraud >> Edge(label=\"Queries/Updates\") >> db_fraud\n    search >> Edge(label=\"Indexes/Queries\") >> db_search\n    catalog >> Edge(label=\"Stores images\") >> assets\n\n# Observability (side-panel)\nwith Cluster(\"Observability\"):\n    prom = Prometheus(\"Prometheus\")\n    grafana = Grafana(\"Grafana\")\n    elk = Elastic(\"ELK Stack\\\\n(Logs)\")\n    jaeger = Jaeger(\"Jaeger Tracing\")\n    [prom, elk, jaeger] >> Edge(label=\"Scrape/Log/Trace\") >> [\n        catalog, inventory, pricing, profile, cart, order, reco, fraud, notif, search\n    ]\n    prom >> Edge(label=\"Feeds\") >> grafana\n\n# CI/CD Pipeline\nwith Cluster(\"CI/CD Pipeline\"):\n    github = GithubActions(\"GitHub Actions\")\n    docker = Docker(\"Docker Build\")\n    registry = ContainerRegistry(\"ECR Registry\")\n    helm = Server(\"Helm Charts\")\n    eks = GKE(\"Kubernetes\\\\n(EKS, 3AZ)\")\n    argocd = ArgoCD(\"ArgoCD\\\\n(GitOps)\")\n    github >> Edge(label=\"Builds\") >> docker >> Edge(label=\"Pushes\") >> registry\n    registry >> Edge(label=\"Deploys Helm\") >> helm >> Edge(label=\"Deploys on K8s\") >> eks\n    github >> Edge(label=\"Pushes manifests\") >> argocd >> Edge(label=\"Reconciles\") >> eks\n\n# Failure points (marked with Alerting node)\nfail_lb = Alerting(\"Failure\\\\n(lb)\")\nfail_api = Alerting(\"Failure\\\\n(API Gateway)\")\nfail_kafka = Alerting(\"Failure\\\\n(Kafka)\")\nfail_dlq = Alerting(\"Failure\\\\n(DLQ)\")\nfail_eks = Alerting(\"Failure\\\\n(EKS)\")\n\nlb >> Edge(label=\"Fail point\") >> fail_lb\napi_gw >> Edge(label=\"Fail point\") >> fail_api\nkafka >> Edge(label=\"Fail point\") >> fail_kafka\ndlq >> Edge(label=\"Fail point\") >> fail_dlq\neks >> Edge(label=\"Fail point\") >> fail_eks\n\n# Color-coding and latency notes are described in the diagram title/legend for clarity.\n\",\"custom_graph_args\":null,\"custom_node_args\":null,\"custom_edge_args\":null}}"
         }
       ],
       "tool_calls": {
@@ -194,20 +134,6 @@
           }
         }
       },
-      "channels": {
-        "fast-agent-timing": [
-          {
-            "type": "text",
-            "text": "{\"start_time\": 328.259759785, \"end_time\": 360.031759015, \"duration_ms\": 31772.0}"
-          }
-        ],
-        "fast-agent-usage": [
-          {
-            "type": "text",
-            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 8224, \"output_tokens\": 3037, \"total_tokens\": 11261, \"timestamp\": 1773145751.3299367, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 4864, \"total_cache_tokens\": 4864, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 1, \"current_context_tokens\": 11261, \"effective_input_tokens\": 3360, \"display_input_tokens\": 8224}, \"raw_usage\": {\"completion_tokens\": 3037, \"prompt_tokens\": 8224, \"total_tokens\": 11261, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 4864}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 2, \"cumulative_input_tokens\": 14833, \"cumulative_output_tokens\": 4614, \"cumulative_billing_tokens\": 19447, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 2, \"current_context_tokens\": 11261, \"context_window_size\": 1047576, \"context_usage_percentage\": 1.074957807357175, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 11008, \"cache_hit_rate_percent\": 42.59897062807167, \"cumulative_effective_input_tokens\": 3825}}"
-          }
-        ]
-      },
       "stop_reason": "toolUse",
       "is_template": false
     },
@@ -224,15 +150,6 @@
           ],
           "isError": true
         }
-      },
-      "channels": {
-        "fast-agent-tool-timing": [
-          {
-            "type": "text",
-            "text": "{\"call_PjwyT76QKdaCwzzD4Ep8eHaw\": {\"timing_ms\": 168.09, \"transport_channel\": \"post-sse\"}}"
-          }
-        ],
-        "mcp-ui": []
       },
       "is_template": false
     },
@@ -256,20 +173,6 @@
           }
         }
       },
-      "channels": {
-        "fast-agent-timing": [
-          {
-            "type": "text",
-            "text": "{\"start_time\": 360.250412386, \"end_time\": 385.947504336, \"duration_ms\": 25697.09}"
-          }
-        ],
-        "fast-agent-usage": [
-          {
-            "type": "text",
-            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 9824, \"output_tokens\": 2144, \"total_tokens\": 11968, \"timestamp\": 1773145777.2457032, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 8064, \"total_cache_tokens\": 8064, \"has_cache_activity\": true}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 1, \"current_context_tokens\": 11968, \"effective_input_tokens\": 1760, \"display_input_tokens\": 9824}, \"raw_usage\": {\"completion_tokens\": 2144, \"prompt_tokens\": 9824, \"total_tokens\": 11968, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 8064}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 3, \"cumulative_input_tokens\": 24657, \"cumulative_output_tokens\": 6758, \"cumulative_billing_tokens\": 31415, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 3, \"current_context_tokens\": 11968, \"context_window_size\": 1047576, \"context_usage_percentage\": 1.1424469441835248, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 19072, \"cache_hit_rate_percent\": 43.614077614397765, \"cumulative_effective_input_tokens\": 5585}}"
-          }
-        ]
-      },
       "stop_reason": "toolUse",
       "is_template": false
     },
@@ -287,15 +190,6 @@
           "isError": false
         }
       },
-      "channels": {
-        "fast-agent-tool-timing": [
-          {
-            "type": "text",
-            "text": "{\"call_QGmtsmserKkD62R1Tz9vFlLD\": {\"timing_ms\": 2128.5, \"transport_channel\": \"post-sse\"}}"
-          }
-        ],
-        "mcp-ui": []
-      },
       "is_template": false
     },
     {
@@ -303,23 +197,9 @@
       "content": [
         {
           "type": "text",
-          "text": "Here is a comprehensive system architecture diagram for a global, real-time e-commerce platform showing the full request lifecycle and all your required layers and features:\n\n- Client Layer: Users access via Mobile App (iOS/Android), Web (React SPA), or Smart TV App, hitting global CDN edges in North America, Europe, and Asia-Pacific.\n- API Gateway: CDN forwards to Load Balancer \u2192 API Gateway Cluster, which routes to Auth Service (JWT + OAuth2), Rate Limiter, and a GraphQL Federation Gateway.\n- Microservices Layer: Ten domain-driven services (Product Catalog, Inventory, Pricing, User Profile, Cart & Checkout, Order Management, ML Recommendations, Fraud Detection, Notifications, Search [Elasticsearch]). All accessed through GraphQL for synchronous calls.\n- Async Communications: Central Kafka Event Bus with key topics (order.created, inventory.updated, fraud.flagged). Includes a dead-letter queue (DLQ) for failed messages, with publishing/subscription edges for each relevant service.\n- Data Layer: Each service owns its own datastore (PostgreSQL, MongoDB, Redis, Cassandra, S3 for images/assets)\u2014polyglot persistence.\n- Observability: Prometheus scrapes metrics from all services, Grafana for dashboards. Logs feed to ELK (Elasticsearch, Logstash, Kibana). Jaeger traces distributed requests.\n- CI/CD Pipeline: GitHub Actions \u2192 Docker image builds \u2192 ECR registry \u2192 Helm \u2192 multi-AZ EKS (Kubernetes), managed by ArgoCD GitOps.\n- Failure points are clearly marked.\n- Latency annotations and edge type distinctions are included as requested.\n\nYou can view the rendered architecture diagram here:\n[View global ecommerce architecture diagram](gs://diagramik-diagrams/019cd7b9-649b-7083-bae1-2c71fa33e8b7.png)\n\nWould you like the diagram in Mermaid code for editing or with even more details (e.g., observability flows, more topics, region clusters, etc.)?"
+          "text": "Here is a comprehensive system architecture diagram for a global, real-time e-commerce platform showing the full request lifecycle and all your required layers and features:\n\n- Client Layer: Users access via Mobile App (iOS/Android), Web (React SPA), or Smart TV App, hitting global CDN edges in North America, Europe, and Asia-Pacific.\n- API Gateway: CDN forwards to Load Balancer → API Gateway Cluster, which routes to Auth Service (JWT + OAuth2), Rate Limiter, and a GraphQL Federation Gateway.\n- Microservices Layer: Ten domain-driven services (Product Catalog, Inventory, Pricing, User Profile, Cart & Checkout, Order Management, ML Recommendations, Fraud Detection, Notifications, Search [Elasticsearch]). All accessed through GraphQL for synchronous calls.\n- Async Communications: Central Kafka Event Bus with key topics (order.created, inventory.updated, fraud.flagged). Includes a dead-letter queue (DLQ) for failed messages, with publishing/subscription edges for each relevant service.\n- Data Layer: Each service owns its own datastore (PostgreSQL, MongoDB, Redis, Cassandra, S3 for images/assets)—polyglot persistence.\n- Observability: Prometheus scrapes metrics from all services, Grafana for dashboards. Logs feed to ELK (Elasticsearch, Logstash, Kibana). Jaeger traces distributed requests.\n- CI/CD Pipeline: GitHub Actions → Docker image builds → ECR registry → Helm → multi-AZ EKS (Kubernetes), managed by ArgoCD GitOps.\n- Failure points are clearly marked.\n- Latency annotations and edge type distinctions are included as requested.\n\nYou can view the rendered architecture diagram here:\n[View global ecommerce architecture diagram](gs://diagramik-diagrams/019cd7b9-649b-7083-bae1-2c71fa33e8b7.png)\n\nWould you like the diagram in Mermaid code for editing or with even more details (e.g., observability flows, more topics, region clusters, etc.)?"
         }
       ],
-      "channels": {
-        "fast-agent-timing": [
-          {
-            "type": "text",
-            "text": "{\"start_time\": 388.094438755, \"end_time\": 395.890545228, \"duration_ms\": 7796.11}"
-          }
-        ],
-        "fast-agent-usage": [
-          {
-            "type": "text",
-            "text": "{\"turn\": {\"provider\": \"openai\", \"model\": \"gpt-4.1\", \"input_tokens\": 12037, \"output_tokens\": 409, \"total_tokens\": 12446, \"timestamp\": 1773145787.1888158, \"cache_usage\": {\"cache_read_tokens\": 0, \"cache_write_tokens\": 0, \"cache_hit_tokens\": 0, \"total_cache_tokens\": 0, \"has_cache_activity\": false}, \"tool_use_tokens\": 0, \"reasoning_tokens\": 0, \"tool_calls\": 0, \"current_context_tokens\": 12446, \"effective_input_tokens\": 12037, \"display_input_tokens\": 12037}, \"raw_usage\": {\"completion_tokens\": 409, \"prompt_tokens\": 12037, \"total_tokens\": 12446, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\": 0}}, \"summary\": {\"model\": \"gpt-4.1\", \"turn_count\": 4, \"cumulative_input_tokens\": 36694, \"cumulative_output_tokens\": 7167, \"cumulative_billing_tokens\": 43861, \"cumulative_tool_use_tokens\": 0, \"cumulative_reasoning_tokens\": 0, \"cumulative_tool_calls\": 3, \"current_context_tokens\": 12446, \"context_window_size\": 1047576, \"context_usage_percentage\": 1.1880760918539561, \"cumulative_cache_read_tokens\": 0, \"cumulative_cache_write_tokens\": 0, \"cumulative_cache_hit_tokens\": 19072, \"cache_hit_rate_percent\": 34.200050209805255, \"cumulative_effective_input_tokens\": 17622}}"
-          }
-        ]
-      },
       "stop_reason": "endTurn",
       "is_template": false
     }
