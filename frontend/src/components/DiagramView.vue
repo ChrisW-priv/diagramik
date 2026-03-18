@@ -1,5 +1,15 @@
 <template>
-  <main id="main-content" class="border border-gray-700 rounded-lg flex flex-col h-full">
+  <main id="main-content" class="border border-gray-700 rounded-lg flex flex-col h-full relative">
+    <!-- Shortcuts button -->
+    <button
+      @click="showShortcuts = true"
+      class="absolute top-2 right-2 z-10 p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-gray-700/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 transition-colors"
+      aria-label="Keyboard shortcuts"
+      title="Keyboard shortcuts (?)"
+    >
+      <QuestionMarkCircleIcon class="h-5 w-5" aria-hidden="true" />
+    </button>
+
     <!-- Tab buttons for small screens -->
     <div class="flex border-b border-gray-700 md:hidden" role="tablist" aria-label="Diagram panels">
       <button
@@ -69,14 +79,16 @@
         </div>
       </div>
     </div>
+    <KeyboardShortcutsModal :open="showShortcuts" @close="showShortcuts = false" />
   </main>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { PencilIcon, EyeIcon } from '@heroicons/vue/24/outline';
+import { PencilIcon, EyeIcon, QuestionMarkCircleIcon } from '@heroicons/vue/24/outline';
 import WorkTab from './WorkTab.vue';
 import DisplayTab from './DisplayTab.vue';
+import KeyboardShortcutsModal from './KeyboardShortcutsModal.vue';
 import { getDiagram } from '../lib/api';
 import { CONFIG } from '../lib/config';
 
@@ -93,6 +105,7 @@ const isResizing = ref(false);
 const dividerPosition = ref(25); // Initial position in percentage (1:3 work:display ratio)
 const containerRef = ref(null);
 const isDesktop = ref(typeof window !== 'undefined' && window.innerWidth >= 768);
+const showShortcuts = ref(false);
 
 const selectedVersion = computed(() => {
   if (!diagram.value || !selectedVersionId.value) {
@@ -137,6 +150,12 @@ const handleKeyDown = (event) => {
   if (event.altKey && event.key === 'Tab') {
     event.preventDefault();
     activeTab.value = activeTab.value === 'work' ? 'display' : 'work';
+  }
+
+  // ? key to open shortcuts (skip when typing in input/textarea)
+  if (event.key === '?' && !['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
+    event.preventDefault();
+    showShortcuts.value = true;
   }
 };
 

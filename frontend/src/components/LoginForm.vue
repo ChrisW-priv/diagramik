@@ -154,5 +154,14 @@ const handleGoogleLogin = () => {
         Sign up
       </a>
     </p>
+
+    <!-- Guide Link -->
+    <div class="border-t border-gray-700 pt-4">
+      <p class="text-center text-sm text-gray-500">
+        <a href="/guide" class="text-blue-400 hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded px-1">
+          See what you can build
+        </a>
+      </p>
+    </div>
   </FormContainer>
 </template>

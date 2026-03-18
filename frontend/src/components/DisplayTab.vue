@@ -2,6 +2,7 @@
   <div class="flex flex-col h-full min-h-0">
     <div v-if="!selectedVersion" class="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
       <p class="text-sm">Describe your diagram in the chat panel to get started.</p>
+      <a href="/guide" class="text-sm text-blue-400 hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded px-1">See example prompts in the guide</a>
     </div>
     <div v-else class="flex flex-col h-full min-h-0 p-2 md:p-4 bg-gray-800 rounded-lg">
       <div class="flex-grow flex justify-center items-center overflow-auto min-h-0">

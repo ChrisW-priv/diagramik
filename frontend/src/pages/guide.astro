@@ -1,0 +1,215 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
+import DiagramTypeCard from '../components/guide/DiagramTypeCard.vue';
+import PromptExample from '../components/guide/PromptExample.vue';
+---
+
+<Layout title="Diagramik | Guide">
+  <div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+      <!-- Back Button -->
+      <a
+        href="/"
+        class="inline-flex items-center text-blue-400 hover:text-blue-300 mb-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded px-1"
+      >
+        <ArrowLeftIcon class="h-5 w-5 mr-2" />
+        Back
+      </a>
+
+      <!-- Header -->
+      <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <h1 class="text-4xl font-bold text-white mb-2">Guide</h1>
+        <p class="text-gray-400">Learn how to create technical diagrams with Diagramik.</p>
+      </div>
+
+      <div class="space-y-8">
+
+        <!-- Quick Start -->
+        <section class="bg-gray-800 rounded-lg shadow-lg p-8">
+          <h2 class="text-2xl font-bold text-white mb-6">Quick Start</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center">
+              <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center mx-auto mb-3 text-white font-bold">1</div>
+              <h3 class="font-medium text-white mb-1">Describe</h3>
+              <p class="text-sm text-gray-400">Write what you want in natural language in the chat panel.</p>
+            </div>
+            <div class="text-center">
+              <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center mx-auto mb-3 text-white font-bold">2</div>
+              <h3 class="font-medium text-white mb-1">Generate</h3>
+              <p class="text-sm text-gray-400">The AI creates a diagram based on your description.</p>
+            </div>
+            <div class="text-center">
+              <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center mx-auto mb-3 text-white font-bold">3</div>
+              <h3 class="font-medium text-white mb-1">Iterate</h3>
+              <p class="text-sm text-gray-400">Refine your diagram through conversation.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Technical Diagrams -->
+        <DiagramTypeCard
+          client:load
+          title="Technical Diagrams"
+          description="Cloud architecture and infrastructure diagrams using the Python diagrams library. Best for visualizing system architecture, deployments, and service relationships."
+          tags={["GCP", "AWS", "Kubernetes", "Databases", "CI/CD", "Monitoring", "C4 Model", "Languages", "Frameworks"]}
+        >
+          <div class="space-y-3">
+            <PromptExample client:load label="Cloud architecture">
+              Create a GCP architecture with Cloud Run services behind a load balancer, connected to Cloud SQL and a GCS bucket.
+            </PromptExample>
+            <PromptExample client:load label="Kubernetes">
+              Show a Kubernetes cluster with an ingress controller routing to three microservices, each with their own database.
+            </PromptExample>
+            <PromptExample client:load label="CI/CD pipeline">
+              Draw a CI/CD pipeline: GitHub triggers Cloud Build, which builds a Docker image, pushes to Artifact Registry, and deploys to Cloud Run.
+            </PromptExample>
+            <p class="text-xs text-gray-500 mt-4">
+              Tip: Mention specific cloud providers or technologies to help the AI pick the right diagram nodes.
+            </p>
+          </div>
+        </DiagramTypeCard>
+
+        <!-- Mermaid Diagrams -->
+        <DiagramTypeCard
+          client:load
+          title="Mermaid Diagrams"
+          description="Flowcharts, sequence diagrams, and other structured diagrams rendered from Mermaid syntax. Great for process flows, data models, and state machines."
+          tags={["Flowchart", "Sequence", "Class", "State", "ERD", "Gantt", "Pie", "Git Graph"]}
+        >
+          <div class="space-y-3">
+            <PromptExample client:load label="Sequence diagram">
+              Create a mermaid sequence diagram showing a user logging in: browser sends credentials to API, API validates with the auth service, returns a JWT token.
+            </PromptExample>
+            <PromptExample client:load label="Entity relationship">
+              Draw a mermaid ER diagram for a blog: users have many posts, posts have many comments, posts belong to categories.
+            </PromptExample>
+            <PromptExample client:load label="Flowchart">
+              Make a mermaid flowchart for a code review process: submit PR, automated checks, reviewer approval, merge or request changes.
+            </PromptExample>
+            <p class="text-xs text-gray-500 mt-4">
+              Tip: Include "mermaid" in your prompt to ensure Mermaid rendering is used instead of the technical diagrams library.
+            </p>
+          </div>
+        </DiagramTypeCard>
+
+        <!-- Writing Effective Prompts -->
+        <section class="bg-gray-800 rounded-lg shadow-lg p-8">
+          <h2 class="text-2xl font-bold text-white mb-6">Writing Effective Prompts</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-gray-700/50 rounded-lg p-4">
+              <h3 class="font-medium text-white mb-1">Be specific about components</h3>
+              <p class="text-sm text-gray-400">Name the services, databases, and tools you want in the diagram.</p>
+            </div>
+            <div class="bg-gray-700/50 rounded-lg p-4">
+              <h3 class="font-medium text-white mb-1">Describe relationships</h3>
+              <p class="text-sm text-gray-400">Explain how components connect: "A sends requests to B" or "C reads from D".</p>
+            </div>
+            <div class="bg-gray-700/50 rounded-lg p-4">
+              <h3 class="font-medium text-white mb-1">Mention the diagram type</h3>
+              <p class="text-sm text-gray-400">Say "mermaid flowchart" or "GCP architecture" to guide the rendering engine.</p>
+            </div>
+            <div class="bg-gray-700/50 rounded-lg p-4">
+              <h3 class="font-medium text-white mb-1">Iterate through conversation</h3>
+              <p class="text-sm text-gray-400">Start simple, then ask for changes: "Add a cache layer" or "Remove the monitoring node".</p>
+            </div>
+            <div class="bg-gray-700/50 rounded-lg p-4 sm:col-span-2">
+              <h3 class="font-medium text-white mb-1">Keep prompts focused</h3>
+              <p class="text-sm text-gray-400">One diagram per conversation works best. For complex systems, break them into separate diagrams.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Keyboard Shortcuts -->
+        <section id="keyboard-shortcuts" class="bg-gray-800 rounded-lg shadow-lg p-8">
+          <h2 class="text-2xl font-bold text-white mb-6">Keyboard Shortcuts</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-700">
+                  <th class="text-left py-2 pr-4 text-gray-400 font-medium">Action</th>
+                  <th class="text-left py-2 text-gray-400 font-medium">Shortcut</th>
+                </tr>
+              </thead>
+              <tbody class="text-gray-300">
+                <tr class="border-b border-gray-700/50">
+                  <td class="py-2.5 pr-4">Submit message</td>
+                  <td class="py-2.5"><kbd>Enter</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-700/50">
+                  <td class="py-2.5 pr-4">New line</td>
+                  <td class="py-2.5"><kbd>Shift</kbd> + <kbd>Enter</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-700/50">
+                  <td class="py-2.5 pr-4">Toggle panels</td>
+                  <td class="py-2.5"><kbd>Alt</kbd> / <kbd>Option</kbd> + <kbd>Tab</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-700/50">
+                  <td class="py-2.5 pr-4">Resize panels</td>
+                  <td class="py-2.5"><kbd>Arrow Left</kbd> / <kbd>Arrow Right</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-700/50">
+                  <td class="py-2.5 pr-4">Larger resize step</td>
+                  <td class="py-2.5"><kbd>Shift</kbd> + <kbd>Arrow</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-700/50">
+                  <td class="py-2.5 pr-4">Show shortcuts</td>
+                  <td class="py-2.5"><kbd>?</kbd></td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 pr-4">Close dialog</td>
+                  <td class="py-2.5"><kbd>Esc</kbd></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Limitations -->
+        <section class="bg-gray-800 rounded-lg shadow-lg p-8">
+          <h2 class="text-2xl font-bold text-white mb-4">Limitations</h2>
+          <ul class="space-y-3 text-sm text-gray-400">
+            <li class="flex gap-3">
+              <span class="text-gray-600 flex-shrink-0">&bull;</span>
+              AI-generated diagrams may need a few iterations to get right.
+            </li>
+            <li class="flex gap-3">
+              <span class="text-gray-600 flex-shrink-0">&bull;</span>
+              Some specific node types or icons may not be available in every provider.
+            </li>
+            <li class="flex gap-3">
+              <span class="text-gray-600 flex-shrink-0">&bull;</span>
+              Very complex diagrams with many components may need to be split into multiple passes.
+            </li>
+            <li class="flex gap-3">
+              <span class="text-gray-600 flex-shrink-0">&bull;</span>
+              Rate limits apply to diagram generation. Check your remaining quota in the app.
+            </li>
+          </ul>
+        </section>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-8 text-center text-gray-500 text-sm">
+        <p>Have questions? <a href="mailto:chris.watras@gmail.com" class="text-blue-400 hover:text-blue-300">Get in touch</a>.</p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-family: inherit;
+    line-height: 1.25rem;
+    color: #d1d5db;
+    background-color: #374151;
+    border: 1px solid #4b5563;
+    border-radius: 0.375rem;
+    min-width: 1.5rem;
+    text-align: center;
+  }
+</style>
