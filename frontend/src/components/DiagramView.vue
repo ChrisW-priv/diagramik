@@ -1,5 +1,5 @@
 <template>
-  <div id="main-content" class="border border-gray-700 rounded-lg flex flex-col h-full">
+  <main id="main-content" class="border border-gray-700 rounded-lg flex flex-col h-full">
     <!-- Tab buttons for small screens -->
     <div class="flex border-b border-gray-700 md:hidden" role="tablist" aria-label="Diagram panels">
       <button
@@ -35,8 +35,6 @@
       </div>
       <p v-else-if="error" aria-live="assertive" role="alert" class="text-red-400 bg-red-500/10 border border-red-500 rounded px-3 py-2">{{ error }}</p>
       <div v-else class="flex flex-col flex-grow min-h-0">
-        <h2 class="text-xl md:text-3xl font-bold mb-2 md:mb-4 truncate" :title="diagram ? diagram.title : 'New Diagram'">{{ diagram ? diagram.title : 'New Diagram' }}</h2>
-        
         <!-- Responsive layout -->
         <div class="flex flex-col md:flex-row flex-grow min-h-0" ref="containerRef">
           <!-- WorkTab -->
@@ -72,7 +70,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <script setup>
@@ -81,6 +79,7 @@ import { PencilIcon, EyeIcon } from '@heroicons/vue/24/outline';
 import WorkTab from './WorkTab.vue';
 import DisplayTab from './DisplayTab.vue';
 import { getDiagram } from '../lib/api';
+import { CONFIG } from '../lib/config';
 
 const props = defineProps({
   id: String,
@@ -126,8 +125,12 @@ const stopResize = () => {
   document.removeEventListener('mouseup', stopResize);
 };
 
+let resizeTimer = null;
 const updateScreenSize = () => {
-  isDesktop.value = window.innerWidth >= 768;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    isDesktop.value = window.innerWidth >= 768;
+  }, CONFIG.TIMERS.DEBOUNCE_RESIZE);
 };
 
 const handleKeyDown = (event) => {

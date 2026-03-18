@@ -2,11 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
 
-const lastUpdated = new Date().toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
-});
+const lastUpdated = 'March 18, 2026';
 ---
 
 <Layout title="Diagramik | Terms of Service">
@@ -14,8 +10,8 @@ const lastUpdated = new Date().toLocaleDateString('en-US', {
     <div class="max-w-4xl mx-auto">
       <!-- Back Button -->
       <a
-        href="javascript:history.back()"
-        class="inline-flex items-center text-blue-400 hover:text-blue-300 mb-6"
+        href="/login"
+        class="inline-flex items-center text-blue-400 hover:text-blue-300 mb-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded px-1"
       >
         <ArrowLeftIcon class="h-5 w-5 mr-2" />
         Back

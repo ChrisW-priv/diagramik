@@ -7,10 +7,11 @@
     <meta charset="UTF-8" />
     <title>Redirecting...</title>
   </head>
-  <body>
+  <body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#0f172a;color:#94a3b8;font-family:system-ui,sans-serif">
+    <p>Loading...</p>
     <script>
-      const AUTH_STORAGE_KEY = 'diagramik_auth';
-      const isAuthenticated = localStorage.getItem(AUTH_STORAGE_KEY) !== null;
+      const TOKEN_STORAGE_KEY = 'diagramik_tokens';
+      const isAuthenticated = localStorage.getItem(TOKEN_STORAGE_KEY) !== null;
 
       if (isAuthenticated) {
         window.location.href = '/diagrams';

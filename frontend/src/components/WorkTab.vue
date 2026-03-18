@@ -8,6 +8,7 @@
         <button
           @click="generationError = null"
           class="text-red-300 hover:text-red-100 text-sm underline mt-1"
+          aria-label="Dismiss error"
         >
           Dismiss
         </button>
@@ -81,7 +82,6 @@
         class="flex items-center justify-center px-3 py-2 sm:px-4 bg-gray-700 text-white rounded-r-lg border border-gray-700 hover:bg-gray-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400"
         :disabled="generating || !prompt.trim()"
         aria-label="Send prompt"
-        title="Send prompt"
       >
         <PaperAirplaneIcon class="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
@@ -147,7 +147,7 @@ const formatMessageContent = (content) => {
 const handleMessageClick = (message, index) => {
   if (message.role !== 'assistant' || !props.diagram || !props.diagram.versions) return;
 
-  // Algorithm: Find the corresponding version based on the message's index.
+  // Chat messages come in user/assistant pairs; divide by 2 to map assistant message index to version index
   const versionIndex = (localChatHistory.value.length - 1 - index) / 2;
 
   if (versionIndex >= 0 && versionIndex < props.diagram.versions.length) {
@@ -163,11 +163,10 @@ const isSelected = (message, index) => {
     return false;
   }
 
-  // Algorithm: Find the version index for the currently selected ID.
   const versionIndex = props.diagram.versions.findIndex(v => v.id === props.selectedVersionId);
   if (versionIndex === -1) return false;
 
-  // Find the chat index that corresponds to this version.
+  // Map version index back to chat index: each version corresponds to a user/assistant pair (* 2)
   const expectedChatIndex = localChatHistory.value.length - 1 - (versionIndex * 2);
   
   return index === expectedChatIndex;
@@ -244,9 +243,10 @@ const submitPrompt = async () => {
   width: 0.375rem;  /* 6px */
   height: 0.375rem;
   border-radius: 9999px;
-  background-color: rgb(96 165 250); /* blue-400 */
+  @apply bg-blue-400;
   opacity: 0.3;
   animation: typing-pulse 1.2s ease-in-out infinite;
+  will-change: opacity;
 }
 
 @keyframes typing-pulse {
