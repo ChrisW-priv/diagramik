@@ -6,7 +6,7 @@
     <div v-else class="flex flex-col h-full min-h-0 p-2 md:p-4 bg-gray-800 rounded-lg">
       <div class="flex-grow flex justify-center items-center overflow-auto min-h-0">
         <!-- Image Display -->
-        <img v-if="imageUrl" :src="imageUrl" :alt="diagram?.title ? `Diagram: ${diagram.title}` : 'Generated diagram'" class="max-w-full max-h-full h-auto rounded-lg">
+        <img v-if="imageUrl" :src="imageUrl" :alt="diagram?.title ? `Diagram: ${diagram.title}` : 'Generated diagram'" loading="lazy" class="max-w-full max-h-full h-auto rounded-lg">
 
         <!-- Error State -->
         <div v-else-if="imageError" class="flex flex-col items-center gap-3 p-6 bg-red-900/30 border border-red-500/50 rounded-lg max-w-md">

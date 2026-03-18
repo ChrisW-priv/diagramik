@@ -1,4 +1,5 @@
 ---
+import Layout from '../../layouts/Layout.astro';
 import VerificationPendingView from '../../components/VerificationPendingView.vue';
 
 // Get email from query params if present
@@ -6,14 +7,6 @@ const url = new URL(Astro.request.url);
 const emailParam = url.searchParams.get('email');
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="description" content="Generate technical diagrams from natural language. Describe your architecture in plain text and get a diagram instantly." />
-    <title>Diagramik | Verify Your Email</title>
-  </head>
-  <body>
-    <VerificationPendingView initialEmail={emailParam ?? undefined} client:only="vue" />
-  </body>
-</html>
+<Layout title="Diagramik | Verify Your Email">
+  <VerificationPendingView initialEmail={emailParam ?? undefined} client:only="vue" />
+</Layout>

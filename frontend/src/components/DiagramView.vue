@@ -1,5 +1,5 @@
 <template>
-  <div id="main-content" class="border border-gray-700 rounded-lg flex flex-col h-full">
+  <main id="main-content" class="border border-gray-700 rounded-lg flex flex-col h-full">
     <!-- Tab buttons for small screens -->
     <div class="flex border-b border-gray-700 md:hidden" role="tablist" aria-label="Diagram panels">
       <button
@@ -69,7 +69,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <script setup>
@@ -78,6 +78,7 @@ import { PencilIcon, EyeIcon } from '@heroicons/vue/24/outline';
 import WorkTab from './WorkTab.vue';
 import DisplayTab from './DisplayTab.vue';
 import { getDiagram } from '../lib/api';
+import { CONFIG } from '../lib/config';
 
 const props = defineProps({
   id: String,
@@ -123,8 +124,12 @@ const stopResize = () => {
   document.removeEventListener('mouseup', stopResize);
 };
 
+let resizeTimer = null;
 const updateScreenSize = () => {
-  isDesktop.value = window.innerWidth >= 768;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    isDesktop.value = window.innerWidth >= 768;
+  }, CONFIG.TIMERS.DEBOUNCE_RESIZE);
 };
 
 const handleKeyDown = (event) => {

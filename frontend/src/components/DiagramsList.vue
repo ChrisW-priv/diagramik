@@ -102,6 +102,7 @@ const handleLogout = async () => {
       <div class="flex gap-3 sm:gap-4">
         <a
           href="/diagrams/new"
+          aria-label="New diagram"
           class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 px-3 py-2.5 rounded-lg transition-colors min-h-12 min-w-12 sm:min-h-auto sm:min-w-auto"
         >
           <PlusCircleIcon class="h-5 w-5 flex-shrink-0" aria-hidden="true" />
@@ -109,6 +110,7 @@ const handleLogout = async () => {
         </a>
         <button
           @click="handleLogout"
+          aria-label="Sign out"
           class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 px-3 py-2.5 rounded-lg transition-colors min-h-12 min-w-12 sm:min-h-auto sm:min-w-auto"
         >
           <ArrowRightOnRectangleIcon class="h-5 w-5 flex-shrink-0" aria-hidden="true" />
@@ -136,7 +138,7 @@ const handleLogout = async () => {
           @click="retryFetch"
           class="flex items-center gap-2 mt-2 text-sm text-red-300 hover:text-red-100 underline"
         >
-          <ArrowPathIcon class="h-4 w-4" />
+          <ArrowPathIcon class="h-4 w-4" aria-hidden="true" />
           Try Again
         </button>
       </div>
@@ -150,7 +152,7 @@ const handleLogout = async () => {
         <p class="text-sm text-gray-500 mb-6">
           Create your first diagram to get started with Diagramik.
         </p>
-        <a href="/diagrams/new" class="inline-block bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg text-white font-medium transition-colors">
+        <a href="/diagrams/new" class="inline-block bg-blue-600 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 px-6 py-3 rounded-lg text-white font-medium transition-colors">
           Create your first diagram
         </a>
       </li>
