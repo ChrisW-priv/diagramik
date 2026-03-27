@@ -4,19 +4,26 @@ ______________________________________________________________________
 
 # Add Cloud Functions
 
-Cloud Functions in this project follow a predictable two-phase pattern. All
+Cloud Functions in this project follow a two-phase deployment pattern. All
 Cloud Functions are deployed as GCP Cloud Run Functions (v2). They are first
 provisioned with "sentinel" Terraform, which uses a throwaway zip to create the
 infrastructure (service account, env vars, secrets, scaling config, etc.).
-Once the infrastructure exists, the actual function code is deployed via
-`gcloud functions deploy`. Deployment of new code is triggered via GitHub
-Actions on push to the relevant branch.
+Once the infrastructure exists, subsequent code deployments build a container
+image via Cloud Build (using Google Cloud Buildpacks) and update the underlying
+Cloud Run service to use the new image.
 
 **Sentinel pattern:** The `infrastructure/modules/cloud-function/` module
 generates a minimal `main.py` at plan time and uploads it as a zip to a shared
 GCS bucket. This lets Terraform own the infrastructure lifecycle without
-requiring real function code to exist first. After `terraform apply`, deploy
-real code with `gcloud functions deploy <function-name> --source=...`.
+requiring real function code to exist first. The module uses
+`lifecycle { ignore_changes = [build_config] }` so subsequent `terraform apply`
+runs do not revert the image that CI has deployed.
+
+**CI deployment (two steps):**
+1. `gcloud builds submit --pack` builds a container image from the function
+   source using Google Cloud Buildpacks and pushes it to Artifact Registry.
+2. `gcloud run services update --image` swaps the image on the underlying
+   Cloud Run service (Cloud Functions v2 is backed by Cloud Run).
 
 ## Instructions
 
@@ -174,14 +181,15 @@ resource "google_secret_manager_secret_iam_member" "my_secret_access" {
 
 ### Step 3 – Add GitHub Actions CI/CD deployment job
 
-Add a deploy job to `.github/workflows/deploy.yml` (or a dedicated workflow
-file). Use the existing Cloud Run deploy jobs as a template:
+Add a deploy job to `.github/workflows/main-push.yml`. The job has two steps:
+build a container image with Cloud Build (buildpacks), then swap the image on
+the underlying Cloud Run service.
 
 ```yaml
 deploy-<function-name>:
   name: Deploy <function-name>
   runs-on: ubuntu-latest
-  needs: [terraform]
+  needs: [build-and-push]
   if: github.ref == 'refs/heads/main'
   permissions:
     contents: read
@@ -195,16 +203,28 @@ deploy-<function-name>:
         workload_identity_provider: ${{ vars.WIF_PROVIDER }}
         service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
 
-    - name: Deploy Cloud Function
-      uses: google-github-actions/deploy-cloud-functions@v3
-      with:
-        name: <function-name>
-        region: ${{ vars.GOOGLE_REGION }}
-        project_id: ${{ vars.GOOGLE_PROJECT_ID }}
-        source_dir: backend/cloud-functions/<function-name>
-        runtime: python313
-        entry_point: main
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Build image with Cloud Build buildpack
+      run: |
+        gcloud builds submit backend/cloud-functions/<function-name> \
+          --pack image=${{ vars.GOOGLE_REGION }}-docker.pkg.dev/${{ vars.GOOGLE_PROJECT_ID }}/diagramik/<function-name>:${{ github.sha }} \
+          --project=${{ vars.GOOGLE_PROJECT_ID }}
+
+    - name: Update Cloud Function to use new image
+      run: |
+        gcloud run services update <function-name> \
+          --image=${{ vars.GOOGLE_REGION }}-docker.pkg.dev/${{ vars.GOOGLE_PROJECT_ID }}/diagramik/<function-name>:${{ github.sha }} \
+          --region=${{ vars.GOOGLE_REGION }} \
+          --project=${{ vars.GOOGLE_PROJECT_ID }}
 ```
+
+The image is pushed to the `diagramik` Artifact Registry repository (the same
+repo used by Cloud Run services). Cloud Build's default SA needs write access
+to that repository; this is handled by the existing
+`google_artifact_registry_repository_iam_member` writer binding in the
+`django-monolith` module (WIF principal for the GitHub repo).
 
 ### Summary of files to create/modify
 
@@ -218,4 +238,4 @@ deploy-<function-name>:
 | **Create** | `backend/cloud-functions/<function-name>/tests/conftest.py`        |
 | **Create** | `backend/cloud-functions/<function-name>/tests/test_main.py`       |
 | **Modify** | `infrastructure/cloud_functions.tf`                                 |
-| **Modify** | `.github/workflows/deploy.yml`                                      |
+| **Modify** | `.github/workflows/main-push.yml`                                   |

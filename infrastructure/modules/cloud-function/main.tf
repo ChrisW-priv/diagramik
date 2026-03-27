@@ -77,6 +77,13 @@ resource "google_cloudfunctions2_function" "function" {
     }
   }
 
+  # After initial provisioning, the function image is updated via Cloud Build +
+  # gcloud run services update in CI. Ignore build_config so Terraform does not
+  # revert the deployed image on subsequent applies.
+  lifecycle {
+    ignore_changes = [build_config]
+  }
+
   service_config {
     available_memory      = coalesce(each.value.available_memory, "256M")
     available_cpu         = coalesce(each.value.available_cpu, "1")

@@ -86,17 +86,25 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
-      - name: Deploy Cloud Function
-        uses: google-github-actions/deploy-cloud-functions@v3
-        with:
-          name: share-diagram-image
-          region: ${{ vars.GOOGLE_REGION }}
-          project_id: ${{ vars.GOOGLE_PROJECT_ID }}
-          source_dir: backend/cloud-functions/share-diagram-image
-          runtime: python313
-          entry_point: main
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build image with Cloud Build buildpack
+        run: |
+          gcloud builds submit backend/cloud-functions/share-diagram-image \
+            --pack image=${{ vars.GOOGLE_REGION }}-docker.pkg.dev/${{ vars.GOOGLE_PROJECT_ID }}/diagramik/share-diagram-image:${{ github.sha }} \
+            --project=${{ vars.GOOGLE_PROJECT_ID }}
+
+      - name: Update Cloud Function to use new image
+        run: |
+          gcloud run services update share-diagram-image \
+            --image=${{ vars.GOOGLE_REGION }}-docker.pkg.dev/${{ vars.GOOGLE_PROJECT_ID }}/diagramik/share-diagram-image:${{ github.sha }} \
+            --region=${{ vars.GOOGLE_REGION }} \
+            --project=${{ vars.GOOGLE_PROJECT_ID }}
