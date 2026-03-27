@@ -197,20 +197,21 @@ class DiagramVersionImage(APIView):
 
 class DiagramShareLinkCreate(APIView):
     """POST /api/v1/diagrams/{diagram_id}/versions/{version_id}/share/
-    Authenticated. Creates a shareable link for a diagram version."""
+    Public. Returns (or creates) a shareable link for a diagram version."""
+
+    authentication_classes = []
+    permission_classes = []
 
     def post(self, request, diagram_id, version_id):
         try:
-            version = DiagramVersion.objects.get(
-                pk=version_id, diagram_id=diagram_id, diagram__owner=request.user
-            )
+            version = DiagramVersion.objects.get(pk=version_id, diagram_id=diagram_id)
         except DiagramVersion.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        share_link = DiagramShareLink.objects.create(diagram_version=version)
+        share_link, created = DiagramShareLink.objects.get_or_create(diagram_version=version)
         share_url = f"{settings.SITE_URL}/share/{share_link.token}"
         return Response(
             {"token": share_link.token, "share_url": share_url},
-            status=status.HTTP_201_CREATED,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
 
