@@ -53,6 +53,20 @@ resource "google_storage_bucket_iam_member" "bucket_A" {
   member = google_service_account.sa.member
 }
 
+# Allow the share-diagram-image CF SA to impersonate the GCS SA for signed URL generation
+resource "google_service_account_iam_member" "cf_sign_blob" {
+  service_account_id = google_service_account.sa.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:${module.cloud_functions.service_account_emails["share-diagram-image"]}"
+}
+
+# Allow the share-diagram-image CF SA to read objects from the diagrams bucket
+resource "google_storage_bucket_iam_member" "cf_bucket_read" {
+  bucket = "diagramik-diagrams"
+  role   = "roles/storage.legacyObjectReader"
+  member = "serviceAccount:${module.cloud_functions.service_account_emails["share-diagram-image"]}"
+}
+
 # VPC Network for private Cloud SQL and CloudRun connectivity
 module "vpc" {
   source              = "./modules/vpc"
@@ -95,6 +109,7 @@ module "diagramik" {
 
   extra_django_env_vars = {
     "SIGNED_URL_SA_KEY_FILENAME" = "/secrets/gcs/key.json"
+    "SITE_URL"                   = "https://${var.domain}"
   }
 
   extra_django_secret_env_vars = {
@@ -187,6 +202,12 @@ module "global-lb" {
       priority     = 1 # Higher priority to match first
     }
 
-    # MCP removed from load balancer - now internal-only via VPC
+    # Share Cloud Function - handles /share/* paths
+    share = {
+      service_name = "share-diagram-image"
+      location     = var.google_region
+      path_prefix  = "/share/*"
+      priority     = 2
+    }
   }
 }

@@ -118,6 +118,10 @@ export const deleteDiagramVersion = (diagramId: string, versionId: string) => {
   return apiClient.delete(`/diagrams/${diagramId}/versions/${versionId}/`);
 };
 
+export const createShareLink = (diagramId: string, versionId: string) => {
+  return apiClient.post(`/diagrams/${diagramId}/versions/${versionId}/share/`);
+};
+
 // Auth API
 export const authApi = {
   async login(email: string, password: string) {

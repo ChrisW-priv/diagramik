@@ -1,0 +1,24 @@
+[project]
+name = "share-diagram-image"
+version = "0.1.0"
+description = "Resolves a share token and redirects to the diagram image"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "functions-framework>=3.5.0",
+  "requests>=2.32.0",
+  "google-cloud-storage>=2.19.0",
+  "google-auth>=2.38.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4.1",
+  "pytest-cov>=7.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --cov=. --cov-report=term-missing"

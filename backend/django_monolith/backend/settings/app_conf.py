@@ -13,3 +13,5 @@ GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "playground-449613")
 DIAGRAMS_BUCKET_NAME = os.environ.get("DIAGRAMS_BUCKET_NAME", "diagramik-diagrams")
 
 SIGNED_URL_SA_KEY_FILENAME = os.environ.get("SIGNED_URL_SA_KEY_FILENAME")
+
+SITE_URL = os.environ.get("SITE_URL", "http://localhost:3000")

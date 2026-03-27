@@ -36,6 +36,17 @@ class DiagramVersion(models.Model):
         return f"Version {self.id} for {self.diagram.title}"
 
 
+class DiagramShareLink(models.Model):
+    token = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    diagram_version = models.ForeignKey(
+        DiagramVersion, on_delete=models.CASCADE, related_name="share_links"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"ShareLink {self.token} → {self.diagram_version_id}"
+
+
 class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     diagram = models.ForeignKey(
