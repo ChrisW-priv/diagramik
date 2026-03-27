@@ -24,7 +24,18 @@
         <!-- Loading State -->
         <div v-else class="w-full max-w-2xl aspect-video bg-gray-700 rounded-lg animate-pulse"></div>
       </div>
-      <div class="flex-shrink-0 pt-4 flex justify-end">
+      <div class="flex-shrink-0 pt-4 flex justify-end gap-2">
+        <button
+            @click="shareDiagram"
+            class="flex items-center justify-center p-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="!imageUrl || isSharing"
+            :aria-label="shareStatus === 'copied' ? 'Link copied!' : 'Copy share link'"
+            :title="shareStatus === 'copied' ? 'Link copied!' : 'Copy share link'"
+        >
+          <CheckIcon v-if="shareStatus === 'copied'" class="h-6 w-6 text-green-400" />
+          <ArrowPathIcon v-else-if="isSharing" class="h-6 w-6 animate-spin" />
+          <LinkIcon v-else class="h-6 w-6" />
+        </button>
         <button
             @click="downloadDiagram"
             class="flex items-center justify-center p-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400"
@@ -41,8 +52,8 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { ExclamationCircleIcon, ArrowPathIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline';
-import { apiClient } from '../lib/api';
+import { ExclamationCircleIcon, ArrowPathIcon, ArrowDownTrayIcon, LinkIcon, CheckIcon } from '@heroicons/vue/24/outline';
+import { apiClient, createShareLink } from '../lib/api';
 
 const props = defineProps({
   diagram: Object,
@@ -99,6 +110,27 @@ const retryImageLoad = () => {
   loadImage(props.selectedVersion);
 };
 
+
+const isSharing = ref(false);
+const shareStatus = ref('idle'); // 'idle' | 'copied' | 'error'
+
+const shareDiagram = async () => {
+  if (!props.selectedVersion || isSharing.value) return;
+  isSharing.value = true;
+  shareStatus.value = 'idle';
+  try {
+    const response = await createShareLink(props.selectedVersion.diagram_id, props.selectedVersion.id);
+    const shareUrl = response.data.share_url;
+    await navigator.clipboard.writeText(shareUrl);
+    shareStatus.value = 'copied';
+    setTimeout(() => { shareStatus.value = 'idle'; }, 2000);
+  } catch {
+    shareStatus.value = 'error';
+    setTimeout(() => { shareStatus.value = 'idle'; }, 2000);
+  } finally {
+    isSharing.value = false;
+  }
+};
 
 const downloadDiagram = () => {
   if (imageUrl.value) {
