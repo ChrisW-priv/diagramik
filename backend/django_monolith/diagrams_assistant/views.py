@@ -1,26 +1,26 @@
 import asyncio
 from datetime import timedelta
-from django.shortcuts import redirect
+
+from django.conf import settings
 from django.db.models import Max
 from django.db.models.functions import Coalesce
-
+from django.shortcuts import redirect
+from google.cloud.storage import Blob, Client
 from google.oauth2 import service_account
+from quota_management.throttles import DiagramGenerationThrottle, log_diagram_generation
+from rest_framework import generics, status
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from agent import agent
 
-from .models import Diagram, DiagramVersion, ChatMessage, DiagramShareLink
+from .models import ChatMessage, Diagram, DiagramShareLink, DiagramVersion
 from .serializers import (
-    DiagramSerializer,
     DiagramListItemSerializer,
+    DiagramSerializer,
     DiagramVersionSerializer,
 )
-from quota_management.throttles import DiagramGenerationThrottle, log_diagram_generation
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.request import Request
-from rest_framework.views import APIView
-from django.conf import settings
-from google.cloud.storage import Client, Blob
 
 
 def _extract_clarification_from_history(history_json: str) -> str:
@@ -199,15 +199,14 @@ class DiagramShareLinkCreate(APIView):
     """POST /api/v1/diagrams/{diagram_id}/versions/{version_id}/share/
     Public. Returns (or creates) a shareable link for a diagram version."""
 
-    authentication_classes = []
-    permission_classes = []
-
     def post(self, request, diagram_id, version_id):
         try:
             version = DiagramVersion.objects.get(pk=version_id, diagram_id=diagram_id)
         except DiagramVersion.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        share_link, created = DiagramShareLink.objects.get_or_create(diagram_version=version)
+        share_link, created = DiagramShareLink.objects.get_or_create(
+            diagram_version=version
+        )
         share_url = f"{settings.SITE_URL}/share/{share_link.token}"
         return Response(
             {"token": share_link.token, "share_url": share_url},
