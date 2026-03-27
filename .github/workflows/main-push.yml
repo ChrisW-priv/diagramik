@@ -75,3 +75,28 @@ jobs:
         #   env:
         #     SCAN_REGISTRY: ghcr
         #   run: task scan
+
+  deploy-share-diagram-image:
+    name: Deploy share-diagram-image Cloud Function
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+      - name: Deploy Cloud Function
+        uses: google-github-actions/deploy-cloud-functions@v3
+        with:
+          name: share-diagram-image
+          region: ${{ vars.GOOGLE_REGION }}
+          project_id: ${{ vars.GOOGLE_PROJECT_ID }}
+          source_dir: backend/cloud-functions/share-diagram-image
+          runtime: python313
+          entry_point: main

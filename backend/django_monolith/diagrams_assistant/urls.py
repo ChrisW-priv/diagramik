@@ -5,6 +5,8 @@ from .views import (
     DiagramVersionCreate,
     DiagramVersionDelete,
     DiagramVersionImage,
+    DiagramShareLinkCreate,
+    DiagramShareLinkResolve,
 )
 
 urlpatterns = [
@@ -24,5 +26,15 @@ urlpatterns = [
         "diagrams/<uuid:diagram_id>/versions/<uuid:version_id>/image/",
         DiagramVersionImage.as_view(),
         name="diagram-version-image",
+    ),
+    path(
+        "diagrams/<uuid:diagram_id>/versions/<uuid:version_id>/share/",
+        DiagramShareLinkCreate.as_view(),
+        name="diagram-share-link-create",
+    ),
+    path(
+        "share/<uuid:token>/",
+        DiagramShareLinkResolve.as_view(),
+        name="diagram-share-link-resolve",
     ),
 ]

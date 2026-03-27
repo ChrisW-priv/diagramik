@@ -1,12 +1,13 @@
 locals {
   cloud_functions = {
-    # "<function-name>" = {
-    #   description = "<description>"
-    #   environment_variables = {
-    #     "MY_VAR" = "my-value"
-    #   }
-    #   invoker_members = ["allUsers"]
-    # }
+    "share-diagram-image" = {
+      description     = "Resolves share tokens and redirects to diagram images"
+      invoker_members = ["allUsers"]
+      environment_variables = {
+        "MONOLITH_URL" = "https://${var.domain}"
+      }
+      secret_environment_variables = {}
+    }
   }
 }
 
