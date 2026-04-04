@@ -20,9 +20,10 @@ requiring real function code to exist first. The module uses
 runs do not revert the image that CI has deployed.
 
 **CI deployment (two steps):**
+
 1. `gcloud builds submit --pack` builds a container image from the function
    source using Google Cloud Buildpacks and pushes it to Artifact Registry.
-2. `gcloud run services update --image` swaps the image on the underlying
+1. `gcloud run services update --image` swaps the image on the underlying
    Cloud Run service (Cloud Functions v2 is backed by Cloud Run).
 
 ## Instructions
@@ -179,11 +180,16 @@ resource "google_secret_manager_secret_iam_member" "my_secret_access" {
 }
 ```
 
-### Step 3 – Add GitHub Actions CI/CD deployment job
+### Step 3 – Wire up GitHub Actions CI/CD
 
-Add a deploy job to `.github/workflows/main-push.yml`. The job has two steps:
-build a container image with Cloud Build (buildpacks), then swap the image on
-the underlying Cloud Run service.
+Two workflow files need changes.
+
+#### `.github/workflows/main-push.yml` — add a deploy job
+
+Add a new job that runs on every push to main. It builds the container image
+with Cloud Build (buildpacks) and then swaps the image on the underlying Cloud
+Run service. Use direct WIF auth (no `service_account` impersonation) — see the
+existing `deploy-share-diagram-image` job as a reference.
 
 ```yaml
 deploy-<function-name>:
@@ -201,7 +207,6 @@ deploy-<function-name>:
       uses: google-github-actions/auth@v2
       with:
         workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-        service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
 
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
@@ -220,6 +225,42 @@ deploy-<function-name>:
           --project=${{ vars.GOOGLE_PROJECT_ID }}
 ```
 
+Do **not** add `service_account` to the auth step. The WIF principal has direct
+permissions and SA impersonation is not used in this project.
+
+#### `.github/workflows/release.yml` — build before terraform, deploy after
+
+The release workflow owns the full lifecycle: build → terraform (sentinel) →
+deploy real image. Two insertions are needed:
+
+**1. Build step** — add after "Tag and push as latest to GHCR" and before "Run
+Terraform", grouped with the other image builds:
+
+```yaml
+      - name: Build cloud function image with Cloud Build buildpack
+        run: |
+          gcloud builds submit backend/cloud-functions/<function-name> \
+            --pack image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/diagramik/<function-name>:${{ steps.get_tag.outputs.tag }} \
+            --project=${{ env.GCP_PROJECT_ID }}
+```
+
+**2. Deploy step** — add after "Run Terraform" and before "Install frontend
+dependencies":
+
+```yaml
+      - name: Deploy cloud function image to Cloud Run
+        run: |
+          gcloud run services update <function-name> \
+            --image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/diagramik/<function-name>:${{ steps.get_tag.outputs.tag }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }}
+```
+
+The deploy step must come after terraform because terraform creates the Cloud
+Run service (via the sentinel zip) on the function's first deployment. The
+`gcloud run services update` command can only target a service that already
+exists.
+
 The image is pushed to the `diagramik` Artifact Registry repository (the same
 repo used by Cloud Run services). Cloud Build's default SA needs write access
 to that repository; this is handled by the existing
@@ -228,14 +269,15 @@ to that repository; this is handled by the existing
 
 ### Summary of files to create/modify
 
-| Action     | Path                                                                |
-| ---------- | ------------------------------------------------------------------- |
-| **Create** | `backend/cloud-functions/<function-name>/main.py`                  |
-| **Create** | `backend/cloud-functions/<function-name>/pyproject.toml`           |
-| **Create** | `backend/cloud-functions/<function-name>/uv.lock`                  |
-| **Create** | `backend/cloud-functions/<function-name>/.python-version`          |
-| **Create** | `backend/cloud-functions/<function-name>/.gitignore`               |
-| **Create** | `backend/cloud-functions/<function-name>/tests/conftest.py`        |
-| **Create** | `backend/cloud-functions/<function-name>/tests/test_main.py`       |
-| **Modify** | `infrastructure/cloud_functions.tf`                                 |
-| **Modify** | `.github/workflows/main-push.yml`                                   |
+| Action     | Path                                                         |
+| ---------- | ------------------------------------------------------------ |
+| **Create** | `backend/cloud-functions/<function-name>/main.py`            |
+| **Create** | `backend/cloud-functions/<function-name>/pyproject.toml`     |
+| **Create** | `backend/cloud-functions/<function-name>/uv.lock`            |
+| **Create** | `backend/cloud-functions/<function-name>/.python-version`    |
+| **Create** | `backend/cloud-functions/<function-name>/.gitignore`         |
+| **Create** | `backend/cloud-functions/<function-name>/tests/conftest.py`  |
+| **Create** | `backend/cloud-functions/<function-name>/tests/test_main.py` |
+| **Modify** | `infrastructure/cloud_functions.tf`                          |
+| **Modify** | `.github/workflows/main-push.yml`                            |
+| **Modify** | `.github/workflows/release.yml`                              |
