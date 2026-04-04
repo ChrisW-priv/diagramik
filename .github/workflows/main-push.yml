@@ -100,6 +100,7 @@ jobs:
         run: |
           gcloud builds submit backend/cloud-functions/share-diagram-image \
             --pack image=${{ vars.GOOGLE_REGION }}-docker.pkg.dev/${{ vars.GOOGLE_PROJECT_ID }}/diagramik/share-diagram-image:${{ github.sha }} \
+            --gcs-source-staging-dir=gs://${{ vars.GOOGLE_PROJECT_ID }}-cloudbuild-staging/source \
             --project=${{ vars.GOOGLE_PROJECT_ID }}
 
       - name: Update Cloud Function to use new image
