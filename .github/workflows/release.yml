@@ -103,6 +103,12 @@ jobs:
           REGISTRY_GHCR: ghcr.io/${{ steps.repo_owner.outputs.owner_lc }}
         run: task tag:latest
 
+      - name: Build cloud function image with Cloud Build buildpack
+        run: |
+          gcloud builds submit backend/cloud-functions/share-diagram-image \
+            --pack image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/diagramik/share-diagram-image:${{ steps.get_tag.outputs.tag }} \
+            --project=${{ env.GCP_PROJECT_ID }}
+
       - name: Run Terraform
         working-directory: infrastructure
         env:
@@ -111,6 +117,13 @@ jobs:
         run: |
           task init
           task apply
+
+      - name: Deploy cloud function image to Cloud Run
+        run: |
+          gcloud run services update share-diagram-image \
+            --image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/diagramik/share-diagram-image:${{ steps.get_tag.outputs.tag }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }}
 
       - name: Install frontend dependencies
         working-directory: frontend
