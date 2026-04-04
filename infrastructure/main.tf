@@ -53,20 +53,6 @@ resource "google_storage_bucket_iam_member" "bucket_A" {
   member = google_service_account.sa.member
 }
 
-# Allow the share-diagram-image CF SA to impersonate the GCS SA for signed URL generation
-resource "google_service_account_iam_member" "cf_sign_blob" {
-  service_account_id = google_service_account.sa.name
-  role               = "roles/iam.serviceAccountTokenCreator"
-  member             = "serviceAccount:${module.cloud_functions.service_account_emails["share-diagram-image"]}"
-}
-
-# Allow the share-diagram-image CF SA to read objects from the diagrams bucket
-resource "google_storage_bucket_iam_member" "cf_bucket_read" {
-  bucket = "diagramik-diagrams"
-  role   = "roles/storage.legacyObjectReader"
-  member = "serviceAccount:${module.cloud_functions.service_account_emails["share-diagram-image"]}"
-}
-
 # VPC Network for private Cloud SQL and CloudRun connectivity
 module "vpc" {
   source              = "./modules/vpc"
@@ -165,12 +151,37 @@ module "mcp-service" {
   vpc_subnetwork_self_link = module.vpc.primary_subnet_self_link
   vpc_egress               = "PRIVATE_RANGES_ONLY"
 
+  # Mount GCS SA key for signed URL generation
+  extra_volumes = {
+    "gcs-sa-key" = {
+      secret_name = module.gcs-sa-key-secret.secret_id
+      secret_items = [
+        {
+          version = "latest"
+          path    = "key.json"
+        }
+      ]
+    }
+  }
+
+  extra_volume_mounts = {
+    "gcs-sa-key" = "/secrets/gcs"
+  }
+
+  extra_env_vars = {
+    "SIGNED_URL_SA_KEY_FILENAME" = "/secrets/gcs/key.json"
+  }
+
+  extra_secret_access = [
+    module.gcs-sa-key-secret.secret_id,
+  ]
+
   # List of members allowed to invoke the MCP service
   run_invoker_members = [
     "serviceAccount:${module.diagramik.service_account_email}"
   ]
 
-  depends_on = [module.vpc]
+  depends_on = [module.vpc, module.gcs-sa-key-secret]
 }
 
 # Frontend Bucket for static files

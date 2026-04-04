@@ -2,7 +2,7 @@ locals {
   cloud_functions = {
     "share-diagram-image" = {
       description     = "Resolves share tokens and redirects to diagram images"
-      invoker_members = ["allUsers"]
+      invoker_members = []
       environment_variables = {
         "MONOLITH_URL" = "https://${var.domain}"
       }
