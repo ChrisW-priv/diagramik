@@ -5,7 +5,7 @@ description = "Resolves a share token and redirects to the diagram image"
 requires-python = ">=3.13,<3.14"
 dependencies = [
   "functions-framework>=3.5.0",
-  "requests>=2.32.0",
+  "psycopg[binary]>=3.1",
   "google-cloud-storage>=2.19.0",
   "google-auth>=2.38.0",
 ]

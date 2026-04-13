@@ -92,6 +92,12 @@ resource "google_cloudfunctions2_function" "function" {
     max_instance_count    = coalesce(each.value.max_instance_count, 100)
     ingress_settings      = coalesce(each.value.ingress_settings, "ALLOW_ALL")
     service_account_email = google_service_account.sa[each.key].email
+    direct_vpc_egress     = "VPC_EGRESS_PRIVATE_RANGES_ONLY"
+
+    direct_vpc_network_interface {
+      network    = "projects/${var.google_project_id}/global/networks/${var.vpc_network_name}"
+      subnetwork = "projects/${var.google_project_id}/regions/${var.location}/subnetworks/${var.vpc_subnetwork_name}"
+    }
     environment_variables = coalesce(each.value.environment_variables, {})
 
     dynamic "secret_environment_variables" {
@@ -121,8 +127,9 @@ resource "google_cloudfunctions2_function" "function" {
   }
 }
 
-# IAM invoker bindings per function
-resource "google_cloudfunctions2_function_iam_member" "invoker" {
+# IAM invoker bindings on the underlying Cloud Run service directly,
+# since google_cloudfunctions2_function_iam_member does not reliably propagate.
+resource "google_cloud_run_v2_service_iam_member" "invoker" {
   for_each = {
     for pair in flatten([
       for fn_name, fn in var.functions : [
@@ -134,9 +141,9 @@ resource "google_cloudfunctions2_function_iam_member" "invoker" {
       ]
     ]) : pair.key => pair
   }
-  project        = var.google_project_id
-  location       = var.location
-  cloud_function = google_cloudfunctions2_function.function[each.value.fn].name
-  role           = "roles/cloudfunctions.invoker"
-  member         = each.value.member
+  project  = var.google_project_id
+  location = var.location
+  name     = each.value.fn
+  role     = "roles/run.invoker"
+  member   = each.value.member
 }

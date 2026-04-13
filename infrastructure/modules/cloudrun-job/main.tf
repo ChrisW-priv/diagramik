@@ -70,6 +70,17 @@ resource "google_cloud_run_v2_job" "backend_setup_job" {
         }
       }
 
+      dynamic "vpc_access" {
+        for_each = var.vpc_network_name != null ? [1] : []
+        content {
+          network_interfaces {
+            network    = "projects/${var.google_project_id}/global/networks/${var.vpc_network_name}"
+            subnetwork = "projects/${var.google_project_id}/regions/${var.location}/subnetworks/${var.vpc_subnetwork_name}"
+          }
+          egress = "ALL_TRAFFIC"
+        }
+      }
+
       containers {
         image   = var.image_url
         command = var.command

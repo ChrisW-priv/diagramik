@@ -97,3 +97,15 @@ variable "secret_env_vars" {
   }))
   default = {}
 }
+
+variable "vpc_network_name" {
+  description = "VPC network name for direct VPC egress. Null disables VPC."
+  type        = string
+  default     = null
+}
+
+variable "vpc_subnetwork_name" {
+  description = "VPC subnetwork name for direct VPC egress. Null disables VPC."
+  type        = string
+  default     = null
+}

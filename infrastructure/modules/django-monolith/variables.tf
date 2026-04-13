@@ -101,6 +101,18 @@ variable "enable_cloudsql_public_ip" {
   default     = true
 }
 
+variable "vpc_network_name" {
+  description = "VPC network name for setup job VPC egress. Null disables."
+  type        = string
+  default     = null
+}
+
+variable "vpc_subnetwork_name" {
+  description = "VPC subnetwork name for setup job VPC egress. Null disables."
+  type        = string
+  default     = null
+}
+
 # Application Configuration
 variable "mcp_service_url" {
   description = "MCP service URL for FastAgent configuration (internal CloudRun service URL)"

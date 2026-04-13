@@ -2,7 +2,7 @@ import os
 from datetime import timedelta
 
 import functions_framework
-import requests
+import psycopg
 from flask import Request, redirect
 
 import google.auth
@@ -18,6 +18,24 @@ def _get_signed_url(image_uri: str) -> str:
     return blob.generate_signed_url(expiration=timedelta(hours=1), credentials=credentials)
 
 
+def _get_image_uri(token: str) -> str | None:
+    with psycopg.connect(
+        host=os.environ["DB_PRIVATE_IP"],
+        dbname=os.environ["POSTGRES_DATABASE_NAME"],
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+    ) as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT dv.image_uri"
+            " FROM diagrams_assistant_diagramsharelink dsl"
+            " JOIN diagrams_assistant_diagramversion dv ON dsl.diagram_version_id = dv.id"
+            " WHERE dsl.token = %s",
+            (str(token),),
+        )
+        row = cur.fetchone()
+    return row[0] if row else None
+
+
 @functions_framework.http
 def main(request: Request):
     # Extract token from path: /share/{token}
@@ -25,14 +43,10 @@ def main(request: Request):
     if not token:
         return "Token required", 400
 
-    monolith_url = os.environ["MONOLITH_URL"]
-    resp = requests.get(f"{monolith_url}/api/v1/share/{token}/", timeout=10)
-    if resp.status_code == 404:
+    image_uri = _get_image_uri(token)
+    if image_uri is None:
         return "Share link not found", 404
-    if not resp.ok:
-        return "Error resolving share link", 502
 
-    image_uri = resp.json()["image_uri"]
     if image_uri.startswith("gs://"):
         image_uri = _get_signed_url(image_uri)
 

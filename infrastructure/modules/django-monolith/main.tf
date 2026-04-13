@@ -175,23 +175,22 @@ module "monolith-setup-job" {
   command               = ["/app/django_monolith/entrypoint.sh"]
   args                  = ["setup"]
 
-  volumes = {
-    "cloudsql" = {
-      cloudsql_instances = [module.postgres_db.connection_name]
-    }
-  }
+  volumes       = var.enable_cloudsql_public_ip ? { "cloudsql" = { cloudsql_instances = [module.postgres_db.connection_name] } } : {}
+  volume_mounts = var.enable_cloudsql_public_ip ? { "cloudsql" = "/cloudsql" } : {}
 
-  volume_mounts = {
-    "cloudsql" = "/cloudsql"
-  }
+  env_vars = merge(
+    {
+      "POSTGRES_DATABASE_NAME" = module.postgres_db.db_name
+      "POSTGRES_USER"          = module.postgres_db.db_admin_user
+      "STATIC_BUCKET_NAME"     = module.public-bucket.name
+      "MEDIA_BUCKET_NAME"      = module.private-bucket.name
+    },
+    var.enable_cloudsql_public_ip ? { "DB_CONN_NAME" = module.postgres_db.connection_name } : {},
+    var.enable_cloudsql_private_ip ? { "DB_PRIVATE_IP" = module.postgres_db.private_ip_address } : {},
+  )
 
-  env_vars = {
-    "DB_CONN_NAME"           = module.postgres_db.connection_name
-    "POSTGRES_DATABASE_NAME" = module.postgres_db.db_name
-    "POSTGRES_USER"          = module.postgres_db.db_admin_user
-    "STATIC_BUCKET_NAME"     = module.public-bucket.name
-    "MEDIA_BUCKET_NAME"      = module.private-bucket.name
-  }
+  vpc_network_name    = var.enable_cloudsql_private_ip ? var.vpc_network_name : null
+  vpc_subnetwork_name = var.enable_cloudsql_private_ip ? var.vpc_subnetwork_name : null
 
   secret_env_vars = {
     "POSTGRES_PASSWORD" = {

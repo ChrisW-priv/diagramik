@@ -127,6 +127,8 @@ module "diagramik" {
   # VPC Configuration: Private IP only (public access CLOSED)
   vpc_network_self_link      = module.vpc.network_self_link
   vpc_subnetwork_self_link   = module.vpc.primary_subnet_self_link
+  vpc_network_name           = module.vpc.network_name
+  vpc_subnetwork_name        = module.vpc.primary_subnet_name
   enable_cloudsql_private_ip = true
   enable_cloudsql_public_ip  = false # PUBLIC ACCESS DISABLED FOR SECURITY
 

@@ -8,6 +8,16 @@ variable "location" {
   type        = string
 }
 
+variable "vpc_network_name" {
+  description = "VPC network name for direct VPC egress"
+  type        = string
+}
+
+variable "vpc_subnetwork_name" {
+  description = "VPC subnetwork name for direct VPC egress"
+  type        = string
+}
+
 variable "functions" {
   description = "Map of Cloud Function configurations"
   type = map(object({
@@ -25,8 +35,8 @@ variable "functions" {
       secret  = string
       version = string
     })), {})
-    sa_iam_roles     = optional(list(string), [])
-    invoker_members  = optional(list(string), [])
+    sa_iam_roles    = optional(list(string), [])
+    invoker_members = optional(list(string), [])
     event_trigger = optional(object({
       event_type   = string
       retry_policy = optional(string, "RETRY_POLICY_RETRY")
