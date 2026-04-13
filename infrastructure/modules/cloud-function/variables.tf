@@ -35,6 +35,12 @@ variable "functions" {
       secret  = string
       version = string
     })), {})
+    secret_volumes = optional(list(object({
+      mount_path = string
+      secret     = string
+      version    = optional(string, "latest")
+      path       = string
+    })), [])
     sa_iam_roles    = optional(list(string), [])
     invoker_members = optional(list(string), [])
     event_trigger = optional(object({

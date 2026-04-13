@@ -4,10 +4,19 @@ locals {
       description     = "Resolves share tokens and redirects to diagram images"
       invoker_members = ["allUsers"]
       environment_variables = {
-        "DB_PRIVATE_IP"          = module.diagramik.db_private_ip
-        "POSTGRES_USER"          = module.diagramik.db_user
-        "POSTGRES_DATABASE_NAME" = module.diagramik.db_name
+        "DB_PRIVATE_IP"              = module.diagramik.db_private_ip
+        "POSTGRES_USER"              = module.diagramik.db_user
+        "POSTGRES_DATABASE_NAME"     = module.diagramik.db_name
+        "SIGNED_URL_SA_KEY_FILENAME" = "/secrets/gcs/key.json"
       }
+      secret_volumes = [
+        {
+          mount_path = "/secrets/gcs"
+          secret     = module.gcs-sa-key-secret.secret_id
+          version    = "latest"
+          path       = "key.json"
+        }
+      ]
       secret_environment_variables = {
         "POSTGRES_PASSWORD" = {
           secret  = module.diagramik.db_password_secret_id
@@ -30,6 +39,13 @@ module "cloud_functions" {
 # Grant the function's SA access to read the DB password secret
 resource "google_secret_manager_secret_iam_member" "cf_db_password" {
   secret_id = module.diagramik.db_password_secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${module.cloud_functions.service_account_emails["share-diagram-image"]}"
+}
+
+# Grant the function's SA access to read the GCS SA key secret
+resource "google_secret_manager_secret_iam_member" "cf_gcs_sa_key" {
+  secret_id = module.gcs-sa-key-secret.secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${module.cloud_functions.service_account_emails["share-diagram-image"]}"
 }

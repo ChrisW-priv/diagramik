@@ -109,6 +109,19 @@ resource "google_cloudfunctions2_function" "function" {
         version    = secret_environment_variables.value.version
       }
     }
+
+    dynamic "secret_volumes" {
+      for_each = coalesce(each.value.secret_volumes, [])
+      content {
+        mount_path = secret_volumes.value.mount_path
+        project_id = var.google_project_id
+        secret     = secret_volumes.value.secret
+        versions {
+          version = coalesce(secret_volumes.value.version, "latest")
+          path    = secret_volumes.value.path
+        }
+      }
+    }
   }
 
   dynamic "event_trigger" {

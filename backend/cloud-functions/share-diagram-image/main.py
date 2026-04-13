@@ -5,17 +5,17 @@ import functions_framework
 import psycopg
 from flask import Request, redirect
 
-import google.auth
-from google.auth.transport.requests import Request as GoogleAuthRequest
 from google.cloud.storage import Client, Blob
+from google.oauth2 import service_account
 
 
 def _get_signed_url(image_uri: str) -> str:
-    credentials, _ = google.auth.default()
-    credentials.refresh(GoogleAuthRequest())
-    storage_client = Client(credentials=credentials)
+    cred = service_account.Credentials.from_service_account_file(
+        os.environ["SIGNED_URL_SA_KEY_FILENAME"]
+    )
+    storage_client = Client(credentials=cred)
     blob = Blob.from_uri(image_uri, storage_client)
-    return blob.generate_signed_url(expiration=timedelta(hours=1), credentials=credentials)
+    return blob.generate_signed_url(expiration=timedelta(hours=1))
 
 
 def _get_image_uri(token: str) -> str | None:
