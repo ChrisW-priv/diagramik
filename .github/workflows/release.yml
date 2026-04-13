@@ -103,13 +103,6 @@ jobs:
           REGISTRY_GHCR: ghcr.io/${{ steps.repo_owner.outputs.owner_lc }}
         run: task tag:latest
 
-      - name: Build cloud function image with Cloud Build buildpack
-        run: |
-          gcloud builds submit backend/cloud-functions/share-diagram-image \
-            --pack image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/diagramik/share-diagram-image:${{ steps.get_tag.outputs.tag }} \
-            --gcs-source-staging-dir=gs://${{ env.GCP_PROJECT_ID }}-cloudbuild-staging/source \
-            --project=${{ env.GCP_PROJECT_ID }}
-
       - name: Run Terraform
         working-directory: infrastructure
         env:
@@ -118,6 +111,13 @@ jobs:
         run: |
           task init
           task apply
+
+      - name: Build cloud function image with Cloud Build buildpack
+        run: |
+          gcloud builds submit backend/cloud-functions/share-diagram-image \
+            --pack image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/diagramik/share-diagram-image:${{ steps.get_tag.outputs.tag }} \
+            --gcs-source-staging-dir=gs://${{ env.GCP_PROJECT_ID }}-cloudbuild-staging/source \
+            --project=${{ env.GCP_PROJECT_ID }}
 
       - name: Deploy cloud function image to Cloud Run
         run: |
