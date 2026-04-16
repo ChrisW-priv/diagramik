@@ -30,6 +30,7 @@ RUN apt-get update && \
     && echo '{"args":["--no-sandbox","--disable-dev-shm-usage"]}' > /app/puppeteer-config.json
 
 COPY --from=base /app/.venv ./.venv
+COPY --from=base /app/renderer /app/renderer
 COPY mcp_diagrams ./
 
 # Set the default command
