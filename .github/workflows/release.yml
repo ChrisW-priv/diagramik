@@ -128,6 +128,9 @@ jobs:
 
       - name: Build render-diagram image with Cloud Build buildpack
         run: |
+          cp -r backend/renderer backend/cloud-functions/render-diagram/renderer
+          sed -i 's|path = "../../renderer"|path = "renderer"|g' backend/cloud-functions/render-diagram/pyproject.toml
+          sed -i 's|"../../renderer"|"renderer"|g' backend/cloud-functions/render-diagram/uv.lock
           gcloud builds submit backend/cloud-functions/render-diagram \
             --pack image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/diagramik/render-diagram:${{ steps.get_tag.outputs.tag }} \
             --gcs-source-staging-dir=gs://${{ env.GCP_PROJECT_ID }}-cloudbuild-staging/source \
