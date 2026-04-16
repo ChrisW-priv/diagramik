@@ -187,6 +187,40 @@ gitGraph
     commit
 ```
 
+### 9. Mindmap
+
+**Use for:** Brainstorming, concept hierarchies, topic breakdowns, knowledge maps
+
+#### Structure
+
+- Indentation defines the hierarchy — each indented level is a child of the item above
+- Root node uses `((text))` (circle) to visually anchor the diagram
+- No arrows or edges — the tree structure is implicit from indentation
+
+#### Node Shapes
+
+- `((text))` - Circle (use for root)
+- `[text]` - Rectangle
+- `(text)` - Rounded rectangle
+- `{{text}}` - Hexagon
+- `)text(` - Bang/cloud shape
+
+#### Example
+
+```mermaid
+mindmap
+  root((Machine Learning))
+    Supervised
+      Classification
+      Regression
+    Unsupervised
+      Clustering
+      Dimensionality reduction
+    Reinforcement
+      Q-learning
+      Policy gradient
+```
+
 ## Style Guide
 
 ### Labels
