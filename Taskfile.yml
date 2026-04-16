@@ -34,7 +34,7 @@ tasks:
     desc: Set up local development environment
     deps:
       - fe:install
-      - be:monolith:setup-local
+      - be:setup-local
 
   dev:
     desc: Runs dev env for frontend and backend

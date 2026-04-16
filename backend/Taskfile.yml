@@ -176,7 +176,18 @@ tasks:
       - cp -r django_monolith/backend/deployed_settings/* django_monolith/backend/temp_settings
       - .venv/bin/python django_monolith/manage.py check --deploy --fail-level WARNING --settings=backend.temp_settings
 
+  setup-local:
+    desc: Set up local dev environment for all backend services
+    cmds:
+      - task: monolith:setup-local
+      - task: mcp:setup-local
+
   # === MCP Custom Tasks ===
+  mcp:setup-local:
+    desc: Set up local dev environment for MCP service (installs mmdc)
+    cmds:
+      - npm install -g @mermaid-js/mermaid-cli
+
   mcp:dev:
     desc: Run MCP diagram server locally
     deps:

@@ -16,9 +16,8 @@
       <button
         id="tab-display"
         role="tab"
-        @click="activeTab = 'display'"
-        :class="['flex flex-col items-center justify-center gap-1 flex-1 py-2.5 px-3 min-h-12', activeTab === 'display' ? 'bg-gray-700 text-white' : 'text-gray-400', 'hover:bg-gray-700/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed']"
-        :disabled="!diagram"
+        @click="diagram && (activeTab = 'display')"
+        :class="['flex flex-col items-center justify-center gap-1 flex-1 py-2.5 px-3 min-h-12', activeTab === 'display' ? 'bg-gray-700 text-white' : 'text-gray-400', 'hover:bg-gray-700/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 transition-colors', !diagram ? 'opacity-40 cursor-not-allowed pointer-events-none' : '']"
         :aria-disabled="!diagram"
         :aria-selected="activeTab === 'display'"
         aria-controls="panel-display"

@@ -61,6 +61,12 @@ def _extract_last_tool_result(message_history) -> dict:
 
 
 @fast.agent(
+    instruction=(
+        "You are a diagram generation assistant. "
+        "Use the MCP tools to generate diagrams for the user. "
+        "When generating Mermaid diagrams, consult your available skills for correct syntax.\n\n"
+        "{{agentSkills}}"
+    ),
     servers=["diagramming"],
 )
 async def agent(

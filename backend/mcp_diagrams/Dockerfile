@@ -15,9 +15,17 @@ WORKDIR /app
 # Set PATH to use the virtual environment
 ENV PATH="/app/.venv/bin:$PATH"
 
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends graphviz && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends \
+        graphviz \
+        nodejs \
+        npm \
+        chromium \
+    && npm install -g @mermaid-js/mermaid-cli \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=base /app/.venv ./.venv
 COPY mcp_diagrams ./
