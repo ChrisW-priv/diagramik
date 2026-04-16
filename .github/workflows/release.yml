@@ -126,6 +126,20 @@ jobs:
             --region=${{ env.GCP_REGION }} \
             --project=${{ env.GCP_PROJECT_ID }}
 
+      - name: Build render-diagram image with Cloud Build buildpack
+        run: |
+          gcloud builds submit backend/cloud-functions/render-diagram \
+            --pack image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/diagramik/render-diagram:${{ steps.get_tag.outputs.tag }} \
+            --gcs-source-staging-dir=gs://${{ env.GCP_PROJECT_ID }}-cloudbuild-staging/source \
+            --project=${{ env.GCP_PROJECT_ID }}
+
+      - name: Deploy render-diagram image to Cloud Run
+        run: |
+          gcloud run services update render-diagram \
+            --image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/diagramik/render-diagram:${{ steps.get_tag.outputs.tag }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }}
+
       - name: Install frontend dependencies
         working-directory: frontend
         run: task install

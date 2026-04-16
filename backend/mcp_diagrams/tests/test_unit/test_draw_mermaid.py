@@ -2,7 +2,7 @@
 
 import pytest
 from pathlib import Path
-from draw_mermaid import draw_mermaid_diagram
+from renderer import draw_mermaid_diagram
 
 
 pytestmark = pytest.mark.unit

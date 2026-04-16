@@ -2,24 +2,24 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from draw_diagram import draw_diagram
+from renderer.architecture import draw_architecture_diagram
 
 
 pytestmark = pytest.mark.unit
 
 
 class TestDrawDiagram:
-    """Tests for the draw_diagram function."""
+    """Tests for the draw_architecture_diagram function."""
 
     def test_draw_diagram_creates_diagram_with_title(self, mock_diagram_library):
-        """Test that draw_diagram creates a Diagram with the correct title."""
+        """Test that draw_architecture_diagram creates a Diagram with the correct title."""
         # Arrange
-        with patch("draw_diagram.Diagram") as mock_diagram_class:
+        with patch("renderer.architecture.Diagram") as mock_diagram_class:
             mock_diagram_class.return_value.__enter__ = MagicMock()
             mock_diagram_class.return_value.__exit__ = MagicMock()
 
             # Act
-            draw_diagram(
+            draw_architecture_diagram(
                 title="Test Diagram",
                 code="pass",
                 filename="test_output",
@@ -33,14 +33,14 @@ class TestDrawDiagram:
             assert call_kwargs["filename"] == "test_output"
 
     def test_draw_diagram_uses_default_direction(self):
-        """Test that draw_diagram uses default direction LR."""
+        """Test that draw_architecture_diagram uses default direction LR."""
         # Arrange
-        with patch("draw_diagram.Diagram") as mock_diagram_class:
+        with patch("renderer.architecture.Diagram") as mock_diagram_class:
             mock_diagram_class.return_value.__enter__ = MagicMock()
             mock_diagram_class.return_value.__exit__ = MagicMock()
 
             # Act
-            draw_diagram(
+            draw_architecture_diagram(
                 title="Test",
                 code="pass",
                 filename="test",
@@ -51,14 +51,14 @@ class TestDrawDiagram:
             assert call_kwargs["direction"] == "LR"
 
     def test_draw_diagram_accepts_custom_direction(self):
-        """Test that draw_diagram accepts custom direction."""
+        """Test that draw_architecture_diagram accepts custom direction."""
         # Arrange
-        with patch("draw_diagram.Diagram") as mock_diagram_class:
+        with patch("renderer.architecture.Diagram") as mock_diagram_class:
             mock_diagram_class.return_value.__enter__ = MagicMock()
             mock_diagram_class.return_value.__exit__ = MagicMock()
 
             # Act
-            draw_diagram(
+            draw_architecture_diagram(
                 title="Test",
                 code="pass",
                 filename="test",
@@ -72,14 +72,14 @@ class TestDrawDiagram:
     def test_draw_diagram_merges_graph_attributes(self):
         """Test that custom graph attributes are merged with defaults."""
         # Arrange
-        with patch("draw_diagram.Diagram") as mock_diagram_class:
+        with patch("renderer.architecture.Diagram") as mock_diagram_class:
             mock_diagram_class.return_value.__enter__ = MagicMock()
             mock_diagram_class.return_value.__exit__ = MagicMock()
 
             custom_attrs = {"rankdir": "TB", "bgcolor": "white"}
 
             # Act
-            draw_diagram(
+            draw_architecture_diagram(
                 title="Test",
                 code="pass",
                 filename="test",
@@ -99,17 +99,17 @@ class TestDrawDiagram:
             assert graph_attr["bgcolor"] == "white"
 
     def test_draw_diagram_executes_code(self, sample_diagram_code):
-        """Test that draw_diagram executes the provided code."""
+        """Test that draw_architecture_diagram executes the provided code."""
         # Arrange
         with (
-            patch("draw_diagram.Diagram") as mock_diagram_class,
+            patch("renderer.architecture.Diagram") as mock_diagram_class,
             patch("builtins.exec") as mock_exec,
         ):
             mock_diagram_class.return_value.__enter__ = MagicMock()
             mock_diagram_class.return_value.__exit__ = MagicMock()
 
             # Act
-            draw_diagram(
+            draw_architecture_diagram(
                 title="Test",
                 code=sample_diagram_code,
                 filename="test",
@@ -123,14 +123,14 @@ class TestDrawDiagram:
     def test_draw_diagram_with_custom_node_attributes(self):
         """Test that custom node attributes are passed correctly."""
         # Arrange
-        with patch("draw_diagram.Diagram") as mock_diagram_class:
+        with patch("renderer.architecture.Diagram") as mock_diagram_class:
             mock_diagram_class.return_value.__enter__ = MagicMock()
             mock_diagram_class.return_value.__exit__ = MagicMock()
 
             custom_node_attr = {"shape": "box", "style": "filled"}
 
             # Act
-            draw_diagram(
+            draw_architecture_diagram(
                 title="Test",
                 code="pass",
                 filename="test",
@@ -145,14 +145,14 @@ class TestDrawDiagram:
     def test_draw_diagram_with_custom_edge_attributes(self):
         """Test that custom edge attributes are passed correctly."""
         # Arrange
-        with patch("draw_diagram.Diagram") as mock_diagram_class:
+        with patch("renderer.architecture.Diagram") as mock_diagram_class:
             mock_diagram_class.return_value.__enter__ = MagicMock()
             mock_diagram_class.return_value.__exit__ = MagicMock()
 
             custom_edge_attr = {"color": "blue", "style": "dashed"}
 
             # Act
-            draw_diagram(
+            draw_architecture_diagram(
                 title="Test",
                 code="pass",
                 filename="test",
@@ -167,12 +167,12 @@ class TestDrawDiagram:
     def test_draw_diagram_show_is_false(self):
         """Test that show parameter is always False."""
         # Arrange
-        with patch("draw_diagram.Diagram") as mock_diagram_class:
+        with patch("renderer.architecture.Diagram") as mock_diagram_class:
             mock_diagram_class.return_value.__enter__ = MagicMock()
             mock_diagram_class.return_value.__exit__ = MagicMock()
 
             # Act
-            draw_diagram(
+            draw_architecture_diagram(
                 title="Test",
                 code="pass",
                 filename="test",
@@ -183,9 +183,9 @@ class TestDrawDiagram:
             assert call_kwargs["show"] is False
 
     def test_draw_diagram_creates_file(self):
-        """Test that draw_diagram creates a file."""
+        """Test that draw_architecture_diagram creates a file."""
         # Arrange
-        with patch("draw_diagram.Diagram") as mock_diagram_class:
+        with patch("renderer.architecture.Diagram") as mock_diagram_class:
             mock_context = MagicMock()
             mock_diagram_class.return_value.__enter__ = MagicMock(
                 return_value=mock_context
@@ -193,7 +193,7 @@ class TestDrawDiagram:
             mock_diagram_class.return_value.__exit__ = MagicMock()
 
             # Act
-            draw_diagram(
+            draw_architecture_diagram(
                 title="Test Diagram",
                 code="pass",
                 filename="my_test_file",
@@ -205,12 +205,12 @@ class TestDrawDiagram:
 
 
 class TestDrawDiagramDefaults:
-    """Tests for default attributes in draw_diagram."""
+    """Tests for default attributes in draw_architecture_diagram."""
 
     def test_default_graph_attributes(self):
         """Test that default graph attributes are correct."""
         # Arrange
-        from draw_diagram import default_graph_attr
+        from renderer.architecture import default_graph_attr
 
         # Assert
         assert default_graph_attr["concentrate"] == "true"
@@ -219,7 +219,7 @@ class TestDrawDiagramDefaults:
     def test_default_node_attributes_is_dict(self):
         """Test that default node attributes exist."""
         # Arrange
-        from draw_diagram import default_node_attr
+        from renderer.architecture import default_node_attr
 
         # Assert
         assert isinstance(default_node_attr, dict)
@@ -227,21 +227,21 @@ class TestDrawDiagramDefaults:
     def test_default_edge_attributes_is_dict(self):
         """Test that default edge attributes exist."""
         # Arrange
-        from draw_diagram import default_edge_attr
+        from renderer.architecture import default_edge_attr
 
         # Assert
         assert isinstance(default_edge_attr, dict)
 
 
 class TestDrawDiagramIntegration:
-    """Integration-style tests for draw_diagram (still mocked but more realistic)."""
+    """Integration-style tests for draw_architecture_diagram (still mocked but more realistic)."""
 
     @pytest.mark.slow
     def test_draw_diagram_with_realistic_code(self):
-        """Test draw_diagram with realistic diagram code."""
+        """Test draw_architecture_diagram with realistic diagram code."""
         # Arrange
         with (
-            patch("draw_diagram.Diagram") as mock_diagram_class,
+            patch("renderer.architecture.Diagram") as mock_diagram_class,
             patch("builtins.exec") as mock_exec,
         ):
             mock_diagram_class.return_value.__enter__ = MagicMock()
@@ -258,7 +258,7 @@ lb >> [web1, web2]
 """
 
             # Act
-            draw_diagram(
+            draw_architecture_diagram(
                 title="AWS Architecture",
                 code=realistic_code,
                 filename="aws_diagram",
@@ -272,9 +272,9 @@ lb >> [web1, web2]
             assert realistic_code in call_args
 
     def test_draw_diagram_error_handling(self):
-        """Test that draw_diagram handles code execution errors."""
+        """Test that draw_architecture_diagram handles code execution errors."""
         # Arrange
-        with patch("draw_diagram.Diagram") as mock_diagram_class:
+        with patch("renderer.architecture.Diagram") as mock_diagram_class:
             mock_diagram_class.return_value.__enter__ = MagicMock()
             # __exit__ must return None/False to not suppress exceptions
             mock_diagram_class.return_value.__exit__ = MagicMock(return_value=None)
@@ -284,7 +284,7 @@ lb >> [web1, web2]
 
             # Act & Assert
             with pytest.raises(NameError):
-                draw_diagram(
+                draw_architecture_diagram(
                     title="Test",
                     code=invalid_code,
                     filename="test",

@@ -19,7 +19,7 @@ def mock_gcs_client(mocker):
     mock_bucket.blob.return_value = mock_blob
     mock_client.bucket.return_value = mock_bucket
 
-    mocker.patch("move_file_to_gcs.Client", return_value=mock_client)
+    mocker.patch("renderer.gcs.Client", return_value=mock_client)
     return mock_client
 
 
@@ -44,7 +44,7 @@ def mock_file_system(mocker, tmp_path):
 def mock_diagram_library(mocker):
     """Mock the diagrams library to avoid actual diagram generation."""
     mock_diagram = MagicMock()
-    mocker.patch("draw_diagram.Diagram", return_value=mock_diagram)
+    mocker.patch("renderer.architecture.Diagram", return_value=mock_diagram)
 
     # Mock the context manager
     mock_diagram.__enter__ = MagicMock(return_value=mock_diagram)

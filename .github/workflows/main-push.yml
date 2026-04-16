@@ -76,36 +76,3 @@ jobs:
         #     SCAN_REGISTRY: ghcr
         #   run: task scan
 
-  deploy-share-diagram-image:
-    name: Deploy share-diagram-image Cloud Function
-    runs-on: ubuntu-latest
-    needs:
-      - build-and-push
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Build image with Cloud Build buildpack
-        run: |
-          gcloud builds submit backend/cloud-functions/share-diagram-image \
-            --pack image=${{ vars.GOOGLE_REGION }}-docker.pkg.dev/${{ vars.GOOGLE_PROJECT_ID }}/diagramik/share-diagram-image:${{ github.sha }} \
-            --gcs-source-staging-dir=gs://${{ vars.GOOGLE_PROJECT_ID }}-cloudbuild-staging/source \
-            --project=${{ vars.GOOGLE_PROJECT_ID }}
-
-      - name: Update Cloud Function to use new image
-        run: |-
-          gcloud run services update share-diagram-image \
-            --image=${{ vars.GOOGLE_REGION }}-docker.pkg.dev/${{ vars.GOOGLE_PROJECT_ID }}/diagramik/share-diagram-image:${{ github.sha }} \
-            --region=${{ vars.GOOGLE_REGION }} \
-            --project=${{ vars.GOOGLE_PROJECT_ID }}

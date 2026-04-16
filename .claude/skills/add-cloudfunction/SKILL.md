@@ -182,51 +182,8 @@ resource "google_secret_manager_secret_iam_member" "my_secret_access" {
 
 ### Step 3 – Wire up GitHub Actions CI/CD
 
-Two workflow files need changes.
-
-#### `.github/workflows/main-push.yml` — add a deploy job
-
-Add a new job that runs on every push to main. It builds the container image
-with Cloud Build (buildpacks) and then swaps the image on the underlying Cloud
-Run service. Use direct WIF auth (no `service_account` impersonation) — see the
-existing `deploy-share-diagram-image` job as a reference.
-
-```yaml
-deploy-<function-name>:
-  name: Deploy <function-name>
-  runs-on: ubuntu-latest
-  needs: [build-and-push]
-  if: github.ref == 'refs/heads/main'
-  permissions:
-    contents: read
-    id-token: write
-  steps:
-    - uses: actions/checkout@v4
-
-    - name: Authenticate to GCP
-      uses: google-github-actions/auth@v2
-      with:
-        workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-
-    - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v2
-
-    - name: Build image with Cloud Build buildpack
-      run: |
-        gcloud builds submit backend/cloud-functions/<function-name> \
-          --pack image=${{ vars.GOOGLE_REGION }}-docker.pkg.dev/${{ vars.GOOGLE_PROJECT_ID }}/diagramik/<function-name>:${{ github.sha }} \
-          --project=${{ vars.GOOGLE_PROJECT_ID }}
-
-    - name: Update Cloud Function to use new image
-      run: |
-        gcloud run services update <function-name> \
-          --image=${{ vars.GOOGLE_REGION }}-docker.pkg.dev/${{ vars.GOOGLE_PROJECT_ID }}/diagramik/<function-name>:${{ github.sha }} \
-          --region=${{ vars.GOOGLE_REGION }} \
-          --project=${{ vars.GOOGLE_PROJECT_ID }}
-```
-
-Do **not** add `service_account` to the auth step. The WIF principal has direct
-permissions and SA impersonation is not used in this project.
+Cloud functions are **only built and deployed on release**, not on every push to
+main. Only `.github/workflows/release.yml` needs changes.
 
 #### `.github/workflows/release.yml` — build before terraform, deploy after
 
@@ -279,5 +236,4 @@ to that repository; this is handled by the existing
 | **Create** | `backend/cloud-functions/<function-name>/tests/conftest.py`  |
 | **Create** | `backend/cloud-functions/<function-name>/tests/test_main.py` |
 | **Modify** | `infrastructure/cloud_functions.tf`                          |
-| **Modify** | `.github/workflows/main-push.yml`                            |
 | **Modify** | `.github/workflows/release.yml`                              |

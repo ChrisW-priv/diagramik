@@ -5,6 +5,7 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
 COPY agent/ /app/agent/
+COPY renderer/ /app/renderer/
 RUN uv sync --group diagram-mcp
 
 # Release
