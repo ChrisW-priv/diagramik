@@ -38,10 +38,6 @@ class AgentResult(BaseModel):
         ...,
         description="Serialized conversation history for next turn",
     )
-    trace_id: str | None = Field(
-        None,
-        description="ID linking to DSPy trace file for training data",
-    )
 
 
 def _extract_last_tool_result(message_history) -> dict:
@@ -118,7 +114,6 @@ async def agent(
                 diagram_title=tool_result.get("title", "Untitled"),
                 media_uri=tool_result.get("uri", ""),
                 history_json=history_json,
-                trace_id=None,
             )
 
 
