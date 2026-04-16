@@ -5,6 +5,7 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
 COPY agent/ /app/agent/
+COPY renderer/ /app/renderer/
 RUN uv sync --group django-monolith
 
 FROM python:3.13-slim AS release
