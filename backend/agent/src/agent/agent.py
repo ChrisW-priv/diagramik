@@ -4,7 +4,6 @@ This module provides the public API for the diagram generation agent.
 It handles:
 1. History persistence between sessions
 2. Direct tool result extraction
-3. OpenTelemetry tracing for monitoring
 """
 
 import asyncio
@@ -14,8 +13,6 @@ from pathlib import Path
 from fast_agent import FastAgent
 from fast_agent.mcp.prompt_serialization import from_json, to_json
 from pydantic import BaseModel, Field
-
-from agent.telemetry import get_tracer
 
 THIS_FILE_DIR = Path(__file__).parent
 CONF_FILE = THIS_FILE_DIR.parent.parent / "config" / "fastagent.config.yaml"
@@ -79,42 +76,28 @@ async def agent(
     Returns:
         AgentResult with diagram info, updated history, and trace ID
     """
-    tracer = get_tracer()
-    with tracer.start_as_current_span("agent.generate_diagram") as span:
-        span.set_attribute("agent.has_history", previous_history_json is not None)
-        span.set_attribute(
-            "agent.instruction_length", len(user_instruction) if user_instruction else 0
+    async with fast.run() as agents:
+        diagramming_agent = agents.default
+
+        # 1. Load previous history if continuing conversation
+        if previous_history_json:
+            restored_messages = from_json(previous_history_json)
+            diagramming_agent.load_message_history(restored_messages)
+
+        # 2. Call agent
+        await diagramming_agent.send(user_instruction)
+
+        # 3. Extract last tool result directly (no AI rewriting)
+        tool_result = _extract_last_tool_result(diagramming_agent.message_history)
+
+        # 4. Serialize updated history
+        history_json = to_json(diagramming_agent.message_history)
+
+        return AgentResult(
+            diagram_title=tool_result.get("title", "Untitled"),
+            media_uri=tool_result.get("uri", ""),
+            history_json=history_json,
         )
-
-        async with fast.run() as agents:
-            diagramming_agent = agents.default
-
-            # 1. Load previous history if continuing conversation
-            if previous_history_json:
-                restored_messages = from_json(previous_history_json)
-                diagramming_agent.load_message_history(restored_messages)
-                span.set_attribute(
-                    "agent.restored_message_count", len(restored_messages)
-                )
-
-            # 2. Call agent
-            await diagramming_agent.send(user_instruction)
-
-            # 3. Extract last tool result directly (no AI rewriting)
-            tool_result = _extract_last_tool_result(diagramming_agent.message_history)
-            span.set_attribute("agent.has_tool_result", bool(tool_result))
-
-            # 4. Serialize updated history
-            history_json = to_json(diagramming_agent.message_history)
-            span.set_attribute(
-                "agent.final_message_count", len(diagramming_agent.message_history)
-            )
-
-            return AgentResult(
-                diagram_title=tool_result.get("title", "Untitled"),
-                media_uri=tool_result.get("uri", ""),
-                history_json=history_json,
-            )
 
 
 async def main():
