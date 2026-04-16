@@ -94,7 +94,15 @@ class MermaidArgs(BaseModel):
 @mcp.tool(description=_MERMAID_GUIDE)
 async def draw_mermaid(args: MermaidArgs) -> DrawResult:
     result = draw_mermaid_diagram(args.code, args.output_format)
-    return DrawResult(uri=result.get("url"), title=args.title)
+    if "error" in result:
+        raise ValueError(
+            f"Invalid mermaid diagram: {result['error']}\n\nPlease fix the syntax and try again."
+        )
+    new_blob = move_file_to_gcs(
+        result["path"], bucket_name=BUCKET_NAME, project_id=GCP_PROJECT_ID
+    )
+    gsutil_uri = f"gs://{new_blob.bucket.name}/{new_blob.name}"
+    return DrawResult(uri=gsutil_uri, title=args.title)
 
 
 def main():

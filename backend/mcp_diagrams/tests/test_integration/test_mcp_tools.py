@@ -209,9 +209,8 @@ class TestDrawMermaidTool:
     """Integration tests for draw_mermaid MCP tool."""
 
     @pytest.mark.asyncio
-    async def test_draw_mermaid_returns_draw_result(self, sample_mermaid_code):
-        """Test that draw_mermaid returns a DrawResult."""
-        # Arrange
+    async def test_draw_mermaid_returns_draw_result(self, mock_gcs_client, sample_mermaid_code):
+        """Test that draw_mermaid returns a DrawResult with a gs:// URI."""
         from server import draw_mermaid, MermaidArgs
 
         args = MermaidArgs(
@@ -220,18 +219,20 @@ class TestDrawMermaidTool:
             output_format="svg",
         )
 
-        # Act
-        result = await draw_mermaid(args)
+        with patch("server.move_file_to_gcs") as mock_move:
+            mock_blob = MagicMock()
+            mock_blob.bucket.name = "test-bucket"
+            mock_blob.name = "diagram.svg"
+            mock_move.return_value = mock_blob
 
-        # Assert
+            result = await draw_mermaid(args)
+
         assert result.title == "Test Flowchart"
-        assert result.uri is not None
-        assert "mermaid.ink" in result.uri
+        assert result.uri == "gs://test-bucket/diagram.svg"
 
     @pytest.mark.asyncio
-    async def test_draw_mermaid_svg_format(self, sample_mermaid_code):
-        """Test draw_mermaid with SVG format."""
-        # Arrange
+    async def test_draw_mermaid_uri_starts_with_gs(self, mock_gcs_client, sample_mermaid_code):
+        """Test that the returned URI is a GCS URI."""
         from server import draw_mermaid, MermaidArgs
 
         args = MermaidArgs(
@@ -240,64 +241,64 @@ class TestDrawMermaidTool:
             output_format="svg",
         )
 
-        # Act
-        result = await draw_mermaid(args)
+        with patch("server.move_file_to_gcs") as mock_move:
+            mock_blob = MagicMock()
+            mock_blob.bucket.name = "test-bucket"
+            mock_blob.name = "diagram.svg"
+            mock_move.return_value = mock_blob
 
-        # Assert
-        assert "svg" in result.uri
+            result = await draw_mermaid(args)
+
+        assert result.uri.startswith("gs://")
 
     @pytest.mark.asyncio
-    async def test_draw_mermaid_png_format(self, sample_mermaid_code):
-        """Test draw_mermaid with PNG format."""
-        # Arrange
+    async def test_draw_mermaid_uploads_rendered_file(self, mock_gcs_client, sample_mermaid_code):
+        """Test that the rendered file is uploaded to GCS."""
         from server import draw_mermaid, MermaidArgs
 
         args = MermaidArgs(
             code=sample_mermaid_code,
-            title="PNG Diagram",
-            output_format="png",
+            title="Upload Test",
+            output_format="svg",
         )
 
-        # Act
-        result = await draw_mermaid(args)
+        with patch("server.move_file_to_gcs") as mock_move:
+            mock_blob = MagicMock()
+            mock_blob.bucket.name = "test-bucket"
+            mock_blob.name = "diagram.svg"
+            mock_move.return_value = mock_blob
 
-        # Assert
-        assert "png" in result.uri
+            await draw_mermaid(args)
 
-    @pytest.mark.asyncio
-    async def test_draw_mermaid_default_format(self, sample_mermaid_code):
-        """Test draw_mermaid with default format."""
-        # Arrange
-        from server import draw_mermaid, MermaidArgs
-
-        args = MermaidArgs(
-            code=sample_mermaid_code,
-            title="Default Format",
-        )
-
-        # Act
-        result = await draw_mermaid(args)
-
-        # Assert
-        assert "svg" in result.uri
+        mock_move.assert_called_once()
+        upload_path = mock_move.call_args[0][0]
+        assert upload_path.endswith(".svg")
 
     @pytest.mark.asyncio
     async def test_draw_mermaid_validation_error(self):
-        """Test that invalid arguments raise validation error."""
-        # Arrange
+        """Test that missing required fields raise a validation error."""
         from server import MermaidArgs
 
-        # Act & Assert
         with pytest.raises(ValidationError):
-            MermaidArgs(
-                # Missing required fields
-                output_format="svg"
-            )
+            MermaidArgs(output_format="svg")  # missing code and title
 
     @pytest.mark.asyncio
-    async def test_draw_mermaid_with_sequence_diagram(self):
+    async def test_draw_mermaid_raises_on_invalid_syntax(self):
+        """Test that invalid mermaid syntax raises ValueError."""
+        from server import draw_mermaid, MermaidArgs
+
+        args = MermaidArgs(
+            code="this is not valid mermaid at all",
+            title="Bad Diagram",
+            output_format="svg",
+        )
+
+        with pytest.raises(ValueError, match="Invalid mermaid diagram"):
+            await draw_mermaid(args)
+
+    @pytest.mark.asyncio
+    async def test_draw_mermaid_with_sequence_diagram(self, mock_gcs_client):
         """Test draw_mermaid with sequence diagram code."""
-        # Arrange
         from server import draw_mermaid, MermaidArgs
 
         sequence_code = """sequenceDiagram
@@ -310,31 +311,16 @@ class TestDrawMermaidTool:
             output_format="svg",
         )
 
-        # Act
-        result = await draw_mermaid(args)
+        with patch("server.move_file_to_gcs") as mock_move:
+            mock_blob = MagicMock()
+            mock_blob.bucket.name = "test-bucket"
+            mock_blob.name = "sequence.svg"
+            mock_move.return_value = mock_blob
 
-        # Assert
+            result = await draw_mermaid(args)
+
         assert result.title == "Sequence Diagram"
-        assert "mermaid.ink" in result.uri
-
-    @pytest.mark.asyncio
-    async def test_draw_mermaid_url_format(self, sample_mermaid_code):
-        """Test that draw_mermaid returns properly formatted URL."""
-        # Arrange
-        from server import draw_mermaid, MermaidArgs
-
-        args = MermaidArgs(
-            code=sample_mermaid_code,
-            title="URL Test",
-            output_format="svg",
-        )
-
-        # Act
-        result = await draw_mermaid(args)
-
-        # Assert
-        assert result.uri.startswith("https://")
-        assert "pako:" in result.uri
+        assert result.uri.startswith("gs://")
 
 
 class TestMCPServerConfiguration:
@@ -415,9 +401,8 @@ class TestMCPToolsEndToEnd:
             assert result.title == "Complete Workflow Test"
 
     @pytest.mark.asyncio
-    async def test_complete_mermaid_workflow(self, sample_mermaid_code):
+    async def test_complete_mermaid_workflow(self, mock_gcs_client, sample_mermaid_code):
         """Test complete workflow for Mermaid diagram creation."""
-        # Arrange
         from server import draw_mermaid, MermaidArgs
 
         args = MermaidArgs(
@@ -426,19 +411,16 @@ class TestMCPToolsEndToEnd:
             output_format="png",
         )
 
-        # Act
-        result = await draw_mermaid(args)
+        with patch("server.move_file_to_gcs") as mock_move:
+            mock_blob = MagicMock()
+            mock_blob.bucket.name = "production-bucket"
+            mock_blob.name = "mermaid-diagram.png"
+            mock_move.return_value = mock_blob
 
-        # Assert - verify complete flow
-        # 1. URL was generated
-        assert result.uri is not None
-        assert isinstance(result.uri, str)
+            result = await draw_mermaid(args)
 
-        # 2. URL points to mermaid.ink
-        assert "mermaid.ink" in result.uri
-
-        # 3. Title is preserved
+        assert result.uri == "gs://production-bucket/mermaid-diagram.png"
         assert result.title == "Complete Mermaid Test"
-
-        # 4. Format is correct
-        assert "png" in result.uri
+        mock_move.assert_called_once()
+        upload_path = mock_move.call_args[0][0]
+        assert upload_path.endswith(".png")

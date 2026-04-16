@@ -5,6 +5,10 @@ logger:
   show_tools: true
   truncate_tools: false
 
+skills:
+  directories:
+    - "skills"
+
 mcp:
   servers:
     diagramming:

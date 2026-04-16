@@ -2,6 +2,7 @@ import asyncio
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Max
 from django.db.models.functions import Coalesce
 from django.shortcuts import redirect
@@ -47,6 +48,12 @@ def _extract_clarification_from_history(history_json: str) -> str:
 
 def create_publicly_accessible_url(image_uri: str) -> str:
     if image_uri.startswith("gs://"):
+        if settings.SIGNED_URL_SA_KEY_FILENAME is None:
+            raise ImproperlyConfigured(
+                "SIGNED_URL_SA_KEY_FILENAME setting is not configured. "
+                "Set the SIGNED_URL_SA_KEY_FILENAME environment variable to the path "
+                "of a service account key JSON file."
+            )
         cred = service_account.Credentials.from_service_account_file(
             settings.SIGNED_URL_SA_KEY_FILENAME
         )
