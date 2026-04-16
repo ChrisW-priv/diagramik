@@ -26,6 +26,7 @@ diagram-mcp = [
     "diagrams>=0.24.4",
     "mcp>=1.13.1",
     "google-cloud-storage>=3.8.0",
+    "renderer",
 ]
 django-monolith = [
     "django>=6.0.1",
@@ -45,7 +46,9 @@ django-monolith = [
 [tool.uv.workspace]
 members = [
     "agent",
+    "renderer",
 ]
 
 [tool.uv.sources]
 agent = { workspace = true }
+renderer = { workspace = true }

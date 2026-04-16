@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from move_file_to_gcs import move_file_to_gcs
+from renderer import move_file_to_gcs
 
 
 pytestmark = pytest.mark.unit
@@ -18,7 +18,7 @@ class TestMoveFileToGCS:
         test_file.write_text("fake image data")
         filename = str(test_file)
 
-        with patch("move_file_to_gcs.Client") as mock_client_class:
+        with patch("renderer.gcs.Client") as mock_client_class:
             mock_client = MagicMock()
             mock_bucket = MagicMock()
             mock_blob = MagicMock()
@@ -48,8 +48,8 @@ class TestMoveFileToGCS:
         filename = str(test_file)
 
         with (
-            patch("move_file_to_gcs.Client") as mock_client_class,
-            patch("move_file_to_gcs.GCP_PROJECT_ID", "env-project"),
+            patch("renderer.gcs.Client") as mock_client_class,
+            patch("renderer.gcs.GCP_PROJECT_ID", "env-project"),
         ):
             mock_client = MagicMock()
             mock_bucket = MagicMock()
@@ -73,7 +73,7 @@ class TestMoveFileToGCS:
         test_file.write_text("data")
         filename = str(test_file)
 
-        with patch("move_file_to_gcs.Client") as mock_client_class:
+        with patch("renderer.gcs.Client") as mock_client_class:
             mock_client = MagicMock()
             mock_bucket = MagicMock()
             mock_blob = MagicMock()

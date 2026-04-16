@@ -1,5 +1,16 @@
 locals {
   cloud_functions = {
+    "render-diagram" = {
+      description      = "Renders Mermaid and architecture diagrams and uploads to GCS"
+      invoker_members  = []
+      available_memory = "1Gi"
+      available_cpu    = "2"
+      timeout_seconds  = 120
+      environment_variables = {
+        "GCP_PROJECT_ID" = var.google_project_id
+        "BUCKET_NAME"    = module.diagramik.diagrams_bucket_name
+      }
+    }
     "share-diagram-image" = {
       description     = "Resolves share tokens and redirects to diagram images"
       invoker_members = ["allUsers"]
@@ -48,4 +59,11 @@ resource "google_secret_manager_secret_iam_member" "cf_gcs_sa_key" {
   secret_id = module.gcs-sa-key-secret.secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${module.cloud_functions.service_account_emails["share-diagram-image"]}"
+}
+
+# Grant render-diagram SA objectUser access to the diagrams bucket
+resource "google_storage_bucket_iam_member" "render_diagram_gcs" {
+  bucket = module.diagramik.diagrams_bucket_name
+  role   = "roles/storage.objectUser"
+  member = "serviceAccount:${module.cloud_functions.service_account_emails["render-diagram"]}"
 }

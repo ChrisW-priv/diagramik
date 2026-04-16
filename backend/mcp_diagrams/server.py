@@ -3,10 +3,7 @@ from pathlib import Path
 
 from uuid_utils import uuid7
 from mcp.server.fastmcp import FastMCP
-from available_nodes import get_node_reference
-from draw_diagram import draw_diagram as draw_diagram_tool
-from draw_mermaid import draw_mermaid_diagram
-from move_file_to_gcs import move_file_to_gcs
+from renderer import draw_architecture_diagram, draw_mermaid_diagram, get_node_reference, move_file_to_gcs
 from pydantic import BaseModel, Field
 
 
@@ -66,7 +63,7 @@ async def draw_technical_diagram(args: TechnicalDiagramArgs) -> DrawResult:
     kwargs = args.model_dump()
 
     # Should save the filename under "{filename}.png" path
-    draw_diagram_tool(filename=filename, **kwargs)
+    draw_architecture_diagram(filename=filename, **kwargs)
     # Saves the file to GCS and removes it from local FS
     filename += ".png"
     new_blob = move_file_to_gcs(

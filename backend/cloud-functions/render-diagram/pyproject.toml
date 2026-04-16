@@ -1,0 +1,27 @@
+[project]
+name = "render-diagram"
+version = "0.1.0"
+description = "HTTP Cloud Function for diagram rendering"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "functions-framework>=3.5.0",
+    "renderer",
+    "diagrams>=0.24.4",
+    "google-cloud-storage>=3.8.0",
+]
+
+[tool.uv.sources]
+renderer = { path = "../../renderer" }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=7.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --cov=. --cov-report=term-missing"
