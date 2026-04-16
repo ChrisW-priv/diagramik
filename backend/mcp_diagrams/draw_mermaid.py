@@ -33,8 +33,12 @@ def draw_mermaid_diagram(code: str, output_format: str = "svg") -> dict:
         f.write(code)
 
     try:
+        cmd = ["mmdc", "-i", str(in_path), "-o", str(out_path)]
+        puppeteer_config = Path("/app/puppeteer-config.json")
+        if puppeteer_config.exists():
+            cmd += ["-p", str(puppeteer_config)]
         result = subprocess.run(
-            ["mmdc", "-i", str(in_path), "-o", str(out_path)],
+            cmd,
             capture_output=True,
             timeout=30,
         )
