@@ -25,7 +25,8 @@ RUN apt-get update && \
         npm \
         chromium \
     && npm install -g @mermaid-js/mermaid-cli \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && echo '{"args":["--no-sandbox","--disable-dev-shm-usage"]}' > /app/puppeteer-config.json
 
 COPY --from=base /app/.venv ./.venv
 COPY mcp_diagrams ./

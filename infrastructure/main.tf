@@ -152,6 +152,7 @@ module "mcp-service" {
   vpc_network_self_link    = module.vpc.network_self_link
   vpc_subnetwork_self_link = module.vpc.primary_subnet_self_link
   vpc_egress               = "PRIVATE_RANGES_ONLY"
+  memory_limit             = "1Gi"
 
   # Mount GCS SA key for signed URL generation
   extra_volumes = {
