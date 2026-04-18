@@ -93,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { PencilIcon, EyeIcon } from '@heroicons/vue/24/outline';
 import WorkTab from './WorkTab.vue';
 import DisplayTab from './DisplayTab.vue';
@@ -101,8 +101,10 @@ import { getDiagram, updateDiagram } from '../lib/api';
 import { CONFIG } from '../lib/config';
 
 const props = defineProps({
-  id: String,
+  diagramId: String,
 });
+
+const emit = defineEmits(['diagram-created']);
 
 const activeTab = ref('work');
 const diagram = ref(null);
@@ -140,7 +142,7 @@ const submitRename = async () => {
 
 const selectedVersionId = ref(null);
 const isResizing = ref(false);
-const dividerPosition = ref(25); // Initial position in percentage (1:3 work:display ratio)
+const dividerPosition = ref(50); // Initial position in percentage (1:1 work:display ratio)
 const containerRef = ref(null);
 const isDesktop = ref(typeof window !== 'undefined' && window.innerWidth >= 768);
 
@@ -258,7 +260,7 @@ const fetchDiagram = async (diagramId) => {
 
 const handleDiagramCreated = (newDiagram) => {
   if (newDiagram && newDiagram.diagram_id) {
-    window.location.href = `/diagrams/view?id=${newDiagram.diagram_id}`;
+    emit('diagram-created', newDiagram);
   }
 };
 
@@ -269,18 +271,19 @@ const handleVersionSelected = (version) => {
   window.history.pushState({}, '', url);
 };
 
-onMounted(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const idFromUrl = urlParams.get('id');
-  if (idFromUrl) {
-    fetchDiagram(idFromUrl);
-  } else if (props.id) {
-    fetchDiagram(props.id);
-  }
-  else {
+watch(() => props.diagramId, async (newId) => {
+  if (newId) {
+    await fetchDiagram(newId);
+  } else {
+    diagram.value = null;
     loading.value = false;
+    error.value = null;
+    selectedVersionId.value = null;
+    activeTab.value = 'work';
   }
+}, { immediate: true });
 
+onMounted(() => {
   window.addEventListener('resize', updateScreenSize);
   window.addEventListener('keydown', handleKeyDown);
 });

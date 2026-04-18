@@ -102,7 +102,7 @@ const draggedDiagramId = ref<string | null>(null);
 const dragOverTarget = ref<string | null | 'unassigned'>(undefined as any);
 
 // Sidebar
-const sidebarOpen = ref(true);
+const sidebarOpen = ref(false);
 
 // Collapse
 const collapsedSections = ref<Set<string>>(new Set());
@@ -526,6 +526,7 @@ const onTouchMove = (diagramId: string, e: TouchEvent) => {
 
   // Drag mode: track Y and detect which workspace section is under the finger
   if (touchDragId.value === diagramId) {
+    e.preventDefault(); // prevent page scroll while dragging
     touchCurrentY.value = touch.clientY;
     // Detect section by checking bounding rects (no pointer-events hack needed)
     let found: string | null | undefined = undefined;
@@ -607,7 +608,7 @@ onUnmounted(() => {
   <div class="flex h-screen overflow-hidden bg-gray-900">
     <!-- Sidebar -->
     <aside
-      class="flex-shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col overflow-hidden transition-all duration-200 ease-in-out"
+      class="fixed inset-y-0 left-0 md:relative md:inset-auto flex-shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col overflow-hidden transition-all duration-200 ease-in-out z-40 md:z-auto"
       :class="sidebarOpen ? 'w-56' : 'w-14'"
     >
       <!-- Logo + toggle -->
@@ -643,7 +644,10 @@ onUnmounted(() => {
     </aside>
 
     <!-- Main panel -->
-    <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+    <div
+      class="flex flex-col flex-1 min-w-0 overflow-hidden transition-transform duration-200 ease-in-out md:translate-x-0 pl-14 md:pl-0"
+      :class="{ 'translate-x-[10.5rem]': sidebarOpen }"
+    >
       <!-- Top bar -->
       <header class="flex items-center gap-3 px-4 h-14 border-b border-gray-800 flex-shrink-0">
         <!-- Search -->
@@ -761,7 +765,7 @@ onUnmounted(() => {
               <!-- Section header (only show if there are workspaces OR a search is active) -->
               <div
                 v-if="hasWorkspaces || searchQuery"
-                class="flex items-center gap-2 mb-2 group/ws"
+                class="flex items-center gap-2 mb-2 group/ws select-none"
               >
                 <!-- Collapse toggle -->
                 <button
@@ -867,6 +871,8 @@ onUnmounted(() => {
                   @touchstart.passive="onTouchStart(diagram.id, $event)"
                   @touchmove="onTouchMove(diagram.id, $event)"
                   @touchend="onTouchEnd(diagram.id)"
+                  @touchcancel="onTouchEnd(diagram.id)"
+                  @contextmenu.prevent
                 >
                   <!-- Swipe zone (overflow-hidden clips the panel) -->
                   <div class="relative overflow-hidden rounded-lg">
@@ -930,6 +936,7 @@ onUnmounted(() => {
                         <a
                           :href="`/diagrams/view?id=${diagram.id}`"
                           class="flex items-center flex-1 min-w-0 px-3 py-3 md:px-4"
+                          style="-webkit-touch-callout: none;"
                         >
                           <h2 class="text-sm font-medium truncate group-hover/item:text-blue-400 transition-colors" :title="diagram.name">{{ diagram.name }}</h2>
                         </a>

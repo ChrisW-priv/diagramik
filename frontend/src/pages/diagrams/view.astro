@@ -1,22 +1,5 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import DiagramView from '../../components/DiagramView.vue';
-
-const id = Astro.url.searchParams.get('id') ?? undefined;
+const id = Astro.url.searchParams.get('id');
+const destination = id ? `/diagrams?id=${id}` : '/diagrams';
+return Astro.redirect(destination, 301);
 ---
-
-<Layout title="Diagramik | View Diagram">
-  <div class="h-screen flex flex-col overflow-hidden px-4">
-    <div class="flex-shrink-0 py-3">
-      <a href="/diagrams" class="text-blue-400 hover:text-blue-300 inline-flex items-center gap-1.5 text-sm transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-        My diagrams
-      </a>
-    </div>
-    <div class="flex-1 min-h-0 pb-4">
-      <DiagramView client:load id={id} />
-    </div>
-  </div>
-</Layout>
