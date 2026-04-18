@@ -118,6 +118,31 @@ export const deleteDiagramVersion = (diagramId: string, versionId: string) => {
   return apiClient.delete(`/diagrams/${diagramId}/versions/${versionId}/`);
 };
 
+export const updateDiagram = (id: string, title: string) => {
+  return apiClient.patch(`/diagrams/${id}/`, { title });
+};
+
+export const updateDiagramWorkspace = (diagramId: string, workspaceId: string | null) => {
+  return apiClient.patch(`/diagrams/${diagramId}/workspace/`, { workspace: workspaceId });
+};
+
+// Workspace API
+export const getWorkspaces = () => {
+  return apiClient.get('/workspaces/');
+};
+
+export const createWorkspace = (name: string) => {
+  return apiClient.post('/workspaces/', { name });
+};
+
+export const updateWorkspace = (id: string, name: string) => {
+  return apiClient.patch(`/workspaces/${id}/`, { name });
+};
+
+export const deleteWorkspace = (id: string) => {
+  return apiClient.delete(`/workspaces/${id}/`);
+};
+
 export const createShareLink = (diagramId: string, versionId: string) => {
   return apiClient.post(`/diagrams/${diagramId}/versions/${versionId}/share/`);
 };

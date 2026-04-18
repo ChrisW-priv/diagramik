@@ -33,10 +33,31 @@
       </div>
       <p v-else-if="error" aria-live="assertive" role="alert" class="text-red-400 bg-red-500/10 border border-red-500 rounded px-3 py-2">{{ error }}</p>
       <div v-else class="flex flex-col flex-grow min-h-0">
+        <!-- Title bar -->
+        <div v-if="diagram" class="flex items-center mb-2 flex-shrink-0 min-h-8">
+          <h1
+            v-if="!isRenaming"
+            @click="startRename"
+            class="text-sm font-medium text-gray-300 truncate cursor-pointer hover:text-white transition-colors"
+            title="Click to rename"
+          >{{ diagram.title }}</h1>
+          <form v-else @submit.prevent="submitRename" @click.stop class="flex flex-1 items-center gap-2">
+            <input
+              v-model="renameValue"
+              @keydown.escape="isRenaming = false"
+              class="flex-1 min-w-0 text-sm bg-gray-700 border border-blue-500 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              aria-label="Rename diagram"
+              autofocus
+            />
+            <button type="submit" :disabled="renameInProgress" class="text-xs text-blue-400 hover:text-blue-200 flex-shrink-0 disabled:opacity-50">Save</button>
+            <button type="button" @click="isRenaming = false" class="text-xs text-gray-400 hover:text-gray-200 flex-shrink-0">Cancel</button>
+          </form>
+        </div>
+
         <!-- Responsive layout -->
         <div class="flex flex-col md:flex-row flex-grow min-h-0" ref="containerRef">
           <!-- WorkTab -->
-          <div id="panel-work" role="tabpanel" aria-labelledby="tab-work" :class="['w-full flex-col min-h-0', activeTab === 'work' ? 'block' : 'hidden', 'md:flex']" :style="isDesktop ? { width: `calc(${dividerPosition}% - 0.5rem)` } : {}">
+          <div id="panel-work" role="tabpanel" aria-labelledby="tab-work" :class="['w-full flex-col min-h-0', activeTab === 'work' ? 'flex flex-grow md:flex-grow-0' : 'hidden', 'md:flex']" :style="isDesktop ? { width: `calc(${dividerPosition}% - 0.5rem)` } : {}">
             <WorkTab
               :diagram="diagram"
               :selected-version-id="selectedVersionId"
@@ -62,7 +83,7 @@
           </div>
 
           <!-- DisplayTab -->
-          <div id="panel-display" role="tabpanel" aria-labelledby="tab-display" :class="['w-full flex-col min-h-0', activeTab === 'display' ? 'block' : 'hidden', 'md:flex']" :style="isDesktop ? { width: `calc(${100 - dividerPosition}% - 0.5rem)` } : {}">
+          <div id="panel-display" role="tabpanel" aria-labelledby="tab-display" :class="['w-full flex-col min-h-0', activeTab === 'display' ? 'flex flex-grow md:flex-grow-0' : 'hidden', 'md:flex']" :style="isDesktop ? { width: `calc(${100 - dividerPosition}% - 0.5rem)` } : {}">
             <DisplayTab :diagram="diagram" :selected-version="selectedVersion" />
           </div>
         </div>
@@ -76,7 +97,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { PencilIcon, EyeIcon } from '@heroicons/vue/24/outline';
 import WorkTab from './WorkTab.vue';
 import DisplayTab from './DisplayTab.vue';
-import { getDiagram } from '../lib/api';
+import { getDiagram, updateDiagram } from '../lib/api';
 import { CONFIG } from '../lib/config';
 
 const props = defineProps({
@@ -87,6 +108,36 @@ const activeTab = ref('work');
 const diagram = ref(null);
 const loading = ref(true);
 const error = ref(null);
+
+// Rename
+const isRenaming = ref(false);
+const renameValue = ref('');
+const renameInProgress = ref(false);
+
+const startRename = () => {
+  renameValue.value = diagram.value.title;
+  isRenaming.value = true;
+};
+
+const submitRename = async () => {
+  const trimmed = renameValue.value.trim();
+  if (!trimmed || trimmed === diagram.value.title) {
+    isRenaming.value = false;
+    return;
+  }
+  renameInProgress.value = true;
+  try {
+    await updateDiagram(diagram.value.id, trimmed);
+    diagram.value.title = trimmed;
+    isRenaming.value = false;
+  } catch {
+    error.value = 'Failed to rename diagram. Please try again.';
+    isRenaming.value = false;
+  } finally {
+    renameInProgress.value = false;
+  }
+};
+
 const selectedVersionId = ref(null);
 const isResizing = ref(false);
 const dividerPosition = ref(25); // Initial position in percentage (1:3 work:display ratio)

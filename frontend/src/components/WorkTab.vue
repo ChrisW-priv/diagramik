@@ -66,20 +66,20 @@
       </div>
     </div>
 
-    <form @submit.prevent="submitPrompt" class="mt-4 flex flex-shrink-0">
+    <form @submit.prevent="submitPrompt" class="mt-4 flex flex-shrink-0 items-stretch">
       <textarea
         ref="promptTextarea"
         v-model="prompt"
         @keydown.enter="handleEnter"
         placeholder="Describe your idea here..."
         aria-label="Diagram prompt"
-        class="flex-grow p-2.5 sm:p-2 bg-gray-800 rounded-l-lg border border-r-0 border-gray-700 focus-visible:outline-none focus-visible:border-blue-500 resize-none h-10 overflow-hidden focus-visible:ring-2 focus-visible:ring-blue-400 transition-colors text-base"
+        class="flex-grow p-2.5 sm:p-2 bg-gray-800 rounded-l-lg border border-r-0 border-gray-700 focus-visible:outline-none focus-visible:border-blue-500 resize-none h-10 max-h-32 overflow-y-auto focus-visible:ring-2 focus-visible:ring-blue-400 transition-colors text-base"
         :disabled="generating"
         rows="1"
       ></textarea>
       <button
         type="submit"
-        class="flex items-center justify-center px-3 py-2 sm:px-4 bg-gray-700 text-white rounded-r-lg border border-gray-700 hover:bg-gray-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400"
+        class="flex items-center justify-center px-3 sm:px-4 bg-gray-700 text-white rounded-r-lg border border-gray-700 hover:bg-gray-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400"
         :disabled="generating || !prompt.trim()"
         aria-label="Send prompt"
       >

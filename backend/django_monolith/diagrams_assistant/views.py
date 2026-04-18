@@ -16,11 +16,14 @@ from rest_framework.views import APIView
 
 from agent import agent
 
-from .models import ChatMessage, Diagram, DiagramShareLink, DiagramVersion
+from .models import ChatMessage, Diagram, DiagramShareLink, DiagramVersion, Workspace
 from .serializers import (
     DiagramListItemSerializer,
     DiagramSerializer,
+    DiagramUpdateSerializer,
     DiagramVersionSerializer,
+    DiagramWorkspaceAssignSerializer,
+    WorkspaceSerializer,
 )
 
 
@@ -74,11 +77,18 @@ class DiagramListCreate(generics.ListCreateAPIView):
         return []
 
     def get_queryset(self):
-        return (
+        qs = (
             Diagram.objects.filter(owner=self.request.user)
             .annotate(latest_version_at=Max("versions__created_at"))
             .order_by(Coalesce("latest_version_at", "created_at").desc())
         )
+        workspace_param = self.request.query_params.get("workspace")
+        if workspace_param is not None:
+            if workspace_param == "none":
+                qs = qs.filter(workspace__isnull=True)
+            else:
+                qs = qs.filter(workspace_id=workspace_param)
+        return qs
 
     def create(self, request, *args, **kwargs):
         text = request.data.get("text")
@@ -121,11 +131,16 @@ class DiagramListCreate(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class DiagramDetail(generics.RetrieveDestroyAPIView):
-    serializer_class = DiagramSerializer
+class DiagramDetail(generics.RetrieveUpdateDestroyAPIView):
+    http_method_names = ["get", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
         return Diagram.objects.filter(owner=self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return DiagramUpdateSerializer
+        return DiagramSerializer
 
 
 class DiagramVersionCreate(APIView):
@@ -250,3 +265,34 @@ class DiagramVersionDelete(APIView):
 
         version.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class WorkspaceListCreate(generics.ListCreateAPIView):
+    serializer_class = WorkspaceSerializer
+
+    def get_queryset(self):
+        return Workspace.objects.filter(owner=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
+class WorkspaceDetail(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = WorkspaceSerializer
+    http_method_names = ["get", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        return Workspace.objects.filter(owner=self.request.user)
+
+
+class DiagramWorkspaceAssign(generics.UpdateAPIView):
+    serializer_class = DiagramWorkspaceAssignSerializer
+    http_method_names = ["patch", "head", "options"]
+
+    def get_queryset(self):
+        return Diagram.objects.filter(owner=self.request.user)
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request
+        return ctx

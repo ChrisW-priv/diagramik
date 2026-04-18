@@ -7,11 +7,19 @@ from .views import (
     DiagramVersionImage,
     DiagramShareLinkCreate,
     DiagramShareLinkResolve,
+    WorkspaceListCreate,
+    WorkspaceDetail,
+    DiagramWorkspaceAssign,
 )
 
 urlpatterns = [
     path("diagrams/", DiagramListCreate.as_view(), name="diagram-list-create"),
     path("diagrams/<uuid:pk>/", DiagramDetail.as_view(), name="diagram-detail"),
+    path(
+        "diagrams/<uuid:pk>/workspace/",
+        DiagramWorkspaceAssign.as_view(),
+        name="diagram-workspace-assign",
+    ),
     path(
         "diagrams/<uuid:diagram_id>/versions/",
         DiagramVersionCreate.as_view(),
@@ -37,4 +45,6 @@ urlpatterns = [
         DiagramShareLinkResolve.as_view(),
         name="diagram-share-link-resolve",
     ),
+    path("workspaces/", WorkspaceListCreate.as_view(), name="workspace-list-create"),
+    path("workspaces/<uuid:pk>/", WorkspaceDetail.as_view(), name="workspace-detail"),
 ]
