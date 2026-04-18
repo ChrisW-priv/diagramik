@@ -230,9 +230,7 @@ const selectedVersionId = ref(null);
 const isResizing = ref(false);
 const dividerPosition = ref(25); // Initial position in percentage (1:3 work:display ratio)
 const containerRef = ref(null);
-const isDesktop = ref(
-  typeof window !== "undefined" && window.innerWidth >= 768,
-);
+const isDesktop = ref(false);
 
 const selectedVersion = computed(() => {
   if (!diagram.value || !selectedVersionId.value) {
