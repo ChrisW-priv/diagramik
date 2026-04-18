@@ -390,6 +390,7 @@ watch(
 );
 
 onMounted(() => {
+  isDesktop.value = window.innerWidth >= 768;
   window.addEventListener("resize", updateScreenSize);
   window.addEventListener("keydown", handleKeyDown);
 });

@@ -12,6 +12,7 @@ import {
   XMarkIcon,
   PlusIcon,
   ArrowPathIcon,
+  EllipsisHorizontalIcon,
 } from '@heroicons/vue/24/outline';
 import {
   getDiagrams,
@@ -41,7 +42,6 @@ interface Diagram {
 
 const props = defineProps<{
   activeDiagramId: string | null;
-  isOpen: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -49,33 +49,17 @@ const emit = defineEmits<{
   'new-diagram': [];
   'add-to-workspace': [workspaceId: string | null];
   'diagram-deleted': [id: string];
-  'close': [];
 }>();
 
 // --- Sidebar layout state ---
-const sidebarCollapsed = ref(false);
-const sidebarWidth = ref(256);
-const MIN_WIDTH = 160;
-const MAX_WIDTH = 480;
-let isResizingSidebar = false;
+const sidebarCollapsed = ref(true);
+const menuPosition = ref({ top: 0, right: 0 });
 
-const startSidebarResize = (event: MouseEvent) => {
-  if (sidebarCollapsed.value) return;
-  event.preventDefault();
-  isResizingSidebar = true;
-  document.addEventListener('mousemove', onSidebarResize);
-  document.addEventListener('mouseup', stopSidebarResize);
-};
-
-const onSidebarResize = (event: MouseEvent) => {
-  if (!isResizingSidebar) return;
-  sidebarWidth.value = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, event.clientX));
-};
-
-const stopSidebarResize = () => {
-  isResizingSidebar = false;
-  document.removeEventListener('mousemove', onSidebarResize);
-  document.removeEventListener('mouseup', stopSidebarResize);
+const openDiagramMenu = (diagramId: string, event: MouseEvent) => {
+  const btn = event.currentTarget as HTMLElement;
+  const rect = btn.getBoundingClientRect();
+  menuPosition.value = { top: rect.bottom + 4, right: window.innerWidth - rect.right };
+  diagramMenuId.value = diagramId;
 };
 
 // --- Data state ---
@@ -103,6 +87,7 @@ const renameWorkspaceInProgress = ref(false);
 const deletingWorkspaceId = ref<string | null>(null);
 
 const workspaceDropdownId = ref<string | null>(null);
+const diagramMenuId = ref<string | null>(null);
 
 const searchQuery = ref('');
 const collapsedSections = ref<Set<string>>(new Set());
@@ -451,6 +436,7 @@ const handleLogout = async () => {
 // --- Close dropdowns on outside click ---
 const closeDropdowns = (event: MouseEvent) => {
   workspaceDropdownId.value = null;
+  diagramMenuId.value = null;
   swipedOpenId.value = null;
 };
 
@@ -461,21 +447,16 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('click', closeDropdowns);
-  document.removeEventListener('mousemove', onSidebarResize);
-  document.removeEventListener('mouseup', stopSidebarResize);
 });
 </script>
 
 <template>
   <aside
     :style="{
-      width: sidebarCollapsed ? '56px' : `${sidebarWidth}px`,
-      transition: 'width 200ms ease-in-out, transform 200ms ease-in-out',
+      width: sidebarCollapsed ? '56px' : '256px',
+      transition: 'width 200ms ease-in-out',
     }"
-    :class="[
-      'fixed md:relative inset-y-0 left-0 flex-shrink-0 flex flex-col bg-gray-800 border-r border-gray-700 z-40 md:z-auto h-screen md:h-full overflow-hidden',
-      isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-    ]"
+    class="relative flex-shrink-0 flex flex-col bg-gray-800 border-r border-gray-700 h-full overflow-hidden"
     aria-label="Sidebar"
   >
     <!-- Header -->
@@ -745,70 +726,18 @@ onUnmounted(() => {
                         ? 'bg-gray-700 text-white'
                         : 'text-gray-300 hover:bg-gray-700/40 hover:text-white'
                     "
-                    @click="emit('select-diagram', diagram.id); emit('close')"
+                    @click="emit('select-diagram', diagram.id)"
                   >
                     <span class="flex-1 min-w-0 text-sm md:text-xs truncate" :title="diagram.name">{{ diagram.name }}</span>
 
-                    <!-- Hover actions (desktop only) -->
-                    <div
-                      class="hidden sm:flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover/item:opacity-100 focus-within:opacity-100 transition-opacity"
-                      @click.stop
+                    <!-- Kebab menu trigger -->
+                    <button
+                      @click.stop="openDiagramMenu(diagram.id, $event)"
+                      class="hidden sm:flex p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-600 transition-colors opacity-0 group-hover/item:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 flex-shrink-0"
+                      :aria-label="`Actions for ${diagram.name}`"
                     >
-                      <button
-                        @click.stop="startRename(diagram, $event)"
-                        class="p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400"
-                        :aria-label="`Rename ${diagram.name}`"
-                      >
-                        <PencilIcon class="h-3 w-3" aria-hidden="true" />
-                      </button>
-
-                      <!-- Move to workspace -->
-                      <div v-if="workspaces.length > 0" class="relative" @click.stop>
-                        <button
-                          @click.stop="workspaceDropdownId = workspaceDropdownId === diagram.id ? null : diagram.id"
-                          class="p-1 rounded text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400"
-                          :aria-label="`Move ${diagram.name} to workspace`"
-                        >
-                          <FolderIcon class="h-3 w-3" aria-hidden="true" />
-                        </button>
-                        <div
-                          v-if="workspaceDropdownId === diagram.id"
-                          class="absolute left-0 top-full mt-1 z-20 bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-1 min-w-44"
-                          role="menu"
-                        >
-                          <button
-                            v-for="ws in workspaces"
-                            :key="ws.id"
-                            @click="assignWorkspace(diagram, ws.id, $event)"
-                            class="flex items-center gap-2 w-full text-left px-3 py-2 md:py-1.5 text-sm md:text-xs hover:bg-gray-700 transition-colors"
-                            :class="{ 'text-blue-400': diagram.workspaceId === ws.id }"
-                            role="menuitem"
-                          >
-                            <FolderIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" />
-                            {{ ws.name }}
-                          </button>
-                          <div class="border-t border-gray-700 mt-1 pt-1">
-                            <button
-                              @click="assignWorkspace(diagram, null, $event)"
-                              class="flex items-center gap-2 w-full text-left px-3 py-2 md:py-1.5 text-sm md:text-xs hover:bg-gray-700 transition-colors"
-                              :class="{ 'text-blue-400': diagram.workspaceId === null }"
-                              role="menuitem"
-                            >
-                              <XMarkIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" />
-                              Remove from workspace
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        @click.stop="requestDelete(diagram.id, $event)"
-                        class="p-1 rounded text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-400"
-                        :aria-label="`Delete ${diagram.name}`"
-                      >
-                        <TrashIcon class="h-3 w-3" aria-hidden="true" />
-                      </button>
-                    </div>
+                      <EllipsisHorizontalIcon class="h-4 w-4" aria-hidden="true" />
+                    </button>
                   </div>
                 </div>
               </li>
@@ -825,29 +754,76 @@ onUnmounted(() => {
         </template>
       </div>
 
-      <!-- Footer: sign out -->
-      <div class="flex-shrink-0 border-t border-gray-700 px-3 py-3">
-        <button
-          @click="handleLogout"
-          aria-label="Sign out"
-          class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-        >
-          <ArrowRightOnRectangleIcon class="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-          <span>Sign out</span>
-        </button>
-      </div>
     </template>
 
-    <!-- Resize handle (desktop, expanded only) -->
-    <div
-      v-if="!sidebarCollapsed"
-      class="hidden md:block absolute right-0 top-0 bottom-0 w-1 cursor-col-resize group/resize z-10"
-      @mousedown.prevent="startSidebarResize"
-      title="Drag to resize"
-    >
-      <div class="absolute inset-y-0 right-0 w-1 bg-transparent group-hover/resize:bg-blue-500/50 transition-colors duration-150" />
+    <!-- Spacer: pushes footer to bottom when sidebar is collapsed -->
+    <div v-if="sidebarCollapsed" class="flex-1" aria-hidden="true" />
+
+    <!-- Footer: sign out (always visible, even when collapsed) -->
+    <div class="flex-shrink-0 border-t border-gray-700 px-3 py-3">
+      <button
+        @click="handleLogout"
+        aria-label="Sign out"
+        :title="sidebarCollapsed ? 'Sign out' : undefined"
+        class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+      >
+        <ArrowRightOnRectangleIcon class="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+        <span v-if="!sidebarCollapsed">Sign out</span>
+      </button>
     </div>
   </aside>
+
+  <!-- Diagram action menu (teleported to body to escape overflow clipping) -->
+  <Teleport to="body">
+    <div
+      v-if="diagramMenuId"
+      :style="{ position: 'fixed', top: menuPosition.top + 'px', right: menuPosition.right + 'px' }"
+      class="z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-1 min-w-36"
+      role="menu"
+      @click.stop
+    >
+      <button
+        @click.stop="startRename(diagrams.find(d => d.id === diagramMenuId)!, $event); diagramMenuId = null"
+        class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors"
+        role="menuitem"
+      >
+        <PencilIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> Rename
+      </button>
+
+      <template v-if="workspaces.length > 0">
+        <div class="border-t border-gray-700/50 mt-1 pt-1">
+          <button
+            v-for="ws in workspaces"
+            :key="ws.id"
+            @click.stop="assignWorkspace(diagrams.find(d => d.id === diagramMenuId)!, ws.id, $event); diagramMenuId = null"
+            class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors"
+            :class="{ 'text-blue-400': diagrams.find(d => d.id === diagramMenuId)?.workspaceId === ws.id }"
+            role="menuitem"
+          >
+            <FolderIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> {{ ws.name }}
+          </button>
+          <button
+            @click.stop="assignWorkspace(diagrams.find(d => d.id === diagramMenuId)!, null, $event); diagramMenuId = null"
+            class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors"
+            :class="{ 'text-blue-400': diagrams.find(d => d.id === diagramMenuId)?.workspaceId === null }"
+            role="menuitem"
+          >
+            <XMarkIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> No workspace
+          </button>
+        </div>
+      </template>
+
+      <div class="border-t border-gray-700/50 mt-1 pt-1">
+        <button
+          @click.stop="requestDelete(diagramMenuId!, $event); diagramMenuId = null"
+          class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-400/10 transition-colors"
+          role="menuitem"
+        >
+          <TrashIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> Delete
+        </button>
+      </div>
+    </div>
+  </Teleport>
 
   <!-- New Workspace Modal -->
   <Teleport to="body">
