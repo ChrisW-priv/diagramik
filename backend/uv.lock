@@ -9,6 +9,7 @@ resolution-markers = [
 [manifest]
 members = [
     "agent",
+    "renderer",
     "text-diagrams-backend",
 ]
 
@@ -37,9 +38,6 @@ dependencies = [
     { name = "fast-agent-mcp" },
     { name = "google-auth" },
     { name = "nest-asyncio" },
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-exporter-otlp-proto-http" },
-    { name = "opentelemetry-sdk" },
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
@@ -59,9 +57,6 @@ requires-dist = [
     { name = "fast-agent-mcp", specifier = ">=0.4.39" },
     { name = "google-auth", specifier = ">=2.28.0" },
     { name = "nest-asyncio", specifier = ">=1.6.0" },
-    { name = "opentelemetry-api", specifier = ">=1.28.0" },
-    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.28.0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.28.0" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pyyaml", specifier = ">=6.0.2" },
 ]
@@ -3547,6 +3542,21 @@ wheels = [
 ]
 
 [[package]]
+name = "renderer"
+version = "0.1.0"
+source = { editable = "renderer" }
+dependencies = [
+    { name = "diagrams" },
+    { name = "google-cloud-storage" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "diagrams", specifier = ">=0.24.4" },
+    { name = "google-cloud-storage", specifier = ">=3.8.0" },
+]
+
+[[package]]
 name = "requests"
 version = "2.32.3"
 source = { registry = "https://pypi.org/simple" }
@@ -3948,6 +3958,7 @@ diagram-mcp = [
     { name = "diagrams" },
     { name = "google-cloud-storage" },
     { name = "mcp" },
+    { name = "renderer" },
     { name = "uuid-utils" },
 ]
 django-monolith = [
@@ -3986,6 +3997,7 @@ diagram-mcp = [
     { name = "diagrams", specifier = ">=0.24.4" },
     { name = "google-cloud-storage", specifier = ">=3.8.0" },
     { name = "mcp", specifier = ">=1.13.1" },
+    { name = "renderer", editable = "renderer" },
     { name = "uuid-utils", specifier = ">=0.13.0" },
 ]
 django-monolith = [

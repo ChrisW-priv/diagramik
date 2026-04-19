@@ -23,6 +23,8 @@ onMounted(() => {
 
   if (reason === 'session_expired') {
     sessionMessage.value = 'Your session has expired. Please sign in again.';
+  } else if (reason === 'account_deleted') {
+    sessionMessage.value = 'Your account has been successfully deleted.';
   } else if (reason) {
     sessionMessage.value = decodeURIComponent(reason);
   }

@@ -7,7 +7,7 @@ tasks:
   dev:
     desc: Start development server
     cmds:
-      - npm run dev
+      - npm run dev -- --host 0.0.0.0
 
   build:
     desc: Build production bundle

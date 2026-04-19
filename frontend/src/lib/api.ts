@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 import {
   getAuthHeader,
   getStoredTokens,
@@ -6,16 +6,16 @@ import {
   clearTokens,
   isTokenExpired,
   setUser,
-} from './auth';
+} from "./auth";
 
 const API_BASE_URL = import.meta.env.PROD
-  ? 'https://diagramik.com'
-  : 'http://localhost:8000';
+  ? "https://diagramik.com"
+  : "http://192.168.0.136:8000";
 
 export const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -43,7 +43,7 @@ apiClient.interceptors.request.use(async (config) => {
         try {
           const response = await axios.post(
             `${API_BASE_URL}/api/v1/auth/token/refresh/`,
-            { refresh: tokens.refresh }
+            { refresh: tokens.refresh },
           );
           const newTokens = {
             access: response.data.access,
@@ -54,8 +54,8 @@ apiClient.interceptors.request.use(async (config) => {
           config.headers.Authorization = `Bearer ${newTokens.access}`;
         } catch (refreshError) {
           clearTokens();
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login?reason=session_expired';
+          if (typeof window !== "undefined") {
+            window.location.href = "/login?reason=session_expired";
           }
         } finally {
           isRefreshing = false;
@@ -83,19 +83,21 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       clearTokens();
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const errorDetail = error.response?.data?.detail;
-        const reason = errorDetail ? encodeURIComponent(errorDetail) : 'session_expired';
+        const reason = errorDetail
+          ? encodeURIComponent(errorDetail)
+          : "session_expired";
         window.location.href = `/login?reason=${reason}`;
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // Diagram API
 export const getDiagrams = () => {
-  return apiClient.get('/diagrams/');
+  return apiClient.get("/diagrams/");
 };
 
 export const getDiagram = (id: string) => {
@@ -103,7 +105,7 @@ export const getDiagram = (id: string) => {
 };
 
 export const createDiagram = (text: string) => {
-  return apiClient.post('/diagrams/', { text });
+  return apiClient.post("/diagrams/", { text });
 };
 
 export const createDiagramVersion = (diagramId: string, text: string) => {
@@ -116,6 +118,36 @@ export const deleteDiagram = (id: string) => {
 
 export const deleteDiagramVersion = (diagramId: string, versionId: string) => {
   return apiClient.delete(`/diagrams/${diagramId}/versions/${versionId}/`);
+};
+
+export const updateDiagram = (id: string, title: string) => {
+  return apiClient.patch(`/diagrams/${id}/`, { title });
+};
+
+export const updateDiagramWorkspace = (
+  diagramId: string,
+  workspaceId: string | null,
+) => {
+  return apiClient.patch(`/diagrams/${diagramId}/workspace/`, {
+    workspace: workspaceId,
+  });
+};
+
+// Workspace API
+export const getWorkspaces = () => {
+  return apiClient.get("/workspaces/");
+};
+
+export const createWorkspace = (name: string) => {
+  return apiClient.post("/workspaces/", { name });
+};
+
+export const updateWorkspace = (id: string, name: string) => {
+  return apiClient.patch(`/workspaces/${id}/`, { name });
+};
+
+export const deleteWorkspace = (id: string) => {
+  return apiClient.delete(`/workspaces/${id}/`);
 };
 
 export const createShareLink = (diagramId: string, versionId: string) => {
@@ -142,7 +174,7 @@ export const authApi = {
     password1: string,
     password2: string,
     firstName?: string,
-    termsAccepted?: boolean
+    termsAccepted?: boolean,
   ) {
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/registration/`,
@@ -150,9 +182,9 @@ export const authApi = {
         email,
         password1,
         password2,
-        first_name: firstName || '',
+        first_name: firstName || "",
         terms_accepted: termsAccepted || false,
-      }
+      },
     );
     const { access, refresh, user } = response.data;
     if (access && refresh) {
@@ -166,7 +198,7 @@ export const authApi = {
 
   async logout() {
     try {
-      await apiClient.post('/auth/logout/');
+      await apiClient.post("/auth/logout/");
     } catch {
       // Ignore errors during logout
     }
@@ -174,13 +206,13 @@ export const authApi = {
   },
 
   async getUser() {
-    const response = await apiClient.get('/auth/user/');
+    const response = await apiClient.get("/auth/user/");
     setUser(response.data);
     return response.data;
   },
 
   async updateUser(data: { first_name?: string; last_name?: string }) {
-    const response = await apiClient.patch('/auth/user/', data);
+    const response = await apiClient.patch("/auth/user/", data);
     setUser(response.data);
     return response.data;
   },
@@ -188,7 +220,7 @@ export const authApi = {
   async requestPasswordReset(email: string) {
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/password/reset/`,
-      { email }
+      { email },
     );
     return response.data;
   },
@@ -197,7 +229,7 @@ export const authApi = {
     uid: string,
     token: string,
     newPassword1: string,
-    newPassword2: string
+    newPassword2: string,
   ) {
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/password/reset/confirm/`,
@@ -206,15 +238,18 @@ export const authApi = {
         token,
         new_password1: newPassword1,
         new_password2: newPassword2,
-      }
+      },
     );
     return response.data;
   },
 
-  async getGoogleAuthUrl(fromRegister: boolean = false, termsAccepted: boolean = false) {
+  async getGoogleAuthUrl(
+    fromRegister: boolean = false,
+    termsAccepted: boolean = false,
+  ) {
     const params = new URLSearchParams();
-    if (fromRegister) params.append('from_register', 'true');
-    if (termsAccepted) params.append('terms_accepted', 'true');
+    if (fromRegister) params.append("from_register", "true");
+    if (termsAccepted) params.append("terms_accepted", "true");
 
     const queryString = params.toString();
     const url = queryString
@@ -228,7 +263,7 @@ export const authApi = {
   async googleLogin(code: string) {
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/social/google/`,
-      { code }
+      { code },
     );
     const { access, refresh, user } = response.data;
     if (access && refresh) {
@@ -245,8 +280,8 @@ export const authApi = {
       `${API_BASE_URL}/api/v1/auth/social/google/complete/`,
       {
         state_token: stateToken,
-        terms_accepted: termsAccepted
-      }
+        terms_accepted: termsAccepted,
+      },
     );
     const { access, refresh, user } = response.data;
     if (access && refresh) {
@@ -258,14 +293,19 @@ export const authApi = {
     return response.data;
   },
 
+  async deleteAccount() {
+    await apiClient.delete('/auth/user/');
+    clearTokens();
+  },
+
   async refreshToken() {
     const tokens = getStoredTokens();
     if (!tokens?.refresh) {
-      throw new Error('No refresh token available');
+      throw new Error("No refresh token available");
     }
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/token/refresh/`,
-      { refresh: tokens.refresh }
+      { refresh: tokens.refresh },
     );
     const newTokens = {
       access: response.data.access,
@@ -278,7 +318,7 @@ export const authApi = {
   async verifyEmail(uid: string, token: string) {
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/verify-email/`,
-      { uid, token }
+      { uid, token },
     );
     const { access, refresh, user } = response.data;
     if (access && refresh) {
@@ -293,7 +333,7 @@ export const authApi = {
   async resendVerification(email: string) {
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/resend-verification/`,
-      { email }
+      { email },
     );
     return response.data;
   },
@@ -301,7 +341,7 @@ export const authApi = {
   async requestPasswordResetNew(email: string) {
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/password-reset-request/`,
-      { email }
+      { email },
     );
     return response.data;
   },
@@ -311,7 +351,7 @@ export const authApi = {
     token?: string,
     email?: string,
     oldPassword?: string,
-    newPassword?: string
+    newPassword?: string,
   ) {
     const data: any = { new_password: newPassword };
     if (uid && token) {
@@ -323,7 +363,7 @@ export const authApi = {
     }
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/auth/set-new-password/`,
-      data
+      data,
     );
     const { access, refresh, user } = response.data;
     if (access && refresh) {
