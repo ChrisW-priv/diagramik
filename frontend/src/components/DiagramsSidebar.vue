@@ -632,11 +632,15 @@ const handleLogout = async () => {
 };
 
 // --- User profile ---
+// Initialized to null so SSR and initial client hydration render identically.
+// Populated in onMounted (after hydration) to avoid localStorage-driven mismatches.
+const storedUser = ref<ReturnType<typeof getStoredUser>>(null);
+
 const userProfile = computed(() => {
-  const u = getStoredUser();
+  const u = storedUser.value;
   const displayName = u?.first_name || u?.email?.split("@")[0] || "Account";
-  const initials = displayName[0].toUpperCase();
-  return { displayName, initials, email: u?.email ?? "" };
+  const initials = displayName[0]?.toUpperCase() ?? "A";
+  return { displayName, initials, email: u?.email ?? "", pk: u?.pk ?? null };
 });
 
 const userMenuOpen = ref(false);
@@ -666,6 +670,7 @@ const closeDropdowns = (event: MouseEvent) => {
 };
 
 onMounted(async () => {
+  storedUser.value = getStoredUser();
   await fetchDiagrams();
   document.addEventListener("click", closeDropdowns);
 });
@@ -1109,16 +1114,26 @@ onUnmounted(() => {
         class="flex items-center gap-2 w-full px-2 py-1.5 rounded hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
       >
         <!-- Avatar circle -->
+        <img
+          v-if="userProfile.pk"
+          :src="`https://api.dicebear.com/9.x/identicon/svg?seed=${userProfile.pk}`"
+          :alt="`${userProfile.displayName}'s avatar`"
+          class="h-6 w-6 flex-shrink-0 rounded-full bg-gray-700"
+          :class="sidebarCollapsed ? 'mx-auto' : ''"
+        />
         <span
+          v-else
           class="h-6 w-6 flex-shrink-0 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-semibold text-white select-none"
           :class="sidebarCollapsed ? 'mx-auto' : ''"
           aria-hidden="true"
-        >{{ userProfile.initials }}</span>
+          >{{ userProfile.initials }}</span
+        >
         <!-- Display name (expanded only) -->
         <span
           v-if="!sidebarCollapsed"
           class="flex-1 min-w-0 text-sm text-gray-300 truncate text-left"
-        >{{ userProfile.displayName }}</span>
+          >{{ userProfile.displayName }}</span
+        >
       </button>
     </div>
   </aside>
@@ -1145,53 +1160,6 @@ onUnmounted(() => {
       >
         <PencilIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> Rename
       </button>
-
-      <template v-if="workspaces.length > 0">
-        <div class="border-t border-gray-700/50 mt-1 pt-1">
-          <button
-            v-for="ws in workspaces"
-            :key="ws.id"
-            @click.stop="
-              assignWorkspace(
-                diagrams.find((d) => d.id === diagramMenuId)!,
-                ws.id,
-                $event,
-              );
-              diagramMenuId = null;
-            "
-            class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors"
-            :class="{
-              'text-blue-400':
-                diagrams.find((d) => d.id === diagramMenuId)?.workspaceId ===
-                ws.id,
-            }"
-            role="menuitem"
-          >
-            <FolderIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" />
-            {{ ws.name }}
-          </button>
-          <button
-            @click.stop="
-              assignWorkspace(
-                diagrams.find((d) => d.id === diagramMenuId)!,
-                null,
-                $event,
-              );
-              diagramMenuId = null;
-            "
-            class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors"
-            :class="{
-              'text-blue-400':
-                diagrams.find((d) => d.id === diagramMenuId)?.workspaceId ===
-                null,
-            }"
-            role="menuitem"
-          >
-            <XMarkIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> No
-            workspace
-          </button>
-        </div>
-      </template>
 
       <div class="border-t border-gray-700/50 mt-1 pt-1">
         <button
@@ -1274,7 +1242,9 @@ onUnmounted(() => {
     >
       <!-- User info header -->
       <div class="px-3 py-1.5 border-b border-gray-700/50 mb-1">
-        <p class="text-xs font-medium text-white truncate">{{ userProfile.displayName }}</p>
+        <p class="text-xs font-medium text-white truncate">
+          {{ userProfile.displayName }}
+        </p>
         <p class="text-xs text-gray-500 truncate">{{ userProfile.email }}</p>
       </div>
       <!-- Settings -->
@@ -1283,7 +1253,8 @@ onUnmounted(() => {
         class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors"
         role="menuitem"
       >
-        <Cog6ToothIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> Settings
+        <Cog6ToothIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+        Settings
       </a>
       <!-- Divider + Sign out -->
       <div class="border-t border-gray-700/50 mt-1 pt-1">
@@ -1292,7 +1263,11 @@ onUnmounted(() => {
           class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-400/10 transition-colors"
           role="menuitem"
         >
-          <ArrowRightOnRectangleIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> Sign out
+          <ArrowRightOnRectangleIcon
+            class="h-3 w-3 flex-shrink-0"
+            aria-hidden="true"
+          />
+          Sign out
         </button>
       </div>
     </div>
