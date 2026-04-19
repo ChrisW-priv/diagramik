@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { ExclamationCircleIcon, ArrowPathIcon, PlusCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline';
+import { ExclamationCircleIcon, ArrowPathIcon, PlusCircleIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline';
 import { getDiagrams, authApi } from '../lib/api';
 import { isAuthenticated } from '../lib/auth';
 
@@ -107,6 +107,14 @@ const handleLogout = async () => {
         >
           <PlusCircleIcon class="h-5 w-5 flex-shrink-0" aria-hidden="true" />
           <span class="hidden sm:inline text-sm font-medium">New diagram</span>
+        </a>
+        <a
+          href="/settings"
+          aria-label="Account settings"
+          class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 px-3 py-2.5 rounded-lg transition-colors min-h-12 min-w-12 sm:min-h-auto sm:min-w-auto"
+        >
+          <Cog6ToothIcon class="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+          <span class="hidden sm:inline text-sm font-medium">Settings</span>
         </a>
         <button
           @click="handleLogout"

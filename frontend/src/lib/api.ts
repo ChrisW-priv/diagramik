@@ -258,6 +258,11 @@ export const authApi = {
     return response.data;
   },
 
+  async deleteAccount() {
+    await apiClient.delete('/auth/user/');
+    clearTokens();
+  },
+
   async refreshToken() {
     const tokens = getStoredTokens();
     if (!tokens?.refresh) {
