@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { ArrowPathIcon } from '@heroicons/vue/24/outline';
+import { ArrowPathIcon, Bars3Icon } from '@heroicons/vue/24/outline';
 import { authApi } from '../lib/api';
 import { isAuthenticated, getStoredUser } from '../lib/auth';
+import DiagramsSidebar from './DiagramsSidebar.vue';
 import FormField from './base/FormField.vue';
 import AlertError from './base/AlertError.vue';
 import AlertSuccess from './base/AlertSuccess.vue';
+
+const mobileSidebarOpen = ref(false);
 
 const user = ref(getStoredUser());
 const firstName = ref(user.value?.first_name ?? '');
@@ -79,72 +82,100 @@ const handleDeleteAccount = async () => {
 </script>
 
 <template>
-  <main id="main-content" class="container mx-auto px-4 py-8 max-w-2xl">
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="text-2xl md:text-3xl font-bold">Account Settings</h1>
-      <a
-        href="/diagrams"
-        class="text-sm text-gray-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded px-1 transition-colors"
-      >
-        ← Back to diagrams
-      </a>
-    </div>
+  <div class="flex flex-col md:flex-row h-screen overflow-hidden bg-gray-900">
 
-    <!-- Profile Section -->
-    <section class="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
-      <h2 class="text-lg font-semibold mb-4">Profile</h2>
-      <form @submit.prevent="handleSaveProfile" class="space-y-4">
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-300">Email</label>
-          <p class="px-3 py-2.5 bg-gray-700/50 border border-gray-600 rounded-md text-gray-400 text-base">
-            {{ user?.email }}
-          </p>
-        </div>
-
-        <FormField
-          id="first_name"
-          label="First name"
-          v-model="firstName"
-          autocomplete="given-name"
-          placeholder="Enter your first name"
-        />
-
-        <FormField
-          id="last_name"
-          label="Last name"
-          v-model="lastName"
-          autocomplete="family-name"
-          placeholder="Enter your last name"
-        />
-
-        <AlertSuccess v-if="saveSuccess" message="Profile saved successfully." />
-        <AlertError v-if="saveError" :message="saveError" dismissible @dismiss="saveError = ''" />
-
-        <button
-          type="submit"
-          :disabled="saveLoading"
-          :aria-busy="saveLoading"
-          class="flex items-center justify-center gap-2 py-2.5 px-6 bg-blue-600 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none rounded-lg text-sm font-medium transition-colors"
-        >
-          <ArrowPathIcon v-if="saveLoading" class="h-4 w-4 animate-spin" aria-hidden="true" />
-          <span>{{ saveLoading ? 'Saving...' : 'Save changes' }}</span>
-        </button>
-      </form>
-    </section>
-
-    <!-- Danger Zone -->
-    <section class="bg-gray-800 border border-red-900 rounded-lg p-6">
-      <h2 class="text-lg font-semibold text-red-400 mb-2">Danger Zone</h2>
-      <p class="text-sm text-gray-400 mb-4">
-        Permanently delete your account. This action cannot be undone.
-      </p>
+    <!-- MOBILE-ONLY top bar: hamburger + brand name -->
+    <header class="flex md:hidden h-14 items-center px-4 bg-gray-800 border-b border-gray-700 flex-shrink-0 gap-3">
       <button
-        @click="openDeleteModal"
-        class="py-2.5 px-6 border border-red-700 text-red-400 hover:bg-red-900/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-lg text-sm font-medium transition-colors"
+        @click="mobileSidebarOpen = true"
+        aria-label="Open sidebar"
+        class="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
       >
-        Delete account
+        <Bars3Icon class="h-5 w-5" aria-hidden="true" />
       </button>
-    </section>
+      <span class="text-sm font-semibold text-white tracking-tight">Diagramik</span>
+    </header>
+
+    <!-- Mobile backdrop -->
+    <div
+      v-if="mobileSidebarOpen"
+      class="fixed inset-0 z-40 bg-black/50 md:hidden"
+      aria-hidden="true"
+      @click="mobileSidebarOpen = false"
+    />
+
+    <!-- Sidebar -->
+    <DiagramsSidebar
+      :active-diagram-id="null"
+      :mobile-open="mobileSidebarOpen"
+      @select-diagram="(id: string) => { window.location.href = '/diagrams?id=' + id }"
+      @new-diagram="() => { window.location.href = '/diagrams' }"
+      @add-to-workspace="() => { window.location.href = '/diagrams' }"
+      @diagram-deleted="() => {}"
+    />
+
+    <!-- Main content -->
+    <main id="main-content" class="flex-1 overflow-y-auto">
+      <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <h1 class="text-2xl md:text-3xl font-bold mb-8">Account Settings</h1>
+
+        <!-- Profile Section -->
+        <section class="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
+          <h2 class="text-lg font-semibold mb-4">Profile</h2>
+          <form @submit.prevent="handleSaveProfile" class="space-y-4">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-300">Email</label>
+              <p class="px-3 py-2.5 bg-gray-700/50 border border-gray-600 rounded-md text-gray-400 text-base">
+                {{ user?.email }}
+              </p>
+            </div>
+
+            <FormField
+              id="first_name"
+              label="First name"
+              v-model="firstName"
+              autocomplete="given-name"
+              placeholder="Enter your first name"
+            />
+
+            <FormField
+              id="last_name"
+              label="Last name"
+              v-model="lastName"
+              autocomplete="family-name"
+              placeholder="Enter your last name"
+            />
+
+            <AlertSuccess v-if="saveSuccess" message="Profile saved successfully." />
+            <AlertError v-if="saveError" :message="saveError" dismissible @dismiss="saveError = ''" />
+
+            <button
+              type="submit"
+              :disabled="saveLoading"
+              :aria-busy="saveLoading"
+              class="flex items-center justify-center gap-2 py-2.5 px-6 bg-blue-600 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none rounded-lg text-sm font-medium transition-colors"
+            >
+              <ArrowPathIcon v-if="saveLoading" class="h-4 w-4 animate-spin" aria-hidden="true" />
+              <span>{{ saveLoading ? 'Saving...' : 'Save changes' }}</span>
+            </button>
+          </form>
+        </section>
+
+        <!-- Danger Zone -->
+        <section class="bg-gray-800 border border-red-900 rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-red-400 mb-2">Danger Zone</h2>
+          <p class="text-sm text-gray-400 mb-4">
+            Permanently delete your account. This action cannot be undone.
+          </p>
+          <button
+            @click="openDeleteModal"
+            class="py-2.5 px-6 border border-red-700 text-red-400 hover:bg-red-900/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-lg text-sm font-medium transition-colors"
+          >
+            Delete account
+          </button>
+        </section>
+      </div>
+    </main>
 
     <!-- Delete Confirmation Modal -->
     <div
@@ -198,5 +229,5 @@ const handleDeleteAccount = async () => {
         </div>
       </div>
     </div>
-  </main>
+  </div>
 </template>

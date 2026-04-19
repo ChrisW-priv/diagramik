@@ -21,6 +21,7 @@ import {
   PlusIcon,
   ArrowPathIcon,
   EllipsisHorizontalIcon,
+  Cog6ToothIcon,
 } from "@heroicons/vue/24/outline";
 import {
   getDiagrams,
@@ -33,6 +34,7 @@ import {
   updateDiagramWorkspace,
   authApi,
 } from "../lib/api";
+import { getStoredUser } from "../lib/auth";
 
 interface Workspace {
   id: string;
@@ -629,12 +631,38 @@ const handleLogout = async () => {
   window.location.href = "/login";
 };
 
+// --- User profile ---
+const userProfile = computed(() => {
+  const u = getStoredUser();
+  const displayName = u?.first_name || u?.email?.split("@")[0] || "Account";
+  const initials = displayName[0].toUpperCase();
+  return { displayName, initials, email: u?.email ?? "" };
+});
+
+const userMenuOpen = ref(false);
+const userMenuPosition = ref({ bottom: 0, left: 0 });
+
+const openUserMenu = (event: MouseEvent) => {
+  const btn = event.currentTarget as HTMLElement;
+  const rect = btn.getBoundingClientRect();
+  userMenuPosition.value = {
+    bottom: window.innerHeight - rect.top + 4,
+    left: rect.left,
+  };
+  userMenuOpen.value = true;
+};
+
+const closeUserMenu = () => {
+  userMenuOpen.value = false;
+};
+
 // --- Close dropdowns on outside click ---
 const closeDropdowns = (event: MouseEvent) => {
   workspaceDropdownId.value = null;
   diagramMenuId.value = null;
   workspaceMenuId.value = null;
   swipedOpenId.value = null;
+  userMenuOpen.value = false;
 };
 
 onMounted(async () => {
@@ -1072,19 +1100,25 @@ onUnmounted(() => {
     <!-- Spacer: pushes footer to bottom when sidebar is collapsed (icon-only mode) -->
     <div v-if="sidebarCollapsed" class="flex-1" aria-hidden="true" />
 
-    <!-- Footer: sign out -->
-    <div class="flex-shrink-0 border-t border-gray-700 px-3 py-3">
+    <!-- Footer: user profile -->
+    <div class="flex-shrink-0 border-t border-gray-700 px-2 py-2">
       <button
-        @click="handleLogout"
-        aria-label="Sign out"
-        :title="sidebarCollapsed ? 'Sign out' : undefined"
-        class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+        @click.stop="openUserMenu($event)"
+        :aria-label="`User menu for ${userProfile.displayName}`"
+        :title="sidebarCollapsed ? userProfile.displayName : undefined"
+        class="flex items-center gap-2 w-full px-2 py-1.5 rounded hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
       >
-        <ArrowRightOnRectangleIcon
-          class="h-4 w-4 flex-shrink-0"
+        <!-- Avatar circle -->
+        <span
+          class="h-6 w-6 flex-shrink-0 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-semibold text-white select-none"
+          :class="sidebarCollapsed ? 'mx-auto' : ''"
           aria-hidden="true"
-        />
-        <span v-if="!sidebarCollapsed">Sign out</span>
+        >{{ userProfile.initials }}</span>
+        <!-- Display name (expanded only) -->
+        <span
+          v-if="!sidebarCollapsed"
+          class="flex-1 min-w-0 text-sm text-gray-300 truncate text-left"
+        >{{ userProfile.displayName }}</span>
       </button>
     </div>
   </aside>
@@ -1221,6 +1255,44 @@ onUnmounted(() => {
           role="menuitem"
         >
           <TrashIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> Delete
+        </button>
+      </div>
+    </div>
+  </Teleport>
+
+  <!-- User profile menu (teleported to body to escape overflow clipping) -->
+  <Teleport v-if="userMenuOpen" to="body">
+    <div
+      :style="{
+        position: 'fixed',
+        bottom: userMenuPosition.bottom + 'px',
+        left: userMenuPosition.left + 'px',
+      }"
+      class="z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-1 min-w-44"
+      role="menu"
+      @click.stop
+    >
+      <!-- User info header -->
+      <div class="px-3 py-1.5 border-b border-gray-700/50 mb-1">
+        <p class="text-xs font-medium text-white truncate">{{ userProfile.displayName }}</p>
+        <p class="text-xs text-gray-500 truncate">{{ userProfile.email }}</p>
+      </div>
+      <!-- Settings -->
+      <a
+        href="/settings"
+        class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors"
+        role="menuitem"
+      >
+        <Cog6ToothIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> Settings
+      </a>
+      <!-- Divider + Sign out -->
+      <div class="border-t border-gray-700/50 mt-1 pt-1">
+        <button
+          @click.stop="handleLogout"
+          class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-400/10 transition-colors"
+          role="menuitem"
+        >
+          <ArrowRightOnRectangleIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> Sign out
         </button>
       </div>
     </div>
