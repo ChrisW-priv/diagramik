@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick, reactive } from 'vue';
 import {
   ExclamationCircleIcon,
   ArrowRightOnRectangleIcon,
@@ -72,6 +72,21 @@ const openDiagramMenu = (diagramId: string, event: MouseEvent) => {
   diagramMenuId.value = diagramId;
 };
 
+const shouldShowDiagramMenu = computed(() => {
+  // Only show menu if body is available (client-side hydration complete)
+  return typeof document !== 'undefined' && document.body && diagramMenuId.value !== null;
+});
+
+const shouldShowWorkspaceMenu = computed(() => {
+  // Only show menu if body is available (client-side hydration complete)
+  return typeof document !== 'undefined' && document.body && workspaceMenuId.value !== null;
+});
+
+const getDiagramMenuId = () => {
+  // Get the diagram ID from the stored ref
+  return diagramMenuId.value;
+};
+
 // --- Data state ---
 const diagrams = ref<Diagram[]>([]);
 const workspaces = ref<Workspace[]>([]);
@@ -98,9 +113,10 @@ const deletingWorkspaceId = ref<string | null>(null);
 
 const workspaceDropdownId = ref<string | null>(null);
 const diagramMenuId = ref<string | null>(null);
+const workspaceMenuActiveId = ref<string | null>(null);
 
 const searchQuery = ref('');
-const collapsedSections = ref<Set<string>>(new Set());
+const collapsedSections = reactive(new Set<string>());
 
 // --- Drag and drop ---
 const draggedDiagramId = ref<string | null>(null);
@@ -147,35 +163,44 @@ const onDrop = async (targetWorkspaceId: string | null, event: DragEvent) => {
 };
 
 // --- Swipe to reveal delete (mobile) ---
-const SWIPE_PANEL_WIDTH = 80;
-const SWIPE_THRESHOLD = 40;
+// Static allocation per action button for predictable layout
+const BUTTON_WIDTH = 80; // px per button (includes padding)
+const SWIPE_THRESHOLD = 40; // px to fully trigger action
 const swipedOpenId = ref<string | null>(null);
 const touchStartX = ref(0);
 const touchCurrentX = ref(0);
 const touchActiveDiagramId = ref<string | null>(null);
 const isTouchActive = ref(false);
 
+const getSwipePanelWidth = () => {
+  // Three action panels: rename, menu, delete
+  return BUTTON_WIDTH * 3;
+};
+
 const getItemTransformStyle = (diagramId: string) => {
+  const panelWidth = getSwipePanelWidth();
+  const panelIndex = ['rename', 'menu', 'delete'].indexOf(swipedOpenId.value === diagramId ? diagramId : null) ?? -1;
   const open = swipedOpenId.value === diagramId;
   if (isTouchActive.value && touchActiveDiagramId.value === diagramId) {
-    const base = open ? -SWIPE_PANEL_WIDTH : 0;
+    const base = open ? -panelWidth : 0;
     const delta = touchCurrentX.value - touchStartX.value;
-    const clamped = Math.max(-SWIPE_PANEL_WIDTH, Math.min(0, base + delta));
+    const clamped = Math.max(-panelWidth, Math.min(0, base + delta));
     return { transform: `translateX(${clamped}px)`, transition: 'none' };
   }
   return {
-    transform: open ? `translateX(-${SWIPE_PANEL_WIDTH}px)` : 'translateX(0)',
+    transform: open ? `translateX(-${panelWidth}px)` : 'translateX(0)',
     transition: 'transform 200ms ease-out',
   };
 };
 
 const getSwipePanelOpacity = (diagramId: string): number => {
+  const panelWidth = getSwipePanelWidth();
   if (swipedOpenId.value === diagramId) return 1;
   if (isTouchActive.value && touchActiveDiagramId.value === diagramId) {
     const revealed = Math.max(0, touchStartX.value - touchCurrentX.value);
-    const fadeStart = SWIPE_PANEL_WIDTH * 0.25;
+    const fadeStart = panelWidth * 0.25;
     if (revealed < fadeStart) return 0;
-    return Math.min(1, (revealed - fadeStart) / (SWIPE_PANEL_WIDTH * 0.5));
+    return Math.min(1, (revealed - fadeStart) / (panelWidth * 0.5));
   }
   return 0;
 };
@@ -222,7 +247,8 @@ const fetchDiagrams = async () => {
       );
     workspaces.value = workspacesRes.data;
     const allKeys = [...workspacesRes.data.map((w: any) => w.id), 'unassigned'];
-    collapsedSections.value = new Set(allKeys);
+    collapsedSections.clear();
+    allKeys.forEach((k: string) => collapsedSections.add(k));
   } catch (err: any) {
     if (err.response?.status === 401) return;
     error.value = 'Failed to load diagrams.';
@@ -269,14 +295,12 @@ const filteredGroups = computed(() => {
 // --- Collapse ---
 const toggleSection = (sectionId: string | null) => {
   const key = sectionId ?? 'unassigned';
-  const next = new Set(collapsedSections.value);
-  if (next.has(key)) next.delete(key);
-  else next.add(key);
-  collapsedSections.value = next;
+  if (collapsedSections.has(key)) collapsedSections.delete(key);
+  else collapsedSections.add(key);
 };
 
 const isSectionCollapsed = (id: string | null): boolean =>
-  collapsedSections.value.has(id ?? 'unassigned');
+  collapsedSections.has(id ?? 'unassigned');
 
 // --- Delete diagram ---
 const requestDelete = (id: string, event: Event) => {
@@ -348,6 +372,86 @@ const closeWorkspaceModal = () => {
   newWorkspaceName.value = '';
 };
 
+// --- Workspace menu (kebab menu) ---
+const workspaceMenuPosition = ref<{ top: number; right: number }>({ top: 0, right: 0 });
+const workspaceMenuId = ref<string | null>(null);
+
+const openWorkspaceMenu = (wsId: string, event: MouseEvent) => {
+  const btn = event.currentTarget as HTMLElement;
+  const rect = btn.getBoundingClientRect();
+  workspaceMenuPosition.value = { top: rect.bottom + 4, right: window.innerWidth - rect.right };
+  workspaceMenuId.value = `workspace-menu-${wsId}`;
+  workspaceMenuActiveId.value = wsId;
+};
+
+const closeWorkspaceMenu = () => {
+  workspaceMenuId.value = null;
+  workspaceMenuActiveId.value = null;
+};
+
+const handleCreateWorkspaceFromMenu = async () => {
+  const name = newWorkspaceName.value.trim();
+  if (!name) return;
+  creatingWorkspace.value = true;
+  try {
+    const res = await createWorkspace(name);
+    workspaces.value.push(res.data);
+    workspaces.value.sort((a, b) => a.name.localeCompare(b.name));
+    collapsedSections.add(res.data.id);
+    closeWorkspaceMenu();
+  } catch {
+    error.value = 'Failed to create workspace.';
+  } finally {
+    creatingWorkspace.value = false;
+  }
+};
+
+const handleDeleteWorkspaceFromMenu = async (wsId: string, event: Event) => {
+  event.stopPropagation();
+  try {
+    await deleteWorkspace(wsId);
+    workspaces.value = workspaces.value.filter(w => w.id !== wsId);
+    diagrams.value.forEach(d => {
+      if (d.workspaceId === wsId) { d.workspaceId = null; d.workspaceName = null; }
+    });
+    closeWorkspaceMenu();
+  } catch {
+    error.value = 'Failed to delete workspace.';
+  }
+};
+
+const handleRenameWorkspaceFromMenu = (wsId: string, event: Event) => {
+  event.stopPropagation();
+  const ws = workspaces.value.find(w => w.id === wsId);
+  if (!ws) return;
+  renamingWorkspaceId.value = wsId;
+  renameWorkspaceValue.value = ws.name;
+};
+
+const cancelRenameWorkspaceMenu = () => {
+  renamingWorkspaceId.value = null;
+  renameWorkspaceValue.value = '';
+};
+
+const submitRenameWorkspaceMenu = async (wsId: string) => {
+  const ws = workspaces.value.find(w => w.id === wsId);
+  if (!ws) return;
+  const trimmed = renameWorkspaceValue.value.trim();
+  if (!trimmed || trimmed === ws.name) { cancelRenameWorkspaceMenu(); return; }
+  renameWorkspaceInProgress.value = true;
+  try {
+    await updateWorkspace(ws.id, trimmed);
+    ws.name = trimmed;
+    workspaces.value.sort((a, b) => a.name.localeCompare(b.name));
+    cancelRenameWorkspaceMenu();
+  } catch {
+    error.value = 'Failed to rename workspace.';
+    cancelRenameWorkspaceMenu();
+  } finally {
+    renameWorkspaceInProgress.value = false;
+  }
+};
+
 const handleCreateWorkspace = async () => {
   const name = newWorkspaceName.value.trim();
   if (!name) return;
@@ -356,7 +460,7 @@ const handleCreateWorkspace = async () => {
     const res = await createWorkspace(name);
     workspaces.value.push(res.data);
     workspaces.value.sort((a, b) => a.name.localeCompare(b.name));
-    collapsedSections.value = new Set([...collapsedSections.value, res.data.id]);
+    collapsedSections.add(res.data.id);
     closeWorkspaceModal();
   } catch {
     error.value = 'Failed to create workspace.';
@@ -447,6 +551,7 @@ const handleLogout = async () => {
 const closeDropdowns = (event: MouseEvent) => {
   workspaceDropdownId.value = null;
   diagramMenuId.value = null;
+  workspaceMenuId.value = null;
   swipedOpenId.value = null;
 };
 
@@ -511,7 +616,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Collapsible content: visible when sidebar is expanded. -->
-    <template v-if="!sidebarCollapsed">
+    <div v-if="!sidebarCollapsed" class="flex flex-col flex-1 min-h-0 overflow-hidden">
       <!-- Search + New workspace -->
       <div class="flex-shrink-0 px-3 pt-3 pb-2 space-y-2 border-b border-gray-700">
         <div class="relative">
@@ -621,34 +726,19 @@ onUnmounted(() => {
                   <button @click="cancelDeleteWorkspace($event)" class="text-xs text-gray-400 hover:text-gray-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 rounded px-0.5">Cancel</button>
                 </div>
 
-                <!-- Workspace hover actions -->
+                <!-- Workspace 3-dot menu trigger -->
                 <div
                   v-else
-                  class="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover/ws:opacity-100 focus-within:opacity-100 transition-opacity"
+                  class="flex items-center gap-0.5 flex-shrink-0 focus-within:opacity-100 transition-opacity"
                 >
+                  <!-- 3 dots menu trigger for workspace (always visible) -->
                   <button
-                    v-if="!group.isUnassigned"
-                    @click.stop="startRenameWorkspace(group.id!, $event)"
-                    class="p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400"
-                    :aria-label="`Rename ${group.name}`"
+                    @click.stop="(e: MouseEvent) => openWorkspaceMenu(group.id!, e)"
+                    class="p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-700 transition-colors opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400"
+                    :aria-label="`Open menu for ${group.name}`"
+                    :title="`Open menu for ${group.name}`"
                   >
-                    <PencilIcon class="h-3 w-3" aria-hidden="true" />
-                  </button>
-                  <button
-                    v-if="!group.isUnassigned"
-                    @click.stop="requestDeleteWorkspace(group.id!, $event)"
-                    class="p-1 rounded text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-400"
-                    :aria-label="`Delete ${group.name}`"
-                  >
-                    <TrashIcon class="h-3 w-3" aria-hidden="true" />
-                  </button>
-                  <button
-                    @click.stop="emit('add-to-workspace', group.id)"
-                    class="p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400"
-                    :aria-label="group.isUnassigned ? 'New unassigned diagram' : `New diagram in ${group.name}`"
-                    :title="group.isUnassigned ? 'New unassigned diagram' : `New diagram in ${group.name}`"
-                  >
-                    <PlusIcon class="h-3 w-3" aria-hidden="true" />
+                    <EllipsisHorizontalIcon class="h-3 w-3" aria-hidden="true" />
                   </button>
                 </div>
               </template>
@@ -727,9 +817,30 @@ onUnmounted(() => {
                   <!-- Swipe-reveal delete panel (right side, mobile) -->
                   <div
                     class="absolute right-0 top-0 h-full flex items-stretch sm:hidden"
-                    :style="{ width: SWIPE_PANEL_WIDTH + 'px', opacity: getSwipePanelOpacity(diagram.id) }"
+                    :style="{ width: getSwipePanelWidth() + 'px', opacity: getSwipePanelOpacity(diagram.id), pointerEvents: swipedOpenId === diagram.id ? 'auto' : 'none' }"
                     @click.stop
                   >
+                    <!-- Rename button (mobile swipe) -->
+                    <button
+                      @click.stop="startRename(diagram, $event)"
+                      class="flex-1 flex flex-col items-center justify-center gap-1 bg-blue-700 active:bg-blue-600 text-white text-xs rounded-l-sm transition-colors"
+                      :aria-label="`Rename ${diagram.name}`"
+                      :title="diagram.name"
+                    >
+                      <PencilIcon class="h-4 w-4" aria-hidden="true" />
+                      <span>Rename</span>
+                    </button>
+                    <!-- Menu button (mobile swipe) -->
+                    <button
+                      @click.stop="openDiagramMenu(diagram.id, $event)"
+                      class="flex-1 flex flex-col items-center justify-center gap-1 bg-gray-700 active:bg-gray-600 text-white text-xs transition-colors"
+                      :aria-label="`Actions for ${diagram.name}`"
+                      :title="`Actions for ${diagram.name}`"
+                    >
+                      <EllipsisHorizontalIcon class="h-4 w-4" aria-hidden="true" />
+                      <span>Menu</span>
+                    </button>
+                    <!-- Delete button (mobile swipe) -->
                     <button
                       @click.stop="requestDelete(diagram.id, $event)"
                       class="flex-1 flex flex-col items-center justify-center gap-1 bg-red-700 active:bg-red-600 text-white text-xs rounded-r-sm transition-colors"
@@ -753,11 +864,12 @@ onUnmounted(() => {
                   >
                     <span class="flex-1 min-w-0 text-sm md:text-xs truncate" :title="diagram.name">{{ diagram.name }}</span>
 
-                    <!-- Kebab menu trigger -->
+                    <!-- Kebab menu trigger (always visible on desktop and mobile) -->
                     <button
                       @click.stop="openDiagramMenu(diagram.id, $event)"
-                      class="flex p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-600 transition-colors opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 flex-shrink-0"
+                      class="flex p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-600 transition-colors opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 flex-shrink-0"
                       :aria-label="`Actions for ${diagram.name}`"
+                      :title="`Actions for ${diagram.name}`"
                     >
                       <EllipsisHorizontalIcon class="h-4 w-4" aria-hidden="true" />
                     </button>
@@ -777,7 +889,7 @@ onUnmounted(() => {
         </template>
       </div>
 
-    </template>
+    </div>
 
     <!-- Spacer: pushes footer to bottom when sidebar is collapsed (icon-only mode) -->
     <div v-if="sidebarCollapsed" class="flex-1" aria-hidden="true" />
@@ -797,9 +909,8 @@ onUnmounted(() => {
   </aside>
 
   <!-- Diagram action menu (teleported to body to escape overflow clipping) -->
-  <Teleport to="body">
+  <Teleport v-if="shouldShowDiagramMenu" to="body">
     <div
-      v-if="diagramMenuId"
       :style="{ position: 'fixed', top: menuPosition.top + 'px', right: menuPosition.right + 'px' }"
       class="z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-1 min-w-36"
       role="menu"
@@ -843,6 +954,57 @@ onUnmounted(() => {
           role="menuitem"
         >
           <TrashIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> Delete
+        </button>
+      </div>
+    </div>
+  </Teleport>
+
+  <!-- Workspace menu (teleported to body to escape overflow clipping) -->
+  <Teleport v-if="shouldShowWorkspaceMenu" to="body">
+    <div
+      :style="{ position: 'fixed', top: workspaceMenuPosition.top + 'px', right: workspaceMenuPosition.right + 'px' }"
+      class="z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-1 min-w-36"
+      role="menu"
+      @click.stop
+    >
+      <button
+        @click.stop="handleCreateWorkspaceFromMenu(); workspaceMenuId = null; workspaceMenuActiveId = null"
+        class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors"
+        role="menuitem"
+      >
+        <FolderPlusIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> New workspace
+      </button>
+
+      <template v-if="workspaces.length > 0">
+        <div class="border-t border-gray-700/50 mt-1 pt-1">
+          <button
+            v-for="ws in workspaces"
+            :key="ws.id"
+            @click.stop="handleRenameWorkspaceFromMenu(ws.id, $event); workspaceMenuId = null; workspaceMenuActiveId = null"
+            class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors"
+            role="menuitem"
+          >
+            <PencilIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> {{ ws.name }}
+          </button>
+          <button
+            v-for="ws in workspaces"
+            :key="ws.id"
+            @click.stop="handleDeleteWorkspaceFromMenu(ws.id, $event); workspaceMenuId = null; workspaceMenuActiveId = null"
+            class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-400/10 transition-colors"
+            role="menuitem"
+          >
+            <TrashIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> Delete
+          </button>
+        </div>
+      </template>
+
+      <div class="border-t border-gray-700/50 mt-1 pt-1">
+        <button
+          @click.stop="emit('add-to-workspace', workspaceMenuActiveId); workspaceMenuId = null; workspaceMenuActiveId = null"
+          class="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors"
+          role="menuitem"
+        >
+          <PlusIcon class="h-3 w-3 flex-shrink-0" aria-hidden="true" /> New diagram
         </button>
       </div>
     </div>
