@@ -94,6 +94,17 @@ onUnmounted(() => {
       <span class="text-sm font-semibold text-white tracking-tight">Diagramik</span>
     </header>
 
+    <!-- Mobile backdrop: sits between content (z-0) and sidebar (z-50).
+         Rendered here rather than teleported from inside the sidebar, to avoid
+         adding a Teleport to the sidebar's fragment root (which caused Vue
+         block-tree corruption on component updates). -->
+    <div
+      v-if="mobileSidebarOpen"
+      class="fixed inset-0 z-40 bg-black/50 md:hidden"
+      aria-hidden="true"
+      @click="mobileSidebarOpen = false"
+    />
+
     <!-- Sidebar (fixed overlay on mobile, inline on desktop) -->
     <DiagramsSidebar
       ref="sidebarRef"
@@ -103,7 +114,6 @@ onUnmounted(() => {
       @new-diagram="handleNewDiagram"
       @add-to-workspace="handleAddToWorkspace"
       @diagram-deleted="handleDiagramDeleted"
-      @close-mobile="mobileSidebarOpen = false"
     />
 
     <!-- Main area -->

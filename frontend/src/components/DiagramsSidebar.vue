@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import {
   ExclamationCircleIcon,
   ArrowRightOnRectangleIcon,
@@ -50,16 +50,19 @@ const emit = defineEmits<{
   'new-diagram': [];
   'add-to-workspace': [workspaceId: string | null];
   'diagram-deleted': [id: string];
-  'close-mobile': [];
 }>();
 
 // --- Sidebar layout state ---
 const sidebarCollapsed = ref(true);
 
-// True when the sidebar content should be visible: either desktop-expanded or
-// mobile drawer is open. Both sidebarCollapsed and mobileOpen start as the same
-// values on server and client, so this computed never causes hydration mismatches.
-const isExpanded = computed(() => !sidebarCollapsed.value || props.mobileOpen);
+// On mobile, the drawer open/close state comes in via the `mobileOpen` prop.
+// Syncing it into `sidebarCollapsed` keeps the template using a single reactive
+// variable for all v-if conditions. This avoids simultaneously flipping multiple
+// tracked block-tree nodes (which causes Vue's patchBlockChildren to lose its
+// DOM parent reference). Watchers don't run during SSR so no hydration impact.
+watch(() => props.mobileOpen, (open) => {
+  sidebarCollapsed.value = !open;
+});
 const menuPosition = ref({ top: 0, right: 0 });
 
 const openDiagramMenu = (diagramId: string, event: MouseEvent) => {
@@ -482,7 +485,7 @@ onUnmounted(() => {
     <div class="flex items-center px-3 h-14 border-b border-gray-700 flex-shrink-0 gap-2">
       <!-- Brand shown when sidebar is expanded -->
       <button
-        v-show="isExpanded"
+        v-if="!sidebarCollapsed"
         @click="emit('new-diagram')"
         class="flex-1 min-w-0 text-left text-sm font-semibold text-white tracking-tight hover:text-blue-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
         title="New diagram"
@@ -507,9 +510,8 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- Collapsible content: visible when sidebar is expanded (desktop) or drawer is
-         open (mobile). v-show keeps it mounted so opening the mobile drawer is instant. -->
-    <template v-if="isExpanded">
+    <!-- Collapsible content: visible when sidebar is expanded. -->
+    <template v-if="!sidebarCollapsed">
       <!-- Search + New workspace -->
       <div class="flex-shrink-0 px-3 pt-3 pb-2 space-y-2 border-b border-gray-700">
         <div class="relative">
@@ -754,7 +756,7 @@ onUnmounted(() => {
                     <!-- Kebab menu trigger -->
                     <button
                       @click.stop="openDiagramMenu(diagram.id, $event)"
-                      class="hidden sm:flex p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-600 transition-colors opacity-0 group-hover/item:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 flex-shrink-0"
+                      class="flex p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-600 transition-colors opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 flex-shrink-0"
                       :aria-label="`Actions for ${diagram.name}`"
                     >
                       <EllipsisHorizontalIcon class="h-4 w-4" aria-hidden="true" />
@@ -778,32 +780,21 @@ onUnmounted(() => {
     </template>
 
     <!-- Spacer: pushes footer to bottom when sidebar is collapsed (icon-only mode) -->
-    <div v-if="!isExpanded" class="flex-1" aria-hidden="true" />
+    <div v-if="sidebarCollapsed" class="flex-1" aria-hidden="true" />
 
-    <!-- Footer: sign out (always visible) -->
+    <!-- Footer: sign out -->
     <div class="flex-shrink-0 border-t border-gray-700 px-3 py-3">
       <button
         @click="handleLogout"
         aria-label="Sign out"
-        :title="isExpanded ? undefined : 'Sign out'"
+        :title="sidebarCollapsed ? 'Sign out' : undefined"
         class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
       >
         <ArrowRightOnRectangleIcon class="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-        <span v-show="isExpanded">Sign out</span>
+        <span v-if="!sidebarCollapsed">Sign out</span>
       </button>
     </div>
   </aside>
-
-  <!-- Mobile backdrop: tap to close the sidebar overlay.
-       md:hidden ensures it never appears on desktop even if mobileOpen is somehow true. -->
-  <Teleport to="body">
-    <div
-      v-if="props.mobileOpen"
-      class="fixed inset-0 z-40 bg-black/50 md:hidden"
-      aria-hidden="true"
-      @click="emit('close-mobile')"
-    />
-  </Teleport>
 
   <!-- Diagram action menu (teleported to body to escape overflow clipping) -->
   <Teleport to="body">
