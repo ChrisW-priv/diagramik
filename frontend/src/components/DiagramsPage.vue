@@ -25,12 +25,14 @@ const selectDiagram = (id: string) => {
 const handleNewDiagram = () => {
   activeDiagramId.value = null;
   pendingWorkspaceId.value = null;
+  mobileSidebarOpen.value = false;
   history.pushState(null, '', '/diagrams');
 };
 
 const handleAddToWorkspace = (workspaceId: string | null) => {
   pendingWorkspaceId.value = workspaceId;
   activeDiagramId.value = null;
+  mobileSidebarOpen.value = false;
   history.pushState(null, '', '/diagrams');
 };
 
