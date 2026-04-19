@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { Bars3Icon } from '@heroicons/vue/24/outline';
 import DiagramsSidebar from './DiagramsSidebar.vue';
 import DiagramView from './DiagramView.vue';
 import { updateDiagramWorkspace } from '../lib/api';
@@ -9,9 +10,15 @@ const activeDiagramId = ref<string | null>(null);
 const pendingWorkspaceId = ref<string | null>(null);
 const sidebarRef = ref<InstanceType<typeof DiagramsSidebar> | null>(null);
 
+// Mobile sidebar overlay state. Controlled here so the hamburger button
+// in the mobile-only top bar can open the sidebar from outside it.
+const mobileSidebarOpen = ref(false);
+
 const selectDiagram = (id: string) => {
   activeDiagramId.value = id;
   pendingWorkspaceId.value = null;
+  // Close mobile sidebar when user selects a diagram so the content is visible
+  mobileSidebarOpen.value = false;
   history.pushState(null, '', `/diagrams?id=${id}`);
 };
 
@@ -70,15 +77,33 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden bg-gray-900">
-    <!-- Sidebar -->
+  <!-- Mobile: column layout (top bar + content). Desktop: row layout (sidebar + content). -->
+  <div class="flex flex-col md:flex-row h-screen overflow-hidden bg-gray-900">
+
+    <!-- MOBILE-ONLY top bar: hamburger + brand name.
+         Hidden on md+ since the sidebar is always present there. -->
+    <header class="flex md:hidden h-14 items-center px-4 bg-gray-800 border-b border-gray-700 flex-shrink-0 gap-3">
+      <button
+        @click="mobileSidebarOpen = true"
+        aria-label="Open sidebar"
+        class="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+      >
+        <Bars3Icon class="h-5 w-5" aria-hidden="true" />
+      </button>
+      <!-- Brand name lives here on mobile; inside the sidebar on desktop -->
+      <span class="text-sm font-semibold text-white tracking-tight">Diagramik</span>
+    </header>
+
+    <!-- Sidebar (fixed overlay on mobile, inline on desktop) -->
     <DiagramsSidebar
       ref="sidebarRef"
       :active-diagram-id="activeDiagramId"
+      :mobile-open="mobileSidebarOpen"
       @select-diagram="selectDiagram"
       @new-diagram="handleNewDiagram"
       @add-to-workspace="handleAddToWorkspace"
       @diagram-deleted="handleDiagramDeleted"
+      @close-mobile="mobileSidebarOpen = false"
     />
 
     <!-- Main area -->

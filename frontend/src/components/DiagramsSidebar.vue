@@ -42,6 +42,7 @@ interface Diagram {
 
 const props = defineProps<{
   activeDiagramId: string | null;
+  mobileOpen: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -49,10 +50,16 @@ const emit = defineEmits<{
   'new-diagram': [];
   'add-to-workspace': [workspaceId: string | null];
   'diagram-deleted': [id: string];
+  'close-mobile': [];
 }>();
 
 // --- Sidebar layout state ---
 const sidebarCollapsed = ref(true);
+
+// True when the sidebar content should be visible: either desktop-expanded or
+// mobile drawer is open. Both sidebarCollapsed and mobileOpen start as the same
+// values on server and client, so this computed never causes hydration mismatches.
+const isExpanded = computed(() => !sidebarCollapsed.value || props.mobileOpen);
 const menuPosition = ref({ top: 0, right: 0 });
 
 const openDiagramMenu = (diagramId: string, event: MouseEvent) => {
@@ -451,18 +458,31 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <!-- Layout:
+       Mobile  — fixed overlay drawer; hidden off-screen by default via CSS class
+                 (-translate-x-full), slides in to translate-x-0 when mobileOpen.
+                 Width is always 256px (w-64 CSS class; inline style ignored on mobile
+                 because the scoped .sidebar-drawer rule only applies at md+).
+       Desktop — inline flex item; width driven by inline style (56 or 256px) with
+                 a CSS transition defined in the scoped <style> block.
+       No JS viewport checks anywhere here — prevents SSR/client hydration mismatches. -->
   <aside
-    :style="{
-      width: sidebarCollapsed ? '56px' : '256px',
-      transition: 'width 200ms ease-in-out',
-    }"
-    class="relative flex-shrink-0 flex flex-col bg-gray-800 border-r border-gray-700 h-full overflow-hidden"
+    :style="{ '--sidebar-w': sidebarCollapsed ? '56px' : '256px' }"
+    :class="[
+      'sidebar-drawer',
+      'w-64 fixed md:relative left-0 top-0 h-full z-50 md:z-auto',
+      'flex-shrink-0 flex flex-col bg-gray-800 border-r border-gray-700 overflow-hidden',
+      // Mobile transform: off-screen by default; visible when drawer is open.
+      // md:translate-x-0 ensures desktop is never affected by these classes.
+      props.mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+    ]"
     aria-label="Sidebar"
   >
     <!-- Header -->
     <div class="flex items-center px-3 h-14 border-b border-gray-700 flex-shrink-0 gap-2">
+      <!-- Brand shown when sidebar is expanded -->
       <button
-        v-if="!sidebarCollapsed"
+        v-show="isExpanded"
         @click="emit('new-diagram')"
         class="flex-1 min-w-0 text-left text-sm font-semibold text-white tracking-tight hover:text-blue-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
         title="New diagram"
@@ -487,8 +507,9 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- Collapsible content -->
-    <template v-if="!sidebarCollapsed">
+    <!-- Collapsible content: visible when sidebar is expanded (desktop) or drawer is
+         open (mobile). v-show keeps it mounted so opening the mobile drawer is instant. -->
+    <template v-if="isExpanded">
       <!-- Search + New workspace -->
       <div class="flex-shrink-0 px-3 pt-3 pb-2 space-y-2 border-b border-gray-700">
         <div class="relative">
@@ -756,22 +777,33 @@ onUnmounted(() => {
 
     </template>
 
-    <!-- Spacer: pushes footer to bottom when sidebar is collapsed -->
-    <div v-if="sidebarCollapsed" class="flex-1" aria-hidden="true" />
+    <!-- Spacer: pushes footer to bottom when sidebar is collapsed (icon-only mode) -->
+    <div v-if="!isExpanded" class="flex-1" aria-hidden="true" />
 
-    <!-- Footer: sign out (always visible, even when collapsed) -->
+    <!-- Footer: sign out (always visible) -->
     <div class="flex-shrink-0 border-t border-gray-700 px-3 py-3">
       <button
         @click="handleLogout"
         aria-label="Sign out"
-        :title="sidebarCollapsed ? 'Sign out' : undefined"
+        :title="isExpanded ? undefined : 'Sign out'"
         class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
       >
         <ArrowRightOnRectangleIcon class="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-        <span v-if="!sidebarCollapsed">Sign out</span>
+        <span v-show="isExpanded">Sign out</span>
       </button>
     </div>
   </aside>
+
+  <!-- Mobile backdrop: tap to close the sidebar overlay.
+       md:hidden ensures it never appears on desktop even if mobileOpen is somehow true. -->
+  <Teleport to="body">
+    <div
+      v-if="props.mobileOpen"
+      class="fixed inset-0 z-40 bg-black/50 md:hidden"
+      aria-hidden="true"
+      @click="emit('close-mobile')"
+    />
+  </Teleport>
 
   <!-- Diagram action menu (teleported to body to escape overflow clipping) -->
   <Teleport to="body">
@@ -907,6 +939,23 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* Desktop: animate width changes driven by the --sidebar-w CSS variable.
+   The variable is set via inline :style so it has the same value on server and
+   client (both start with sidebarCollapsed=true → 56px) — no hydration mismatch. */
+@media (min-width: 768px) {
+  .sidebar-drawer {
+    width: var(--sidebar-w);
+    transition: width 200ms ease-in-out;
+  }
+}
+
+/* Mobile: animate the transform slide (width is fixed at 256px via the w-64 class). */
+@media (max-width: 767px) {
+  .sidebar-drawer {
+    transition: transform 200ms ease-in-out;
+  }
+}
+
 .sidebar-list {
   scrollbar-width: none;
 }
