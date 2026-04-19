@@ -173,8 +173,8 @@ const touchActiveDiagramId = ref<string | null>(null);
 const isTouchActive = ref(false);
 
 const getSwipePanelWidth = () => {
-  // Three action panels: rename, menu, delete
-  return BUTTON_WIDTH * 3;
+  // Two action panels: rename, delete
+  return BUTTON_WIDTH * 2;
 };
 
 const getItemTransformStyle = (diagramId: string) => {
@@ -830,16 +830,6 @@ onUnmounted(() => {
                       <PencilIcon class="h-4 w-4" aria-hidden="true" />
                       <span>Rename</span>
                     </button>
-                    <!-- Menu button (mobile swipe) -->
-                    <button
-                      @click.stop="openDiagramMenu(diagram.id, $event)"
-                      class="flex-1 flex flex-col items-center justify-center gap-1 bg-gray-700 active:bg-gray-600 text-white text-xs transition-colors"
-                      :aria-label="`Actions for ${diagram.name}`"
-                      :title="`Actions for ${diagram.name}`"
-                    >
-                      <EllipsisHorizontalIcon class="h-4 w-4" aria-hidden="true" />
-                      <span>Menu</span>
-                    </button>
                     <!-- Delete button (mobile swipe) -->
                     <button
                       @click.stop="requestDelete(diagram.id, $event)"
@@ -864,10 +854,10 @@ onUnmounted(() => {
                   >
                     <span class="flex-1 min-w-0 text-sm md:text-xs truncate" :title="diagram.name">{{ diagram.name }}</span>
 
-                    <!-- Kebab menu trigger (always visible on desktop and mobile) -->
+                    <!-- Kebab menu trigger (desktop only) -->
                     <button
                       @click.stop="openDiagramMenu(diagram.id, $event)"
-                      class="flex p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-600 transition-colors opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 flex-shrink-0"
+                      class="hidden sm:flex p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-gray-600 transition-colors opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 flex-shrink-0"
                       :aria-label="`Actions for ${diagram.name}`"
                       :title="`Actions for ${diagram.name}`"
                     >
