@@ -1,5 +1,0 @@
----
-const id = Astro.url.searchParams.get('id');
-const destination = id ? `/diagrams?id=${id}` : '/diagrams';
-return Astro.redirect(destination, 301);
----
