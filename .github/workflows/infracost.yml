@@ -1,0 +1,52 @@
+name: Infrastructure Cost Analysis
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  cost-analysis:
+    name: Infracost Cost Summary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generate cost breakdown
+        run: |
+          infracost breakdown \
+            --path infrastructure/ \
+            --terraform-init-flags="-backend=false" \
+            --terraform-var-file=environments/deployed.tfvars \
+            --format table \
+            --out-file /tmp/infracost-table.txt
+
+      - name: Post to GitHub Job Summary
+        if: always()
+        run: |
+          {
+            echo "## Infrastructure Cost Report"
+            echo ""
+            echo "Generated on push to \`main\` — $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo ""
+            echo '```'
+            cat /tmp/infracost-table.txt
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload cost report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: infracost-report-${{ github.sha }}
+          path: /tmp/infracost-table.txt
+          retention-days: 90
